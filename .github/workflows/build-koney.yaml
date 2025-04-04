@@ -90,5 +90,6 @@ jobs:
           push: ${{ github.event_name == 'push' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          platforms: linux/amd64,linux/arm64
           cache-from: type=registry,ref=${{ env.ALERT_FORWARDER_IMAGE }}:buildcache
           cache-to: ${{ github.event_name == 'push' && format('type=registry,ref={0}:buildcache,mode=max', env.ALERT_FORWARDER_IMAGE) || '' }}
