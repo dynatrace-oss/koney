@@ -9,8 +9,8 @@ on:
       - v*
 
 env:
-  CONTROLLER_IMAGE: ghcr.io/floschick/koney-controller
-  ALERT_FORWARDER_IMAGE: ghcr.io/floschick/koney-alert-forwarder
+  CONTROLLER_IMAGE: ghcr.io/dynatrace-oss/koney-controller
+  ALERT_FORWARDER_IMAGE: ghcr.io/dynatrace-oss/koney-alert-forwarder
 
 jobs:
   build-koney-controller:
