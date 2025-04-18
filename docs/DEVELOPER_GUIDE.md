@@ -72,10 +72,20 @@ make uninstall
 Build the installer for the image built and published in the registry:
 
 ```sh
-make build-installer VERSION="latest"
+make build-installer VERSION="x.y.z"
 ```
 
 ℹ️ **Note**: The makefile target mentioned above generates an `install.yaml` file in the `dist` directory. This file contains all the resources built with Kustomize, which are necessary to install this project without its dependencies.
+
+### New Release Process
+
+1. Bump the version in the `Makefile`
+2. Bump the version in the `README.md`
+3. Build the installer (see above) with the new version
+4. Commit, tag, push, and let the pipeline push the image to the registry
+5. Create a new release on GitHub
+
+ℹ️ **Note**: Image version tags are formatted as `1.2.3` while git version tags are formatted as `v1.2.3` (with a `v` prefix).
 
 ## 🪲 Debugging
 

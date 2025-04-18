@@ -23,7 +23,7 @@ Currently, Koney supports the deployment of [honeytokens](https://en.wikipedia.o
 Install the operator in your cluster and wait for it to be ready:
 
 ```sh
-kubectl apply -f https://raw.githubusercontent.com/dynatrace-oss/koney/main/dist/install.yaml
+kubectl apply -f https://raw.githubusercontent.com/dynatrace-oss/koney/refs/tags/v0.1.0/dist/install.yaml
 kubectl wait --for=condition=ready pod -n koney-system -l control-plane=controller-manager
 ```
 

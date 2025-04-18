@@ -627,7 +627,7 @@ spec:
         control-plane: controller-manager
     spec:
       containers:
-      - image: ghcr.io/dynatrace-oss/koney-alert-forwarder:latest
+      - image: ghcr.io/dynatrace-oss/koney-alert-forwarder:0.1.0
         livenessProbe:
           httpGet:
             path: /healthz
@@ -657,7 +657,7 @@ spec:
         - --health-probe-bind-address=:8081
         command:
         - /manager
-        image: ghcr.io/dynatrace-oss/koney-controller:latest
+        image: ghcr.io/dynatrace-oss/koney-controller:0.1.0
         livenessProbe:
           httpGet:
             path: /healthz

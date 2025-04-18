@@ -114,7 +114,7 @@ generate: controller-gen ## Generate code containing DeepCopy, DeepCopyInto, and
 #TODO: use the go-install-tool to install goimports locally if necessary and update docs
 fmt: ## Run go fmt against code.
 	gofmt -l -s -w .
-	goimports -l -w -local github.com/dynatrace-oss/koney
+	goimports -l -w -local github.com/dynatrace-oss/koney .
 
 .PHONY: vet
 vet: ## Run go vet against code.
