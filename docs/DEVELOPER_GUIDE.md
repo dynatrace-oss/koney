@@ -34,7 +34,7 @@ make install
 Then, deploy the manager to the cluster with the specified version:
 
 ```sh
-make deploy VERSION="demo"
+make deploy IMAGE_TAG_BASE="your.local.registry/koney" VERSION="demo"
 ```
 
 ℹ️ **Note**: If you encounter RBAC errors, you may need to grant yourself cluster-admin privileges or be logged in as admin.
@@ -72,7 +72,7 @@ make uninstall
 Build the installer for the image built and published in the registry:
 
 ```sh
-make build-installer VERSION="x.y.z"
+make build-installer IMAGE_TAG_BASE="your.local.registry/koney" VERSION="x.y.z"
 ```
 
 ℹ️ **Note**: The makefile target mentioned above generates an `install.yaml` file in the `dist` directory. This file contains all the resources built with Kustomize, which are necessary to install this project without its dependencies.
