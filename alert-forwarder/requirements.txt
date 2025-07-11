@@ -1,4 +1,0 @@
-kubernetes~=31.0
-fastapi[standard]~=0.115
-uvicorn[standard] # indirect dependency of fastapi
-rich # indirect dependency of fastapi

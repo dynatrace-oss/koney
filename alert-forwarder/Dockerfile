@@ -1,19 +1,32 @@
-FROM python:3.13-slim@sha256:21e39cf1815802d4c6f89a0d3a166cc67ce58f95b6d1639e68a394c99310d2e5
+# Copyright (c) 2025 Dynatrace LLC
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+FROM --platform=$BUILDPLATFORM golang:1.21-alpine AS builder
+ARG TARGETOS
+ARG TARGETARCH
 WORKDIR /app
+COPY go.mod go.sum ./
+RUN go mod download
+COPY . .
+RUN CGO_ENABLED=0 GOOS=${TARGETOS} GOARCH=${TARGETARCH} \
+    go build -o alert-forwarder .
 
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
-
-COPY ./forwarder/*.py ./forwarder/
-
-# hide most server logs by default so that Koney trap alerts
-# can be seen more easily (they are logged regardless)
-ENV UVICORN_LOG_LEVEL=error
-
+FROM alpine:latest
+RUN apk --no-cache add ca-certificates
+WORKDIR /app
+COPY --from=builder /app/alert-forwarder .
 USER 65532:65532
-
 EXPOSE 8000
-
-ENTRYPOINT ["uvicorn"]
-CMD ["forwarder.main:app", "--host", "0.0.0.0", "--port", "8000"]
+ENTRYPOINT ["./alert-forwarder"]
