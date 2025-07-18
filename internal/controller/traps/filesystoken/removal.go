@@ -134,8 +134,8 @@ func (r *FilesystemHoneytokenReconciler) removeDecoyWithContainerExec(ctx contex
 
 	var joinedErrors error
 
-	// Remove the file
-	cmd := []string{"rm", trap.FilesystemHoneytoken.FilePath}
+	// Remove the file (do not fail if the file is already gone)
+	cmd := []string{"rm", "-f", trap.FilesystemHoneytoken.FilePath}
 	output, err := r.executeCommandInContainer(ctx, pod, containerName, cmd)
 	if err != nil {
 		log.Error(err, "unable to remove FilesystemHoneytoken trap from container", "container", containerName, "stderr", output)
