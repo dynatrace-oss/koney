@@ -24,23 +24,27 @@ import (
 // TODO: Randomize on startup and sync with alerting system
 const KoneyFingerprint = 1337
 
-// EncodeFingerprintInEcho encodes the fingerprint for echo commands
+// Encodes the fingerprint for echo commands
 func EncodeFingerprintInEcho(code int) string {
 	return fmt.Sprintf("KONEY_FINGERPRINT_%d", code)
 }
 
-// EncodeFingerprintInCat encodes the fingerprint for cat commands
+// Encodes the fingerprint for cat commands
 func EncodeFingerprintInCat(code int) string {
 	binaryCode := strconv.FormatInt(int64(code), 2)
 
-	var cipher []string
-	for _, bit := range binaryCode {
+	var builder strings.Builder
+
+	for i, bit := range binaryCode {
+		if i > 0 {
+			builder.WriteByte(' ')
+		}
 		if bit == '0' {
-			cipher = append(cipher, "-u")
+			builder.WriteString("-u")
 		} else {
-			cipher = append(cipher, "-uu")
+			builder.WriteString("-uu")
 		}
 	}
 
-	return strings.Join(cipher, " ")
+	return builder.String()
 }

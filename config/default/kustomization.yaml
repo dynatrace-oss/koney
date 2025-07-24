@@ -157,8 +157,8 @@ kind: Kustomization
 # Will be patched by the Makefile
 images:
 - name: alert-forwarder
-  newName: localhost:5001/koney-alert-forwarder
-  newTag: "20250711233557"
+  newName: ghcr.io/dynatrace-oss/koney-alert-forwarder
+  newTag: 0.1.0
 - name: controller
-  newName: localhost:5001/koney-controller
-  newTag: test
+  newName: ghcr.io/dynatrace-oss/koney-controller
+  newTag: 0.1.0
