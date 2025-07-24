@@ -33,3 +33,6 @@ go.work
 # env files
 .env
 .env.*
+
+# Mac specific
+.DS_Store

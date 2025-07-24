@@ -1,19 +1,26 @@
-FROM python:3.13-slim@sha256:21e39cf1815802d4c6f89a0d3a166cc67ce58f95b6d1639e68a394c99310d2e5
+FROM --platform=$BUILDPLATFORM golang:1.24-alpine AS builder
+
+ARG TARGETOS
+ARG TARGETARCH
 
 WORKDIR /app
 
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+COPY go.mod go.sum ./
+RUN go mod download
 
-COPY ./forwarder/*.py ./forwarder/
+COPY . .
 
-# hide most server logs by default so that Koney trap alerts
-# can be seen more easily (they are logged regardless)
-ENV UVICORN_LOG_LEVEL=error
+RUN CGO_ENABLED=0 GOOS=${TARGETOS} GOARCH=${TARGETARCH} \
+    go build -ldflags="-w -s" -o alert-forwarder .
 
-USER 65532:65532
+FROM gcr.io/distroless/static:nonroot
 
+WORKDIR /app
+
+COPY --from=builder /app/alert-forwarder .
+
+# Expose port
 EXPOSE 8000
 
-ENTRYPOINT ["uvicorn"]
-CMD ["forwarder.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Set entrypoint
+ENTRYPOINT ["./alert-forwarder"]

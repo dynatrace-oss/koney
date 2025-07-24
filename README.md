@@ -1,4 +1,4 @@
-<!-- markdownlint-disable no-inline-html first-line-h1 -->
+<!-- markdownlint-disable no-inline-html first-line-h1 descriptive-link-text-->
 
 <p align="center">
   <img alt="Koney Logo" width="128px" src="./docs/images/koney.png" />
