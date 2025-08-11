@@ -1,7 +1,7 @@
 apiVersion: research.dynatrace.com/v1alpha1
 kind: DeceptionPolicy
 metadata:
-  name: deceptionpolicy-servicetoken
+  name: deceptionpolicy-servicetoken-kive
 spec:
   strictValidation: true
   mutateExisting: true
@@ -24,4 +24,4 @@ spec:
       decoyDeployment:
         strategy: containerExec
       captorDeployment:
-        strategy: tetragon
+        strategy: kive

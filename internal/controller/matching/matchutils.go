@@ -18,7 +18,7 @@ package matching
 import "sigs.k8s.io/controller-runtime/pkg/client"
 
 func ContainerSelectorSelectsAll(containerSelector string) bool {
-	return containerSelector == "*" || containerSelector == ""
+	return containerSelector == ".*" || containerSelector == ""
 }
 
 // extractObjectNames is a helper function that extracts the names of the objects from a list of objects.

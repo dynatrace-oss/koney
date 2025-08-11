@@ -39,9 +39,11 @@ const (
 	// If resources are not ready yet for traps (e.g., containers are still starting), retry reconciliation after this shorter interval.
 	ShortStatusCheckInterval = 10 * time.Second
 
-	// WildcardContainerSelectorRegex is a regex that matches wildcard characters in container selector fields.
-	WildcardContainerSelectorRegex = `\*|\?|\[|\]`
-
 	// TetragonWebhookUrl is the URL of the alert forwarder that receives alerts from Tetragon.
 	TetragonWebhookUrl = "http://koney-alert-forwarder-service." + KoneyNamespace + ".svc:8000/handlers/tetragon"
+
+	// HiveWebhookUrl is the URL of the service where the HiveAlerts will be forwarded to.
+	KiveWebhookUrl = "http://koney-alert-forwarder-service." + KoneyNamespace + ".svc:8000/handlers/kive"
+
+	KivePolicyNamespace = "koney-system"
 )

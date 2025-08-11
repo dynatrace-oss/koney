@@ -42,6 +42,6 @@ type ResourceDescription struct {
 
 	// ContainerSelector is a selector to filter the containers to inject the trap into.
 	// +optional
-	// +kubebuilder:default="*"
+	// +kubebuilder:default=""
 	ContainerSelector string `json:"containerSelector,omitempty" yaml:"containerSelector,omitempty"`
 }

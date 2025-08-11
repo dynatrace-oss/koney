@@ -1204,25 +1204,25 @@ var _ = Describe("selectContainers", func() {
 		})
 
 		It("should select all containers", func() {
-			selection, err := selectContainers(&pod, "*")
+			selection, err := selectContainers(&pod, ".*")
 			Expect(err).ToNot(HaveOccurred())
 			Expect(selection).To(ConsistOf("foo", "bar", "baz", "quz"))
 		})
 
 		It("should select containers starting with some string", func() {
-			selection, err := selectContainers(&pod, "b*")
+			selection, err := selectContainers(&pod, "b.*")
 			Expect(err).ToNot(HaveOccurred())
 			Expect(selection).To(ConsistOf("bar", "baz"))
 		})
 
 		It("should select containers ending with some string", func() {
-			selection, err := selectContainers(&pod, "*z")
+			selection, err := selectContainers(&pod, ".*z")
 			Expect(err).ToNot(HaveOccurred())
 			Expect(selection).To(ConsistOf("baz", "quz"))
 		})
 
 		It("should select containers containing some string", func() {
-			selection, err := selectContainers(&pod, "*a*")
+			selection, err := selectContainers(&pod, ".*a.*")
 			Expect(err).ToNot(HaveOccurred())
 			Expect(selection).To(ConsistOf("bar", "baz"))
 		})

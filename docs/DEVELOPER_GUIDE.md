@@ -8,7 +8,7 @@ This document describes how to build, test, and deploy the Koney operator.
 - `docker` version 17.03+.
 - `kubectl` version v1.11.3+.
 - Access to a Kubernetes v1.11.3+ cluster.
-- [Tetragon](https://tetragon.io/) v1.1.0+ installed in the cluster, if you also want to monitor traps.
+- [Tetragon](https://tetragon.io/) v1.1.0+ or [Kive](https://github.com/San7o/kivebpf) installed in the cluster, if you also want to monitor traps.
 - `pre-commit` to run checks before committing changes.
 
 ## ⚓ Deploy the Operator to the Cluster
@@ -114,7 +114,7 @@ Run all end-to-end tests:
 
 ⚠️ **Warning**: This will deploy resources in your currently active cluster! Make sure that this is a playground cluster.
 
-ℹ️ **Note**: Tetragon must be installed in the cluster to run all the end-to-end tests.
+ℹ️ **Note**: Tetragon and Kive must be installed in the cluster to run all the end-to-end tests.
 
 ```sh
 kubectl config set-context your-playground-cluster
