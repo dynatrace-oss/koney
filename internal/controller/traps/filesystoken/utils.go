@@ -33,7 +33,7 @@ import (
 	"github.com/dynatrace-oss/koney/internal/controller/utils"
 )
 
-// GenerateTetragpmTracingPolicyName generates the name of a Tetragon tracing policy based on the trap.
+// GenerateTetragonTracingPolicyName generates the name of a Tetragon tracing policy based on the trap.
 func GenerateTetragonTracingPolicyName(trap v1alpha1.Trap) (string, error) {
 	trapJSON, err := json.Marshal(trap)
 	if err != nil {
@@ -43,7 +43,7 @@ func GenerateTetragonTracingPolicyName(trap v1alpha1.Trap) (string, error) {
 	return "koney-tracing-policy-" + utils.Hash(string(trapJSON)), nil
 }
 
-// Similar to GenerateTetragpmTracingPolicyName but used for Kive
+// Similar to GenerateTetragonTracingPolicyName but used for Kive
 func GenerateKiveTracingPolicyName(trap v1alpha1.Trap) (string, error) {
 	// What is irrelevant for the policy should not alter the name, so
 	// that there are no duplicate policies with different names.
