@@ -284,7 +284,7 @@ func verifyStatusConditions(namespace, crdName, deceptionPolicyName string, expe
 // setting up probes, and give the alert forwarder some time to process the alert.
 //
 //nolint:unparam
-func verifyHoneytokenAndAwaitAlert(
+func verifyHoneytokenAndAwaitAlertTetragon(
 	trap v1alpha1.Trap, lastModified time.Time,
 	podNamespace, podName string, containers []string,
 ) error {
@@ -298,7 +298,7 @@ func verifyHoneytokenAndAwaitAlert(
 	time.Sleep(3 * time.Second)
 
 	accessAttempts := 0
-	firstAccessTime := time.Now()
+	firstAccessTime := time.Now().UTC()
 
 	// Try to access the honeytoken file and watch for alerts many times,
 	// because eBPF events might be delayed or even dropped under kernel load
@@ -390,9 +390,131 @@ func verifyHoneytokenAndAwaitAlert(
 			Expect(alert.Process).NotTo(BeNil())
 			Expect(alert.Process.Uid).To(BeZero())
 			Expect(alert.Process.Pid).NotTo(BeZero())
-			Expect(alert.Process.Cwd).To(Equal("/"))
 			Expect(alert.Process.Binary).To(Equal("/usr/bin/cat"))
+			Expect(alert.Process.Cwd).To(Equal("/"))
 			Expect(alert.Process.Arguments).To(Equal(trap.FilesystemHoneytoken.FilePath))
+		}
+
+		return nil
+
+	}, time.Minute, time.Second).Should(Succeed())
+
+	return nil
+}
+
+// Similar to verifyHoneytokenAndAwaitAlertTetragon but for Kive
+//
+//nolint:unparam
+func verifyHoneytokenAndAwaitAlertKive(
+	trap v1alpha1.Trap, lastModified time.Time,
+	podNamespace, podName string, containers []string,
+) error {
+	// Wait for Kive to setup probes
+	pattern := "Created / Updated KiveData resource."
+	Eventually(func() error {
+		return expectLogLine(pattern, "kivebpf-system", "app.kubernetes.io/name=kivebpf", "kivebpf-system", &lastModified)
+	}, time.Minute, time.Second).Should(Succeed())
+
+	// eBPF probes tend to need some extra time before being ready
+	time.Sleep(3 * time.Second)
+
+	accessAttempts := 0
+	firstAccessTime := time.Now().UTC()
+
+	// Try to access the honeytoken file and watch for alerts many times,
+	// because eBPF events might be delayed or even dropped under kernel load
+	Eventually(func() error {
+
+		// Verify the honeytoken content (this should trigger an alert)
+		err := verifyHoneytokenContent(trap, podNamespace, podName, containers)
+		if err != nil {
+			return err
+		}
+
+		accessAttempts += len(containers)
+
+		// Try finding the log entry many times because the processing takes some time
+		const maxAttempts = 10
+		var alerts []KoneyAlert
+		var attempt int
+
+		for attempt < maxAttempts {
+			alerts, err = findKoneyAlerts(trap.FilesystemHoneytoken.FilePath, "koney-system", &firstAccessTime)
+			if err != nil {
+				return err
+			}
+
+			// Remove alerts that happened before the first access time
+			// (we don't want delayed alerts from previous tests)
+			filteredAlerts := []KoneyAlert{}
+			for i := 0; i < len(alerts); i++ {
+				timestamp, err := time.Parse(time.RFC3339, alerts[i].Timestamp)
+				if err != nil {
+					return fmt.Errorf("failed to parse alert timestamp: %v", err)
+				}
+				if timestamp.After(firstAccessTime.Truncate(time.Second)) {
+					filteredAlerts = append(filteredAlerts, alerts[i])
+				}
+			}
+			alerts = filteredAlerts
+
+			// Wait 1 second and try again ...
+			if len(alerts) == 0 {
+				time.Sleep(time.Second)
+				attempt++
+				continue
+			}
+
+			// Check if the number of alerts is in range: at least as many alerts as containers,
+			// but not more than the total number of access attempts that we made
+			if len(alerts) < len(containers) || len(alerts) > accessAttempts*3 {
+				return fmt.Errorf("expected %d alerts, but got %d alerts", len(containers), len(alerts))
+			}
+
+			// Alerts found
+			break
+		}
+
+		if len(alerts) == 0 {
+			return fmt.Errorf("expected alerts not found in logs after %d attempts", maxAttempts)
+		}
+
+		for _, alert := range alerts {
+			fmt.Fprintf(ginkgo.GinkgoWriter, "found alert: %+v\n", alert) //nolint:errcheck
+
+			timestamp, err := time.Parse(time.RFC3339, alert.Timestamp)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(func() error {
+				// the first access time has millisecond precision, but Koney alerts have second precision,
+				// so we need to truncate the first access time to seconds for a valid comparison
+				if timestamp.Before(firstAccessTime.Truncate(time.Second)) {
+					return fmt.Errorf("expected alert timestamp at %s to happen after first access at %s", timestamp, firstAccessTime)
+				}
+				return nil
+			}()).To(Succeed())
+
+			Expect(alert.DeceptionPolicyName).NotTo(BeEmpty())
+			Expect(alert.TrapType).To(Equal("filesystem_honeytoken"))
+
+			Expect(alert.Metadata).NotTo(BeNil())
+			Expect(alert.Metadata["file_path"]).To(Equal(trap.FilesystemHoneytoken.FilePath))
+
+			Expect(alert.Pod).NotTo(BeNil())
+			Expect(alert.Pod.Name).To(Equal(podName))
+			Expect(alert.Pod.Namespace).To(Equal(podNamespace))
+			Expect(alert.Pod.Container.Id).NotTo(BeEmpty())
+			Expect(alert.Pod.Container.Name).To(BeElementOf(containers))
+
+			Expect(alert.Node).NotTo(BeNil())
+			Expect(alert.Node.Name).NotTo(BeNil())
+
+			Expect(alert.Process).NotTo(BeNil())
+			Expect(alert.Process.Uid).To(BeZero())
+			Expect(alert.Process.Pid).NotTo(BeZero())
+			Expect(alert.Process.Binary).To(ContainSubstring("cat"))
+			// Kive does not guarantee the following
+			//Expect(alert.Process.Cwd).To(Equal("/"))
+			//Expect(alert.Process.Arguments).To(Equal(trap.FilesystemHoneytoken.FilePath))
 		}
 
 		return nil

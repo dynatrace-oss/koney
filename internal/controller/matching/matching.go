@@ -18,7 +18,7 @@ package matching
 import (
 	"context"
 	"fmt"
-	"path/filepath"
+	"regexp"
 
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -320,11 +320,13 @@ func selectContainers(resource client.Object, containerSelector string) ([]strin
 		return selectedContainers, nil
 	}
 
+	compiledRegex, err := regexp.Compile(containerSelector)
+	if err != nil {
+		return []string{}, fmt.Errorf("compiling regex: %w", err)
+	}
+
 	for _, container := range containers {
-		matched, err := filepath.Match(containerSelector, container.Name)
-		if err != nil {
-			return nil, err
-		} else if matched {
+		if compiledRegex.Match([]byte(container.Name)) {
 			selectedContainers = append(selectedContainers, container.Name)
 		}
 	}

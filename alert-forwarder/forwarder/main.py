@@ -17,12 +17,13 @@ import json
 import logging
 import time
 
-from fastapi import BackgroundTasks, FastAPI, Response, status
+from fastapi import BackgroundTasks, FastAPI, Response, status, Request
 from kubernetes import config
 from rich.console import Console
 
 from .sink import read_alert_sinks, send_alert
 from .tetragon import is_filtered_alert, map_tetragon_event, read_tetragon_events
+from .kive import process_kive_alert
 
 # various error messages
 K8S_AUTH_ERROR = "failed to authenticate with Kubernetes API"
@@ -53,6 +54,33 @@ def handle_tetragon(response: Response, background_tasks: BackgroundTasks):
     # which will be debounced automatically
     most_recent_trigger = trigger_time
     background_tasks.add_task(load_new_alerts, timestamp=trigger_time)
+
+
+@app.post("/handlers/kive", status_code=status.HTTP_202_ACCEPTED)
+async def handle_kive(request: Request):
+    if not authenticate_kubernetes():
+        return dict(message=K8S_AUTH_ERROR)
+    
+    koney_alert = process_kive_alert(await request.json())
+    koney_alert_str = json.dumps(koney_alert)
+    console.print(koney_alert_str, soft_wrap=True)
+
+    alert_sinks = []
+    try:
+        alert_sinks = read_alert_sinks()
+    except:
+        if logger.level <= logging.ERROR:
+            console.print(K8S_SINK_READ_ERROR, style="bold red")
+            console.print_exception()
+    
+    # send to external systems
+    for sink in alert_sinks:
+        try:
+            send_alert(koney_alert, sink)
+        except:
+            if logger.level <= logging.ERROR:
+                console.print(SINK_SEND_ERROR, style="bold red")
+                console.print_exception()
 
 
 def load_new_alerts(timestamp: float):

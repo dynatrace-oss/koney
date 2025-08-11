@@ -1,17 +1,17 @@
 apiVersion: research.dynatrace.com/v1alpha1
 kind: DeceptionPolicy
 metadata:
-  name: deceptionpolicy-servicetoken-volume
+  name: deceptionpolicy-servicetoken-kive
 spec:
   strictValidation: true
   mutateExisting: true
 
   traps:
-  - filesystemHoneytoken:
-      filePath: /run/secrets/koney/service_token
-      fileContent: >
-        admin:password
-      readOnly: true
+    - filesystemHoneytoken:
+        filePath: /run/secrets/koney/service_token
+        fileContent: >
+          someverysecrettoken
+        readOnly: true
 
       match:
         any:
@@ -21,7 +21,7 @@ spec:
                 matchLabels:
                   demo.koney/honeytoken: "true"
 
-    decoyDeployment:
-      strategy: volumeMount
-    captorDeployment:
-      strategy: tetragon
+      decoyDeployment:
+        strategy: containerExec
+      captorDeployment:
+        strategy: kive

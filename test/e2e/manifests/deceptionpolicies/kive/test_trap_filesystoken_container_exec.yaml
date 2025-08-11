@@ -1,0 +1,26 @@
+apiVersion: research.dynatrace.com/v1alpha1
+kind: DeceptionPolicy
+metadata:
+  name: koney-test-deceptionpolicy
+spec:
+  strictValidation: true
+  mutateExisting: true
+
+  traps:
+    - filesystemHoneytoken:
+        filePath: /run/secrets/koney/service_token
+        fileContent: someverysecrettoken
+        readOnly: true
+
+      match:
+        any:
+          - resources:
+              containerSelector: nginx
+              selector:
+                matchLabels:
+                  demo.koney/honeytoken: "true"
+
+      decoyDeployment:
+        strategy: containerExec
+      captorDeployment:
+        strategy: kive

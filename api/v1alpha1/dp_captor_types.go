@@ -20,7 +20,7 @@ type CaptorDeployment struct {
 	// Strategy is the technical method to deploy the captor.
 	// Currently, only "tetragon" is supported, which is also the default.
 	// It requires the Tetragon controller to be installed.
-	// +kubebuilder:validation:Enum=tetragon
+	// +kubebuilder:validation:Enum=tetragon; kive
 	// +optional
 	// +kubebuilder:default="tetragon"
 	Strategy string `json:"strategy,omitempty" yaml:"strategy,omitempty"`

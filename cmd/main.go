@@ -25,6 +25,7 @@ import (
 	// to ensure that exec-entrypoint and run can make use of them.
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 
+	kivev1 "github.com/San7o/kivebpf/api/v1"
 	ciliumiov1alpha1 "github.com/cilium/tetragon/pkg/k8s/apis/cilium.io/v1alpha1"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
@@ -51,6 +52,7 @@ func init() {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
 	utilruntime.Must(ciliumiov1alpha1.AddToScheme(scheme))
 	utilruntime.Must(researchdynatracecomv1alpha1.AddToScheme(scheme))
+	utilruntime.Must(kivev1.AddToScheme(scheme))
 	// +kubebuilder:scaffold:scheme
 }
 

@@ -77,6 +77,7 @@ spec:
                             It requires the Tetragon controller to be installed.
                           enum:
                           - tetragon
+                          - kive
                           type: string
                       type: object
                     decoyDeployment:
@@ -136,7 +137,7 @@ spec:
                                   about the resource being created or modified.
                                 properties:
                                   containerSelector:
-                                    default: '*'
+                                    default: ""
                                     description: ContainerSelector is a selector to
                                       filter the containers to inject the trap into.
                                     type: string
