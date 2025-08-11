@@ -134,7 +134,7 @@ The `any` field is a list and holds one or more `resources` objects, which conta
   - `matchLabels`: a map of key-value pairs.
   - `matchExpressions`: a list of label selector requirements evaluated as a logical AND operation. **(not implemented yet)**
 
-- `containerSelector`: selects the container(s) in the matched pods or deployments where the trap is deployed. It supports the same pattern syntax as [`filepath.Match`](https://pkg.go.dev/path/filepath#Match) (e.g., `*` matches zero or more characters, `?` matches any single characte. The default value is `*`, which means that the trap is deployed in all containers in the matched pods.
+- `containerSelector`: selects the container(s) in the matched pods or deployments where the trap is deployed. It supports the same pattern syntax as [`regexp`](https://github.com/google/re2/wiki/Syntax). The default value is empty, and the trap is deployed in all containers in the matched pods.
 
 🧪 For example, the following `match` field selects all pods in the `koney` namespace, and all pods with the label `demo.koney/honeytoken: "true"`:
 
@@ -147,10 +147,10 @@ match:
         selector:
           matchLabels:
             demo.koney/honeytoken: "true"
-        containerSelector: "*"
+        containerSelector: ".*"
 ```
 
-ℹ️ **Note**: Tetragon's tracing policies do not support wildcards in the `containerSelector` field. This is not a problem when the `containerSelector` field is set to a specific container name or set to `*`. However, when the `containerSelector` field is set to a pattern, the tracing policy is created with an empty `containerSelector` field, matching all containers in the pod. See [Captor Deployment](#captor-deployment) for more information about tracing policies. Moreover, tracing policies do not support the `namespaces` field. Therefore, tracing policies match pods in all namespaces.
+ℹ️ **Note**: Tetragon's tracing policies do not support wildcards in the `containerSelector` field. This is not a problem when the `containerSelector` field is set to a specific container name or set to `.*`. However, when the `containerSelector` field is set to a pattern, the tracing policy is created with an empty `containerSelector` field, matching all containers in the pod. See [Captor Deployment](#captor-deployment) for more information about tracing policies. Moreover, tracing policies do not support the `namespaces` field. Therefore, tracing policies match pods in all namespaces.
 
 #### Decoy Deployment
 
@@ -180,6 +180,7 @@ The `captorDeployment` field defines how a captor is deployed. It has the follow
 - `strategy`: the strategy used to deploy the captor. At the moment, it can only be `tetragon`. The default value is `tetragon`. The strategies are:
 
   - `tetragon`: the captor is deployed by creating and applying a Tetragon `TracingPolicy` CR in the cluster. Requires that [Tetragon](https://tetragon.io/) is installed in the cluster with the `dnsPolicy=ClusterFirstWithHostNet` configuration.
+  - `kive`: the captor is deployed with `Kive`, a light operator which performs inode-based monitoring instead of path-based monitoring. Requires that [Kive](https://github.com/San7o/kivebpf) in installed in the cluster.
 
 🧪 For example, the following `captorDeployment` field deploys a captor using the `tetragon` strategy:
 
@@ -193,6 +194,8 @@ captorDeployment:
 ```sh
 helm upgrade tetragon cilium/tetragon -n kube-system --set dnsPolicy=ClusterFirstWithHostNet
 ```
+
+🚨 **Important**: Kive currently does not support the `volumeMount` decoy strategy.
 
 ### Status Conditions
 

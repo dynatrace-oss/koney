@@ -13,13 +13,13 @@ spec:
         someverysecrettoken
       readOnly: true
 
-    match:
-      any:
-      - resources:
-          containerSelector: "*"
-          selector:
-            matchLabels:
-              demo.koney/honeytoken: "true"
+      match:
+        any:
+          - resources:
+              containerSelector: ".*"
+              selector:
+                matchLabels:
+                  demo.koney/honeytoken: "true"
 
     decoyDeployment:
       strategy: containerExec

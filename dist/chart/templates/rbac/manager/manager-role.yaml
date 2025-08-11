@@ -61,6 +61,18 @@ rules:
   - update
   - watch
 - apiGroups:
+  - kivebpf.san7o.github.io
+  resources:
+  - kivepolicies
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
   - research.dynatrace.com
   resources:
   - deceptionpolicies

@@ -26,58 +26,20 @@ import (
 	. "github.com/onsi/gomega"
 
 	"github.com/dynatrace-oss/koney/api/v1alpha1"
-
 	"github.com/dynatrace-oss/koney/internal/controller/constants"
-	"github.com/dynatrace-oss/koney/internal/controller/utils"
 	testutils "github.com/dynatrace-oss/koney/test/utils"
 )
 
 const (
-	imageTagPrefix = "e2e-tests-"
-
-	testNamespace = "koney-tests"
-	testCrdName   = "deceptionpolicies.research.dynatrace.com"
-
-	manifestsDir = "test/e2e/manifests"
-
-	nameOfTestDeployment  = "koney-test-deployment"
-	labelOfTestDeployment = "app=koney-test-pod"
-	yamlOfTestDeployment  = manifestsDir + "/deployments/test_deployment_two_containers_nginx_alpine.yaml"
-
-	nameOfExtraTestPod = "koney-extra-test-pod"
-	yamlOfExtraTestPod = manifestsDir + "/pods/test_pod_extra.yaml"
-
-	nameOfDeceptionPolicy              = "koney-test-deceptionpolicy"
-	yamlOfOneFilesystokenContainerExec = manifestsDir + "/deceptionpolicies/test_trap_filesystoken_container_exec.yaml"
-	yamlOfTwoFilesystokenContainerExec = manifestsDir + "/deceptionpolicies/test_trap_two_filesystokens.yaml"
-	yamlOfFilesystokenNoMutateExisting = manifestsDir + "/deceptionpolicies/test_trap_filesystoken_no_mutate_existing.yaml"
-	yamlOfFilesystokenVolumeMount      = manifestsDir + "/deceptionpolicies/test_trap_filesystoken_volume_mount.yaml"
-)
-
-var (
-	projectDir, _ = testutils.GetProjectDir()
-
-	// lastModificationTime is the time when the DeceptionPolicy was last created, updated or deleted by us
-	lastModificationTime time.Time
-
-	// allFilesystemHoneytokenPaths is a list of all paths created during tests, which should be removed at the end
-	allFilesystemHoneytokenPaths []string
-
-	// controllerPodName is the actual name of the Koney controller pod
-	controllerPodName string
-
-	// testPodName is the actual name of the test pod, which was created by the test deployment
-	testPodName string
-
-	// controllerContainersPolicyShouldMatch is the only list of containers that all policies should match
-	containersPolicyShouldMatch = []string{"nginx"}
-
-	// managerNamespace is the namespace where the controller-manager is deployed
-	managerNamespace = utils.GetKoneyNamespace()
+	yamlOfOneFilesystokenContainerExecKive = manifestsDir + "/deceptionpolicies/kive/test_trap_filesystoken_container_exec.yaml"
+	yamlOfTwoFilesystokenContainerExecKive = manifestsDir + "/deceptionpolicies/kive/test_trap_two_filesystokens.yaml"
+	yamlOfFilesystokenNoMutateExistingKive = manifestsDir + "/deceptionpolicies/kive/test_trap_filesystoken_no_mutate_existing.yaml"
+	// VolumeMount is currently not supported by Kive
+	//yamlOfFilesystokenVolumeMountKive      = manifestsDir + "/deceptionpolicies/kive/test_trap_filesystoken_volume_mount.yaml"
 )
 
 //nolint:dupl
-var _ = Describe("Koney Operator", Ordered, func() {
+var _ = Describe("Koney Operator with Kive", Ordered, func() {
 	BeforeAll(func() {
 		By("creating manager namespace")
 		cmd := exec.Command("kubectl", "create", "ns", managerNamespace)
@@ -183,7 +145,7 @@ var _ = Describe("Koney Operator", Ordered, func() {
 			By("creating a Koney DeceptionPolicy CR")
 			lastModificationTime = time.Now().UTC()
 			cmd = exec.Command("kubectl", "apply", "-n", testNamespace,
-				"-f", filepath.Join(projectDir, yamlOfOneFilesystokenContainerExec))
+				"-f", filepath.Join(projectDir, yamlOfOneFilesystokenContainerExecKive))
 			_, err = testutils.Run(cmd)
 			Expect(err).NotTo(HaveOccurred())
 
@@ -218,7 +180,7 @@ var _ = Describe("Koney Operator", Ordered, func() {
 
 			By("validating that the honeytoken is created in the test pod and has the expected content")
 			for _, trap := range deceptionPolicy.Spec.Traps {
-				err := verifyHoneytokenAndAwaitAlertTetragon(trap, lastModificationTime,
+				err := verifyHoneytokenAndAwaitAlertKive(trap, lastModificationTime,
 					testNamespace, testPodName, containersPolicyShouldMatch)
 				Expect(err).ShouldNot(HaveOccurred())
 			}
@@ -235,7 +197,7 @@ var _ = Describe("Koney Operator", Ordered, func() {
 			By("updating the DeceptionPolicy CR")
 			lastModificationTime = time.Now().UTC()
 			cmd := exec.Command("kubectl", "apply", "-n", testNamespace,
-				"-f", filepath.Join(projectDir, yamlOfTwoFilesystokenContainerExec))
+				"-f", filepath.Join(projectDir, yamlOfTwoFilesystokenContainerExecKive))
 			_, err := testutils.Run(cmd)
 			Expect(err).NotTo(HaveOccurred())
 
@@ -268,7 +230,7 @@ var _ = Describe("Koney Operator", Ordered, func() {
 
 			By("validating that the honeytoken is updated in the test pod and has the expected content")
 			for _, trap := range deceptionPolicy.Spec.Traps {
-				err := verifyHoneytokenAndAwaitAlertTetragon(trap, lastModificationTime,
+				err := verifyHoneytokenAndAwaitAlertKive(trap, lastModificationTime,
 					testNamespace, testPodName, containersPolicyShouldMatch)
 				Expect(err).ShouldNot(HaveOccurred())
 			}
@@ -317,7 +279,7 @@ var _ = Describe("Koney Operator", Ordered, func() {
 			By("validating that the honeytoken is created in the extra test pod and has the expected content")
 			for _, trap := range deceptionPolicy.Spec.Traps {
 				// we re-use the lastModificationTime from the previous test because no probes should have needed an update
-				err := verifyHoneytokenAndAwaitAlertTetragon(trap, lastModificationTime,
+				err := verifyHoneytokenAndAwaitAlertKive(trap, lastModificationTime,
 					testNamespace, nameOfExtraTestPod, containersPolicyShouldMatch)
 				Expect(err).ShouldNot(HaveOccurred())
 			}
@@ -334,7 +296,7 @@ var _ = Describe("Koney Operator", Ordered, func() {
 			By("reverting the DeceptionPolicy CR")
 			lastModificationTime = time.Now().UTC()
 			cmd := exec.Command("kubectl", "apply", "-n", testNamespace,
-				"-f", filepath.Join(projectDir, yamlOfOneFilesystokenContainerExec))
+				"-f", filepath.Join(projectDir, yamlOfOneFilesystokenContainerExecKive))
 			_, err := testutils.Run(cmd)
 			Expect(err).NotTo(HaveOccurred())
 
@@ -367,7 +329,7 @@ var _ = Describe("Koney Operator", Ordered, func() {
 
 			By("validating that the honeytoken is updated in the test pod and has the expected content")
 			for _, trap := range deceptionPolicy.Spec.Traps {
-				err := verifyHoneytokenAndAwaitAlertTetragon(trap, lastModificationTime,
+				err := verifyHoneytokenAndAwaitAlertKive(trap, lastModificationTime,
 					testNamespace, testPodName, containersPolicyShouldMatch)
 				Expect(err).ShouldNot(HaveOccurred())
 			}
@@ -378,13 +340,14 @@ var _ = Describe("Koney Operator", Ordered, func() {
 			}, time.Minute, time.Second).Should(Succeed())
 		})
 	})
-
+	/* VolumeMount is currently not supported by Kive
 	When("updating the DeceptionPolicy CR with a trap deployed using the volumeMount strategy", func() {
 		It("should update the honeytoken in the test pod", func() {
 			By("updating the DeceptionPolicy CR")
+
 			lastModificationTime = time.Now().UTC()
 			cmd := exec.Command("kubectl", "apply", "-n", testNamespace,
-				"-f", filepath.Join(projectDir, yamlOfFilesystokenVolumeMount))
+				"-f", filepath.Join(projectDir, yamlOfFilesystokenVolumeMountKive))
 			_, err := testutils.Run(cmd)
 			Expect(err).NotTo(HaveOccurred())
 
@@ -423,11 +386,9 @@ var _ = Describe("Koney Operator", Ordered, func() {
 
 			updateObservedFilePaths(deceptionPolicy.Spec.Traps, &allFilesystemHoneytokenPaths)
 
-			fmt.Printf("foo testPodName: %s", testPodName)
-
 			By("validating that the honeytoken is updated in the test pod and has the expected content")
 			for _, trap := range deceptionPolicy.Spec.Traps {
-				err := verifyHoneytokenAndAwaitAlertTetragon(trap, lastModificationTime,
+				err := verifyHoneytokenAndAwaitAlertKive(trap, lastModificationTime,
 					testNamespace, testPodName, containersPolicyShouldMatch)
 				Expect(err).ShouldNot(HaveOccurred())
 			}
@@ -438,6 +399,7 @@ var _ = Describe("Koney Operator", Ordered, func() {
 			}, time.Minute, time.Second).Should(Succeed())
 		})
 	})
+	*/
 
 	When("deleting the DeceptionPolicy CR", func() {
 		It("should remove the honeytoken from the test pod", func() {
@@ -487,7 +449,7 @@ var _ = Describe("Koney Operator", Ordered, func() {
 		It("should not attempt to place any traps", func() {
 			By("adding the DeceptionPolicy CR")
 			cmd := exec.Command("kubectl", "apply", "-n", testNamespace,
-				"-f", filepath.Join(projectDir, yamlOfFilesystokenNoMutateExisting))
+				"-f", filepath.Join(projectDir, yamlOfFilesystokenNoMutateExistingKive))
 			_, err := testutils.Run(cmd)
 			Expect(err).NotTo(HaveOccurred())
 

@@ -16,23 +16,20 @@
 package filesystoken
 
 import (
-	"regexp"
-
 	slimv1 "github.com/cilium/cilium/pkg/k8s/slim/k8s/apis/meta/v1"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/dynatrace-oss/koney/api/v1alpha1"
-	"github.com/dynatrace-oss/koney/internal/controller/constants"
 )
 
 var (
 	containerSelectorValues = []string{
 		"name",
-		"namewithwildcard*",
+		"namewithwildcard.*",
 		"namewithwildcard?",
-		"*",
+		".*",
 	}
 
 	labelSelectorValues = metav1.LabelSelector{
@@ -95,11 +92,8 @@ var _ = Describe("generateTetragonTracingPolicy", func() {
 				}
 
 				// Check the container selector
-				compiledRegex, err := regexp.Compile(constants.WildcardContainerSelectorRegex)
-				Expect(err).ToNot(HaveOccurred())
-
 				for _, resourceFilter := range trap.MatchResources.Any {
-					if resourceFilter.ContainerSelector == "" || resourceFilter.ContainerSelector == "*" || compiledRegex.MatchString(resourceFilter.ContainerSelector) {
+					if resourceFilter.ResourceDescription.ContainerSelector == "" || resourceFilter.ResourceDescription.ContainerSelector == ".*" {
 						Expect(tracingPolicy.Spec.ContainerSelector.MatchExpressions).To(BeEmpty())
 					} else {
 						Expect(tracingPolicy.Spec.ContainerSelector.MatchExpressions).To(HaveLen(1))
