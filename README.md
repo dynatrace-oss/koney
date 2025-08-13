@@ -134,7 +134,13 @@ The `any` field is a list and holds one or more `resources` objects, which conta
   - `matchLabels`: a map of key-value pairs.
   - `matchExpressions`: a list of label selector requirements evaluated as a logical AND operation. **(not implemented yet)**
 
-- `containerSelector`: selects the container(s) in the matched pods or deployments where the trap is deployed. It supports the same pattern syntax as [`regexp`](https://github.com/google/re2/wiki/Syntax). The default value is empty, which means that the trap is deployed in all containers in the matched pods.
+- `containerSelector`: selects the container(s) in the matched pods or deployments where the trap is deployed.
+  - if this field is prepended by `regex:`, the rest of the string will represent a regular expression matched with go [regexp](https://golang.org/s/re2syntax) library.
+  - if the field is prepended by "glob:", then this is a filesystem-style regex, as described in go [filepath.Match](https://pkg.go.dev/path/filepath#Match) library
+  - if it is empty, the trap is deployed in all containers in the matched pods.
+  - otherwise, the name of the container will be compared exactly.
+
+  The default value is empty.
 
 🧪 For example, the following `match` field selects all pods in the `koney` namespace, and all pods with the label `demo.koney/honeytoken: "true"`:
 
@@ -147,10 +153,10 @@ match:
         selector:
           matchLabels:
             demo.koney/honeytoken: "true"
-        containerSelector: ".*"
+        containerSelector: "regex:.*"
 ```
 
-ℹ️ **Note**: Tetragon's tracing policies do not support wildcards in the `containerSelector` field. This is not a problem when the `containerSelector` field is set to a specific container name or set to `.*`. However, when the `containerSelector` field is set to a pattern, the tracing policy is created with an empty `containerSelector` field, matching all containers in the pod. See [Captor Deployment](#captor-deployment) for more information about tracing policies. Moreover, tracing policies do not support the `namespaces` field. Therefore, tracing policies match pods in all namespaces.
+ℹ️ **Note**: Tetragon's tracing policies do not support wildcards in the `containerSelector` field. This is not a problem when the `containerSelector` field is set to a specific container name or set to `regex:.*` or `glob:*`. However, when the `containerSelector` field is set to a pattern, the tracing policy is created with an empty `containerSelector` field, matching all containers in the pod. See [Captor Deployment](#captor-deployment) for more information about tracing policies. Moreover, tracing policies do not support the `namespaces` field. Therefore, tracing policies match pods in all namespaces.
 
 #### Decoy Deployment
 

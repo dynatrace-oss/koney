@@ -16,7 +16,7 @@ spec:
       match:
         any:
           - resources:
-              containerSelector: ".*"
+              containerSelector: "regex:.*"
               selector:
                 matchLabels:
                   demo.koney/honeytoken: "true"
