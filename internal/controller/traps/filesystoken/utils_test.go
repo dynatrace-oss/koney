@@ -27,9 +27,9 @@ import (
 var (
 	containerSelectorValues = []string{
 		"name",
-		"namewithwildcard.*",
-		"namewithwildcard?",
-		".*",
+		"glob:namewithwildcard.*",
+		"glob:namewithwildcard?",
+		"regex:.*",
 	}
 
 	labelSelectorValues = metav1.LabelSelector{
@@ -92,7 +92,7 @@ var _ = Describe("generateTetragonTracingPolicy", func() {
 
 				// Check the container selector
 				for _, resourceFilter := range trap.MatchResources.Any {
-					if resourceFilter.ResourceDescription.ContainerSelector == "" || resourceFilter.ResourceDescription.ContainerSelector == ".*" {
+					if resourceFilter.ResourceDescription.ContainerSelector == "" || resourceFilter.ResourceDescription.ContainerSelector == "regex:.*" {
 						Expect(tracingPolicy.Spec.ContainerSelector.MatchExpressions).To(BeEmpty())
 					} else {
 						Expect(tracingPolicy.Spec.ContainerSelector.MatchExpressions).To(HaveLen(1))

@@ -18,7 +18,6 @@ package matching
 import (
 	"context"
 	"fmt"
-	"regexp"
 
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -320,13 +319,14 @@ func selectContainers(resource client.Object, containerSelector string) ([]strin
 		return selectedContainers, nil
 	}
 
-	compiledRegex, err := regexp.Compile(containerSelector)
-	if err != nil {
-		return []string{}, fmt.Errorf("invalid regex: %w", err)
-	}
-
 	for _, container := range containers {
-		if compiledRegex.Match([]byte(container.Name)) {
+
+		matched, err := utils.MatchContainerName(containerSelector, container.Name)
+		if err != nil {
+			return []string{}, fmt.Errorf("invalid container selector: %w", err)
+		}
+
+		if matched {
 			selectedContainers = append(selectedContainers, container.Name)
 		}
 	}
