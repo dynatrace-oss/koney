@@ -17,13 +17,13 @@ import json
 import logging
 import time
 
-from fastapi import BackgroundTasks, FastAPI, Response, status, Request
+from fastapi import BackgroundTasks, FastAPI, Request, Response, status
 from kubernetes import config
 from rich.console import Console
 
-from .sink import read_alert_sinks, send_alert
-from .tetragon import is_filtered_alert, map_tetragon_event, read_tetragon_events
 from .kive import process_kive_alert
+from .sink import send_alert, try_read_alert_sinks
+from .tetragon import is_filtered_alert, map_tetragon_event, read_tetragon_events
 
 # various error messages
 K8S_AUTH_ERROR = "failed to authenticate with Kubernetes API"
@@ -57,22 +57,17 @@ def handle_tetragon(response: Response, background_tasks: BackgroundTasks):
 
 
 @app.post("/handlers/kive", status_code=status.HTTP_202_ACCEPTED)
-async def handle_kive(request: Request):
+async def handle_kive(response: Response, request: Request):
     if not authenticate_kubernetes():
+        response.status_code = status.HTTP_401_UNAUTHORIZED
         return dict(message=K8S_AUTH_ERROR)
-    
+
     koney_alert = process_kive_alert(await request.json())
     koney_alert_str = json.dumps(koney_alert)
     console.print(koney_alert_str, soft_wrap=True)
 
-    alert_sinks = []
-    try:
-        alert_sinks = read_alert_sinks()
-    except:
-        if logger.level <= logging.ERROR:
-            console.print(K8S_SINK_READ_ERROR, style="bold red")
-            console.print_exception()
-    
+    alert_sinks = try_read_alert_sinks()
+
     # send to external systems
     for sink in alert_sinks:
         try:
@@ -96,14 +91,7 @@ def load_new_alerts(timestamp: float):
     if not events_per_policy:
         return
 
-    # resolve alert sinks
-    alert_sinks = []
-    try:
-        alert_sinks = read_alert_sinks()
-    except:
-        if logger.level <= logging.ERROR:
-            console.print(K8S_SINK_READ_ERROR, style="bold red")
-            console.print_exception()
+    alert_sinks = try_read_alert_sinks()
 
     # iterate over Tetragon events, map, log, and send alerts
     for policy_name, events in events_per_policy.items():

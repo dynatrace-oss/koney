@@ -31,11 +31,14 @@ import (
 )
 
 const (
-	yamlOfOneFilesystokenContainerExecKive = manifestsDir + "/deceptionpolicies/kive/test_trap_filesystoken_container_exec.yaml"
-	yamlOfTwoFilesystokenContainerExecKive = manifestsDir + "/deceptionpolicies/kive/test_trap_two_filesystokens.yaml"
-	yamlOfFilesystokenNoMutateExistingKive = manifestsDir + "/deceptionpolicies/kive/test_trap_filesystoken_no_mutate_existing.yaml"
-	// VolumeMount is currently not supported by Kive
-	//yamlOfFilesystokenVolumeMountKive      = manifestsDir + "/deceptionpolicies/kive/test_trap_filesystoken_volume_mount.yaml"
+	yamlOfOneFilesystokenContainerExecKive = manifestsDir +
+		"/deceptionpolicies/kive/test_trap_filesystoken_container_exec.yaml"
+	yamlOfTwoFilesystokenContainerExecKive = manifestsDir +
+		"/deceptionpolicies/kive/test_trap_two_filesystokens.yaml"
+	yamlOfFilesystokenNoMutateExistingKive = manifestsDir +
+		"/deceptionpolicies/kive/test_trap_filesystoken_no_mutate_existing.yaml"
+	yamlOfFilesystokenVolumeMountKive = manifestsDir +
+		"/deceptionpolicies/kive/test_trap_filesystoken_volume_mount.yaml"
 )
 
 //nolint:dupl
@@ -110,7 +113,7 @@ var _ = Describe("Koney Operator with Kive", Ordered, func() {
 				)
 				status, err := testutils.Run(cmd)
 				ExpectWithOffset(testutils.Offset, err).NotTo(HaveOccurred())
-				if string(status) != "Running" {
+				if string(status) != statusRunning {
 					return fmt.Errorf("controller pod in %s status", status)
 				}
 
@@ -340,7 +343,6 @@ var _ = Describe("Koney Operator with Kive", Ordered, func() {
 			}, time.Minute, time.Second).Should(Succeed())
 		})
 	})
-	/* VolumeMount is currently not supported by Kive
 	When("updating the DeceptionPolicy CR with a trap deployed using the volumeMount strategy", func() {
 		It("should update the honeytoken in the test pod", func() {
 			By("updating the DeceptionPolicy CR")
@@ -352,10 +354,12 @@ var _ = Describe("Koney Operator with Kive", Ordered, func() {
 			Expect(err).NotTo(HaveOccurred())
 
 			// Restart deployment and wait
-			cmd = exec.Command("kubectl", "rollout", "restart", "deployment", nameOfTestDeployment, "-n", testNamespace)
+			cmd = exec.Command("kubectl", "rollout", "restart", "deployment",
+				nameOfTestDeployment, "-n", testNamespace)
 			_, err = testutils.Run(cmd)
 			Expect(err).NotTo(HaveOccurred())
-			cmd = exec.Command("kubectl", "rollout", "status", "deployment", nameOfTestDeployment, "-n", testNamespace, "--timeout=1m")
+			cmd = exec.Command("kubectl", "rollout", "status", "deployment",
+				nameOfTestDeployment, "-n", testNamespace, "--timeout=1m")
 			_, err = testutils.Run(cmd)
 			Expect(err).NotTo(HaveOccurred())
 
@@ -399,7 +403,6 @@ var _ = Describe("Koney Operator with Kive", Ordered, func() {
 			}, time.Minute, time.Second).Should(Succeed())
 		})
 	})
-	*/
 
 	When("deleting the DeceptionPolicy CR", func() {
 		It("should remove the honeytoken from the test pod", func() {

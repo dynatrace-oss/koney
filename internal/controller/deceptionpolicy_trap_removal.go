@@ -161,7 +161,7 @@ func (r *DeceptionPolicyReconciler) cleanupRemovedCaptors(ctx context.Context, d
 
 	kivePolicyNamesFromTraps := []string{}
 	for _, trap := range deceptionPolicy.Spec.Traps {
-		tracingPolicyName, err := filesystoken.GenerateKiveTracingPolicyName(trap)
+		tracingPolicyName, err := filesystoken.GenerateKivePolicyName(trap)
 		if err != nil {
 			return err
 		}

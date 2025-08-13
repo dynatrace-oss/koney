@@ -52,6 +52,8 @@ const (
 	yamlOfTwoFilesystokenContainerExec = manifestsDir + "/deceptionpolicies/test_trap_two_filesystokens.yaml"
 	yamlOfFilesystokenNoMutateExisting = manifestsDir + "/deceptionpolicies/test_trap_filesystoken_no_mutate_existing.yaml"
 	yamlOfFilesystokenVolumeMount      = manifestsDir + "/deceptionpolicies/test_trap_filesystoken_volume_mount.yaml"
+
+	statusRunning = "Running"
 )
 
 var (
@@ -148,7 +150,7 @@ var _ = Describe("Koney Operator", Ordered, func() {
 				)
 				status, err := testutils.Run(cmd)
 				ExpectWithOffset(testutils.Offset, err).NotTo(HaveOccurred())
-				if string(status) != "Running" {
+				if string(status) != statusRunning {
 					return fmt.Errorf("controller pod in %s status", status)
 				}
 
@@ -392,7 +394,8 @@ var _ = Describe("Koney Operator", Ordered, func() {
 			cmd = exec.Command("kubectl", "rollout", "restart", "deployment", nameOfTestDeployment, "-n", testNamespace)
 			_, err = testutils.Run(cmd)
 			Expect(err).NotTo(HaveOccurred())
-			cmd = exec.Command("kubectl", "rollout", "status", "deployment", nameOfTestDeployment, "-n", testNamespace, "--timeout=1m")
+			cmd = exec.Command("kubectl", "rollout", "status", "deployment",
+				nameOfTestDeployment, "-n", testNamespace, "--timeout=1m")
 			_, err = testutils.Run(cmd)
 			Expect(err).NotTo(HaveOccurred())
 
@@ -422,8 +425,6 @@ var _ = Describe("Koney Operator", Ordered, func() {
 			}, time.Minute, time.Second).Should(Succeed())
 
 			updateObservedFilePaths(deceptionPolicy.Spec.Traps, &allFilesystemHoneytokenPaths)
-
-			fmt.Printf("foo testPodName: %s", testPodName)
 
 			By("validating that the honeytoken is updated in the test pod and has the expected content")
 			for _, trap := range deceptionPolicy.Spec.Traps {
