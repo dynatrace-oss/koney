@@ -44,7 +44,7 @@ func GenerateTetragonTracingPolicyName(trap v1alpha1.Trap) (string, error) {
 }
 
 // Similar to GenerateTetragonTracingPolicyName but used for Kive
-func GenerateKiveTracingPolicyName(trap v1alpha1.Trap) (string, error) {
+func GenerateKivePolicyName(trap v1alpha1.Trap) (string, error) {
 	// What is irrelevant for the policy should not alter the name, so
 	// that there are no duplicate policies with different names.
 	trap.DecoyDeployment.Strategy = ""
@@ -107,7 +107,8 @@ func generateVolumeName(filePath string) string {
 }
 
 // generateTetragonTracingPolicy generates a Tetragon tracing policy for a filesystem honeytoken trap.
-func generateTetragonTracingPolicy(deceptionPolicy *v1alpha1.DeceptionPolicy, trap v1alpha1.Trap, tracingPolicyName string) (*ciliumiov1alpha1.TracingPolicy, error) {
+func generateTetragonTracingPolicy(deceptionPolicy *v1alpha1.DeceptionPolicy,
+	trap v1alpha1.Trap, tracingPolicyName string) *ciliumiov1alpha1.TracingPolicy {
 	/*
 		The `security_file_permission` function is a common execution point for the execution of
 		system calls related to filesystem access, such as read, write, etc.
@@ -266,11 +267,12 @@ func generateTetragonTracingPolicy(deceptionPolicy *v1alpha1.DeceptionPolicy, tr
 		}
 	}
 
-	return tracingPolicy, nil
+	return tracingPolicy
 }
 
-// generateKiveTracingPolicy generates a Kive tracing policy for a filesystem honeytoken trap.
-func generateKiveTracingPolicy(deceptionPolicy *v1alpha1.DeceptionPolicy, trap v1alpha1.Trap, tracingPolicyName string) (*kivev1.KivePolicy, error) {
+// generateKivePolicy generates a Kive tracing policy for a filesystem honeytoken trap.
+func generateKivePolicy(deceptionPolicy *v1alpha1.DeceptionPolicy,
+	trap v1alpha1.Trap, tracingPolicyName string) *kivev1.KivePolicy {
 
 	tracingPolicy := &kivev1.KivePolicy{
 		TypeMeta: metav1.TypeMeta{
@@ -282,8 +284,7 @@ func generateKiveTracingPolicy(deceptionPolicy *v1alpha1.DeceptionPolicy, trap v
 			Labels: map[string]string{
 				constants.LabelKeyDeceptionPolicyRef: deceptionPolicy.Name,
 			},
-			Finalizers: []string{kivev1.KivePolicyFinalizerName},
-			Namespace:  constants.KivePolicyNamespace,
+			Namespace: constants.KivePolicyNamespace,
 			OwnerReferences: []metav1.OwnerReference{
 				{
 					APIVersion:         deceptionPolicy.APIVersion,
@@ -301,6 +302,9 @@ func generateKiveTracingPolicy(deceptionPolicy *v1alpha1.DeceptionPolicy, trap v
 	kiveTrap := kivev1.KiveTrap{
 		Path:     trap.FilesystemHoneytoken.FilePath,
 		Callback: constants.KiveWebhookUrl,
+		Metadata: map[string]string{
+			"koney-deception-policy-name": deceptionPolicy.Name,
+		},
 		MatchAny: []kivev1.KiveTrapMatch{},
 	}
 	for _, resource := range trap.MatchResources.Any {
@@ -349,5 +353,5 @@ func generateKiveTracingPolicy(deceptionPolicy *v1alpha1.DeceptionPolicy, trap v
 	kiveTraps := []kivev1.KiveTrap{kiveTrap}
 	tracingPolicy.Spec.Traps = kiveTraps
 
-	return tracingPolicy, nil
+	return tracingPolicy
 }

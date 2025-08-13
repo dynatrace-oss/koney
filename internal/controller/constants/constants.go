@@ -33,6 +33,9 @@ const (
 	// Koney might create resources such as a TracingPolicy for captors.
 	LabelKeyDeceptionPolicyRef = "koney/deception-policy"
 
+	// The name used by our controller to claim ownership of fields when doing server-side apply in Kubernetes.
+	FieldOwnerKoneyController = "koney-controller"
+
 	// If reconciliation fails, retry after this interval.
 	NormalFailureRetryInterval = 1 * time.Minute
 
@@ -42,8 +45,9 @@ const (
 	// TetragonWebhookUrl is the URL of the alert forwarder that receives alerts from Tetragon.
 	TetragonWebhookUrl = "http://koney-alert-forwarder-service." + KoneyNamespace + ".svc:8000/handlers/tetragon"
 
-	// HiveWebhookUrl is the URL of the service where the HiveAlerts will be forwarded to.
+	// KiveWebhookUrl is the URL of the service where the KiveAlerts will be forwarded to.
 	KiveWebhookUrl = "http://koney-alert-forwarder-service." + KoneyNamespace + ".svc:8000/handlers/kive"
 
+	// KivePolicyNamespace is the namespace in which KivePolicy objects are created.
 	KivePolicyNamespace = "koney-system"
 )

@@ -13,22 +13,25 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import json
+from .tetragon import _normalize_container_id
 from .types import *
 
-def process_kive_alert(kiveAlert: json) -> KoneyAlert:
+
+def process_kive_alert(kiveAlert: dict) -> KoneyAlert:
     koneyAlert = KoneyAlert(
         timestamp=kiveAlert["timestamp"],
-        deception_policy_name=kiveAlert["kive-policy-name"],
+        deception_policy_name=kiveAlert["custom-metadata"][
+            "koney-deception-policy-name"
+        ],
         trap_type="filesystem_honeytoken",
         metadata={
-            'file_path': kiveAlert["metadata"]["path"],
+            "file_path": kiveAlert["metadata"]["path"],
         },
         pod=PodMetadata(
             name=kiveAlert["pod"]["name"],
             namespace=kiveAlert["pod"]["namespace"],
             container=ContainerMetadata(
-                id=kiveAlert["pod"]["container"]["id"],
+                id=_normalize_container_id(kiveAlert["pod"]["container"]["id"]),
                 name=kiveAlert["pod"]["container"]["name"],
             ),
         ),

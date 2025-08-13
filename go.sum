@@ -14,6 +14,10 @@ github.com/San7o/kivebpf v0.0.0-20250808200103-c0e8dfd7b76d h1:LH/vmczqlWc1Qr7EM
 github.com/San7o/kivebpf v0.0.0-20250808200103-c0e8dfd7b76d/go.mod h1:1VqYNVWfQXd/Ifj0YFREaPRy1nlh2PLY7ZylCWFAIpM=
 github.com/San7o/kivebpf v1.0.0-pre h1:dcHLyRRJrdb+NljjKWgwwSvw0xgIXZwhh2YN4cn+sYs=
 github.com/San7o/kivebpf v1.0.0-pre/go.mod h1:1VqYNVWfQXd/Ifj0YFREaPRy1nlh2PLY7ZylCWFAIpM=
+github.com/San7o/kivebpf v1.0.0-pre.0.20250812140157-26321394fbab h1:d5RzlwI23Kdp2nIRCCT7wv5JcFuM0L+rivnxxQKBUIw=
+github.com/San7o/kivebpf v1.0.0-pre.0.20250812140157-26321394fbab/go.mod h1:1VqYNVWfQXd/Ifj0YFREaPRy1nlh2PLY7ZylCWFAIpM=
+github.com/San7o/kivebpf v1.0.0-pre.0.20250813140322-136c7938f18b h1:hcbKb9CGIKcJlrhs9ie4jkBwCtORyEpoD4uzc9HXP8U=
+github.com/San7o/kivebpf v1.0.0-pre.0.20250813140322-136c7938f18b/go.mod h1:1VqYNVWfQXd/Ifj0YFREaPRy1nlh2PLY7ZylCWFAIpM=
 github.com/antlr4-go/antlr/v4 v4.13.1 h1:SqQKkuVZ+zWkMMNkjy5FZe5mr5WURWnlpmOuzYWrPrQ=
 github.com/antlr4-go/antlr/v4 v4.13.1/go.mod h1:GKmUxMtwp6ZgGwZSva4eWPC5mS6vUAmOABFgjdkM7Nw=
 github.com/armon/go-socks5 v0.0.0-20160902184237-e75332964ef5 h1:0CwZNZbxp69SHPdPJAN/hZIm0C4OItdklCFmMRWYpio=

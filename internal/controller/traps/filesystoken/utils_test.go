@@ -80,8 +80,7 @@ var _ = Describe("generateTetragonTracingPolicy", func() {
 						Traps: []v1alpha1.Trap{trap},
 					},
 				}
-				tracingPolicy, err := generateTetragonTracingPolicy(&deceptionPolicy, trap, "test-tracing-policy")
-				Expect(err).ToNot(HaveOccurred())
+				tracingPolicy := generateTetragonTracingPolicy(&deceptionPolicy, trap, "test-tracing-policy")
 				Expect(tracingPolicy.Name).To(Equal("test-tracing-policy"))
 
 				// Check the label selector

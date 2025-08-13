@@ -99,7 +99,7 @@ func verifyTestPodRunningByName(namespace, name string) error {
 		return err
 	}
 
-	if string(status) != "Running" {
+	if string(status) != statusRunning {
 		return fmt.Errorf("test pod %s in %s status", name, status)
 	}
 
@@ -137,6 +137,8 @@ func verifyAnnotationPresentInPod(namespace, name string) error {
 }
 
 // verifyAnnotationPresentInDeployment checks if the changes annotation is present in the test deployment
+//
+//nolint:unparam
 func verifyAnnotationPresentInDeployment(namespace, name string) error {
 	// Get the annotations of the test deployment
 	cmd := exec.Command("kubectl", "get", "-n", namespace, "deployment", name,
@@ -513,8 +515,8 @@ func verifyHoneytokenAndAwaitAlertKive(
 			Expect(alert.Process.Pid).NotTo(BeZero())
 			Expect(alert.Process.Binary).To(ContainSubstring("cat"))
 			// Kive does not guarantee the following
-			//Expect(alert.Process.Cwd).To(Equal("/"))
-			//Expect(alert.Process.Arguments).To(Equal(trap.FilesystemHoneytoken.FilePath))
+			// Expect(alert.Process.Cwd).To(Equal("/"))
+			// Expect(alert.Process.Arguments).To(Equal(trap.FilesystemHoneytoken.FilePath))
 		}
 
 		return nil
@@ -595,6 +597,8 @@ func findKoneyAlerts(needle, managerNamespace string, sinceTime *time.Time) ([]K
 }
 
 // verifyHoneytokenRemoved checks if the honeytoken is removed from the test pod
+//
+//nolint:unparam
 func verifyHoneytokenRemoved(filePath string, podNamespace, podName string, containers []string) error {
 	for _, container := range containers {
 		cmd := exec.Command("kubectl", "exec", "-n", podNamespace, "-c", container, podName, "--", "cat", filePath)
