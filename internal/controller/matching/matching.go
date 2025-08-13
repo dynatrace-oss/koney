@@ -322,7 +322,7 @@ func selectContainers(resource client.Object, containerSelector string) ([]strin
 
 	compiledRegex, err := regexp.Compile(containerSelector)
 	if err != nil {
-		return []string{}, fmt.Errorf("compiling regex: %w", err)
+		return []string{}, fmt.Errorf("invalid regex: %w", err)
 	}
 
 	for _, container := range containers {

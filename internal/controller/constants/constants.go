@@ -32,6 +32,9 @@ const (
 	// Koney might create resources such as a TracingPolicy for captors.
 	LabelKeyDeceptionPolicyRef = "koney/deception-policy"
 
+	// The name used by our controller to claim ownership of fields when doing server-side apply in Kubernetes.
+	FieldOwnerKoneyController = "koney-controller"
+
 	// If reconciliation fails, retry after this interval.
 	NormalFailureRetryInterval = 1 * time.Minute
 

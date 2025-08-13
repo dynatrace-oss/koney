@@ -59,6 +59,17 @@ def read_alert_sinks() -> list[AlertSink]:
     return alert_sinks
 
 
+def try_read_alert_sinks():
+    try:
+        alert_sinks = read_alert_sinks()
+        return alert_sinks
+    except:
+        if logger.level <= logging.ERROR:
+            console.print(K8S_SINK_READ_ERROR, style="bold red")
+            console.print_exception()
+        return []
+
+
 def send_alert(koney_alert: KoneyAlert, sink: AlertSink) -> None:
     cluster_uid = _get_cluster_uid()
 

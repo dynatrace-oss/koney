@@ -18,6 +18,7 @@ package v1alpha1
 import (
 	"errors"
 	"fmt"
+	"regexp"
 )
 
 // TrapType is a string representation of a trap type and can be used like an enum.
@@ -94,6 +95,11 @@ func (trap *Trap) IsValid() error {
 
 		if len(value.Namespaces) == 0 && len(value.Selector.MatchLabels) == 0 {
 			return errors.New("MatchResources.Any.Namespaces and MatchResources.Any.Selector are empty")
+		}
+
+		_, err := regexp.Compile(value.ContainerSelector)
+		if err != nil {
+			return fmt.Errorf("MatchResources.Any.ContainerSelector is not a valid regex: %w", err)
 		}
 	}
 

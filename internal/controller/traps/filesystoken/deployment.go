@@ -39,6 +39,7 @@ import (
 
 	"github.com/dynatrace-oss/koney/api/v1alpha1"
 	"github.com/dynatrace-oss/koney/internal/controller/annotations"
+	"github.com/dynatrace-oss/koney/internal/controller/constants"
 	"github.com/dynatrace-oss/koney/internal/controller/matching"
 	trapsapi "github.com/dynatrace-oss/koney/internal/controller/traps/api"
 	"github.com/dynatrace-oss/koney/internal/controller/utils"
@@ -404,11 +405,7 @@ func (r *FilesystemHoneytokenReconciler) deployCaptorWithTetragon(ctx context.Co
 			return err
 		}
 
-		tracingPolicy, err := generateTetragonTracingPolicy(deceptionPolicy, trap, tracingPolicyName)
-		if err != nil {
-			log.Error(err, "unable to generate Tetragon tracing policy")
-			return err
-		}
+		tracingPolicy := generateTetragonTracingPolicy(deceptionPolicy, trap, tracingPolicyName)
 
 		if err := r.Create(ctx, tracingPolicy); err != nil {
 			log.Error(err, "unable to create Tetragon tracing policy")
@@ -426,19 +423,19 @@ func (r *FilesystemHoneytokenReconciler) deployCaptorWithTetragon(ctx context.Co
 func (r *FilesystemHoneytokenReconciler) deployCaptorWithKive(ctx context.Context, deceptionPolicy *v1alpha1.DeceptionPolicy, trap v1alpha1.Trap) error {
 	log := log.FromContext(ctx)
 
-	tracingPolicyName, err := GenerateKiveTracingPolicyName(trap)
+	tracingPolicyName, err := GenerateKivePolicyName(trap)
 	if err != nil {
 		log.Error(err, "unable to generate Kive tracing policy name")
 		return err
 	}
 
-	tracingPolicy, err := generateKiveTracingPolicy(deceptionPolicy, trap, tracingPolicyName)
+	tracingPolicy := generateKivePolicy(deceptionPolicy, trap, tracingPolicyName)
 	if err != nil {
 		log.Error(err, "unable to generate Kive tracing policy")
 		return err
 	}
 
-	if err := r.Client.Patch(ctx, tracingPolicy, client.Apply, client.ForceOwnership, client.FieldOwner("koney-controller")); err != nil {
+	if err := r.Client.Patch(ctx, tracingPolicy, client.Apply, client.ForceOwnership, client.FieldOwner(constants.FieldOwnerKoneyController)); err != nil {
 		log.Error(err, "unable to create Kive tracing policy")
 		return err
 	}
