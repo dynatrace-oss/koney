@@ -1203,26 +1203,62 @@ var _ = Describe("selectContainers", func() {
 			Expect(selection).To(BeEmpty())
 		})
 
-		It("should select all containers", func() {
-			selection, err := selectContainers(&pod, ".*")
+		It("regex should select a single container", func() {
+			selection, err := selectContainers(&pod, "regex:foo")
+			Expect(err).ToNot(HaveOccurred())
+			Expect(selection).To(ConsistOf("foo"))
+		})
+
+		It("regex should select no containers", func() {
+			selection, err := selectContainers(&pod, "regex:non-existing")
+			Expect(err).ToNot(HaveOccurred())
+			Expect(selection).To(BeEmpty())
+		})
+
+		It("regex should select all containers", func() {
+			selection, err := selectContainers(&pod, "regex:.*")
 			Expect(err).ToNot(HaveOccurred())
 			Expect(selection).To(ConsistOf("foo", "bar", "baz", "quz"))
 		})
 
-		It("should select containers starting with some string", func() {
-			selection, err := selectContainers(&pod, "^b")
+		It("regex should select containers starting with some string", func() {
+			selection, err := selectContainers(&pod, "regex:^b")
 			Expect(err).ToNot(HaveOccurred())
 			Expect(selection).To(ConsistOf("bar", "baz"))
 		})
 
-		It("should select containers ending with some string", func() {
-			selection, err := selectContainers(&pod, "z$")
+		It("regex should select containers ending with some string", func() {
+			selection, err := selectContainers(&pod, "regex:z$")
 			Expect(err).ToNot(HaveOccurred())
 			Expect(selection).To(ConsistOf("baz", "quz"))
 		})
 
-		It("should select containers containing some string", func() {
-			selection, err := selectContainers(&pod, "a")
+		It("regex should select containers containing some string", func() {
+			selection, err := selectContainers(&pod, "regex:a")
+			Expect(err).ToNot(HaveOccurred())
+			Expect(selection).To(ConsistOf("bar", "baz"))
+		})
+
+		It("glob should select all containers", func() {
+			selection, err := selectContainers(&pod, "glob:*")
+			Expect(err).ToNot(HaveOccurred())
+			Expect(selection).To(ConsistOf("foo", "bar", "baz", "quz"))
+		})
+
+		It("glob should select containers starting with some string", func() {
+			selection, err := selectContainers(&pod, "glob:b*")
+			Expect(err).ToNot(HaveOccurred())
+			Expect(selection).To(ConsistOf("bar", "baz"))
+		})
+
+		It("glob should select containers ending with some string", func() {
+			selection, err := selectContainers(&pod, "glob:*z")
+			Expect(err).ToNot(HaveOccurred())
+			Expect(selection).To(ConsistOf("baz", "quz"))
+		})
+
+		It("glob should select containers containing some string", func() {
+			selection, err := selectContainers(&pod, "glob:*a*")
 			Expect(err).ToNot(HaveOccurred())
 			Expect(selection).To(ConsistOf("bar", "baz"))
 		})
