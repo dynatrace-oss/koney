@@ -17,7 +17,7 @@ require (
 
 require (
 	cel.dev/expr v0.24.0 // indirect
-	github.com/San7o/kivebpf v1.0.0-pre.0.20250813140322-136c7938f18b // indirect
+	github.com/San7o/kivebpf v1.0.0-pre2 // indirect
 	github.com/antlr4-go/antlr/v4 v4.13.1 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/blang/semver/v4 v4.0.0 // indirect
