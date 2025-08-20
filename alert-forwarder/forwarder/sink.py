@@ -25,6 +25,10 @@ from rich.console import Console
 from .alerts import map_to_dynatrace_event
 from .types import AlertSink, DynatraceSink, KoneyAlert
 
+# Errors
+K8S_SINK_READ_ERROR = "failed to read DeceptionAlertSink objects"
+SINK_SEND_ERROR = "failed to send alert to external system"
+
 # the namespace where Koney and the DeceptionAlertSink CRDs are located
 KONEY_NAMESPACE = "koney-system"
 

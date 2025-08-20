@@ -22,24 +22,24 @@ import (
 	"strings"
 )
 
-func MatchContainerName(regex string, containerName string) (bool, error) {
+func MatchContainerName(pattern string, containerName string) (bool, error) {
 
-	if regex == "" {
+	if pattern == "" {
 		return true, nil
 	}
 
-	if strings.HasPrefix(regex, "regex:") {
+	if strings.HasPrefix(pattern, "regex:") {
 
-		compiledRegex, err := regexp.Compile(strings.TrimPrefix(regex, "regex:"))
+		compiledPattern, err := regexp.Compile(strings.TrimPrefix(pattern, "regex:"))
 		if err != nil {
 			return false, fmt.Errorf("error compiling regex: %w", err)
 		}
 
-		return compiledRegex.Match([]byte(containerName)), nil
+		return compiledPattern.Match([]byte(containerName)), nil
 
-	} else if strings.HasPrefix(regex, "glob:") {
+	} else if strings.HasPrefix(pattern, "glob:") {
 
-		result, err := filepath.Match(strings.TrimPrefix(regex, "glob:"), containerName)
+		result, err := filepath.Match(strings.TrimPrefix(pattern, "glob:"), containerName)
 		if err != nil {
 			return false, fmt.Errorf("error compiling glob expression: %w", err)
 		}
@@ -47,5 +47,5 @@ func MatchContainerName(regex string, containerName string) (bool, error) {
 	}
 
 	// Direct comparison
-	return regex == containerName, nil
+	return pattern == containerName, nil
 }
