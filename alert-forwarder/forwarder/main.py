@@ -22,13 +22,11 @@ from kubernetes import config
 from rich.console import Console
 
 from .kive import process_kive_alert
-from .sink import send_alert, try_read_alert_sinks
+from .sink import K8S_SINK_READ_ERROR, SINK_SEND_ERROR, send_alert, try_read_alert_sinks
 from .tetragon import is_filtered_alert, map_tetragon_event, read_tetragon_events
 
 # various error messages
 K8S_AUTH_ERROR = "failed to authenticate with Kubernetes API"
-K8S_SINK_READ_ERROR = "failed to read DeceptionAlertSink objects"
-SINK_SEND_ERROR = "failed to send alert to external system"
 
 # the delay after receiving a (possibly multiple) triggers until we start loading alerts (once)
 DEBOUNCE_SECONDS = 5

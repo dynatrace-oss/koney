@@ -549,7 +549,7 @@ var _ = Describe("Koney Operator", Ordered, func() {
 	When("deleting the controller-manager", func() {
 		It("should delete the controller-manager", func() {
 			By("deleting the controller-manager")
-			cmd := exec.Command("make", "undeploy")
+			cmd := exec.Command("timeout", "30s", "make", "undeploy")
 			_, err := testutils.Run(cmd)
 			Expect(err).NotTo(HaveOccurred())
 		})

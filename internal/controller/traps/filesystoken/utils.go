@@ -311,7 +311,7 @@ func generateKivePolicy(deceptionPolicy *v1alpha1.DeceptionPolicy,
 		Path:     trap.FilesystemHoneytoken.FilePath,
 		Callback: buildKiveWebhookUrl(),
 		Metadata: map[string]string{
-			"koney-deception-policy-name": deceptionPolicy.Name,
+			constants.MetadataKeyDeceptionPolicyName: deceptionPolicy.Name,
 		},
 		MatchAny: []kivev1.KiveTrapMatch{},
 	}

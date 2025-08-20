@@ -35,6 +35,9 @@ const (
 	// The name used by our controller to claim ownership of fields when doing server-side apply in Kubernetes.
 	FieldOwnerKoneyController = "koney-controller"
 
+	// MetadataKeyDeceptionPolicyName is the key that custom metadata in foreign resources holds to store the deception policy name
+	MetadataKeyDeceptionPolicyName = "koney-deception-policy-name"
+
 	// If reconciliation fails, retry after this interval.
 	NormalFailureRetryInterval = 1 * time.Minute
 
