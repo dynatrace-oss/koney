@@ -136,7 +136,7 @@ The `any` field is a list and holds one or more `resources` objects, which conta
 
 - `containerSelector`: selects the container(s) in the matched pods or deployments where the trap is deployed.
   - if this field is prepended by `regex:`, the rest of the string will represent a regular expression matched with go [regexp](https://golang.org/s/re2syntax) library.
-  - if the field is prepended by "glob:", then this is a filesystem-style regex, as described in go [filepath.Match](https://pkg.go.dev/path/filepath#Match) library
+  - if the field is prepended by `glob:`, then this is a [glob](https://en.wikipedia.org/wiki/Glob_(programming)) pattern, as described in go [filepath.Match](https://pkg.go.dev/path/filepath#Match) library
   - if it is empty, the trap is deployed in all containers in the matched pods.
   - otherwise, the name of the container will be compared exactly.
 

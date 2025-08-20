@@ -13,8 +13,8 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from .tetragon import _normalize_container_id
 from .types import *
+from .utils import _normalize_container_id
 
 
 def process_kive_alert(kiveAlert: dict) -> KoneyAlert:

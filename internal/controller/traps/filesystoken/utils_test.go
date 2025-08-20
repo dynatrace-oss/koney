@@ -22,12 +22,13 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/dynatrace-oss/koney/api/v1alpha1"
+	"github.com/dynatrace-oss/koney/internal/controller/matching"
 )
 
 var (
 	containerSelectorValues = []string{
 		"name",
-		"glob:namewithwildcard.*",
+		"glob:namewithwildcard*",
 		"glob:namewithwildcard?",
 		"regex:.*",
 	}
@@ -92,7 +93,7 @@ var _ = Describe("generateTetragonTracingPolicy", func() {
 
 				// Check the container selector
 				for _, resourceFilter := range trap.MatchResources.Any {
-					if resourceFilter.ResourceDescription.ContainerSelector == "" || resourceFilter.ResourceDescription.ContainerSelector == "regex:.*" {
+					if matching.ContainerSelectorSelectsAll(resourceFilter.ResourceDescription.ContainerSelector) {
 						Expect(tracingPolicy.Spec.ContainerSelector.MatchExpressions).To(BeEmpty())
 					} else {
 						Expect(tracingPolicy.Spec.ContainerSelector.MatchExpressions).To(HaveLen(1))
