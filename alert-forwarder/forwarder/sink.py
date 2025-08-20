@@ -25,6 +25,10 @@ from rich.console import Console
 from .alerts import map_to_dynatrace_event
 from .types import AlertSink, DynatraceSink, KoneyAlert
 
+# Errors
+K8S_SINK_READ_ERROR = "failed to read DeceptionAlertSink objects"
+SINK_SEND_ERROR = "failed to send alert to external system"
+
 # the namespace where Koney and the DeceptionAlertSink CRDs are located
 KONEY_NAMESPACE = "koney-system"
 
@@ -56,6 +60,17 @@ def read_alert_sinks() -> list[AlertSink]:
         alert_sinks.append(alert_sink)
 
     return alert_sinks
+
+
+def try_read_alert_sinks():
+    try:
+        alert_sinks = read_alert_sinks()
+        return alert_sinks
+    except:
+        if logger.level <= logging.ERROR:
+            console.print(K8S_SINK_READ_ERROR, style="bold red")
+            console.print_exception()
+        return []
 
 
 def send_alert(koney_alert: KoneyAlert, sink: AlertSink) -> None:

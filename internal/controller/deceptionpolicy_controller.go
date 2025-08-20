@@ -58,6 +58,7 @@ type DeceptionPolicyReconciler struct {
 // +kubebuilder:rbac:groups=apps,resources=deployments,verbs=get;list;watch;update;patch
 // +kubebuilder:rbac:groups=core,resources=deployments/status,verbs=get
 // +kubebuilder:rbac:groups=cilium.io,resources=tracingpolicies,verbs=get;list;watch;update;patch;create;delete
+// +kubebuilder:rbac:groups=kivebpf.san7o.github.io,resources=kivepolicies,verbs=get;list;watch;update;patch;create;delete
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.

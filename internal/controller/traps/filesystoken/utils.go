@@ -18,8 +18,8 @@ package filesystoken
 import (
 	"context"
 	"encoding/json"
-	"regexp"
 
+	kivev1 "github.com/San7o/kivebpf/api/v1"
 	slimv1 "github.com/cilium/cilium/pkg/k8s/slim/k8s/apis/meta/v1"
 	ciliumiov1alpha1 "github.com/cilium/tetragon/pkg/k8s/apis/cilium.io/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
@@ -41,6 +41,16 @@ func GenerateTetragonTracingPolicyName(trap v1alpha1.Trap) (string, error) {
 	}
 
 	return "koney-tracing-policy-" + utils.Hash(string(trapJSON)), nil
+}
+
+// Similar to GenerateTetragonTracingPolicyName but used for Kive
+func GenerateKivePolicyName(trap v1alpha1.Trap) (string, error) {
+	// What is irrelevant for the policy should not alter the name, so
+	// that there are no duplicate policies with different names.
+	trap.DecoyDeployment.Strategy = ""
+	trap.FilesystemHoneytoken.FileContent = ""
+	trap.FilesystemHoneytoken.ReadOnly = false
+	return GenerateTetragonTracingPolicyName(trap)
 }
 
 // createSecret creates a secret in the same namespace as the resource with the given name and data.
@@ -97,7 +107,8 @@ func generateVolumeName(filePath string) string {
 }
 
 // generateTetragonTracingPolicy generates a Tetragon tracing policy for a filesystem honeytoken trap.
-func generateTetragonTracingPolicy(deceptionPolicy *v1alpha1.DeceptionPolicy, trap v1alpha1.Trap, tracingPolicyName string) (*ciliumiov1alpha1.TracingPolicy, error) {
+func generateTetragonTracingPolicy(deceptionPolicy *v1alpha1.DeceptionPolicy,
+	trap v1alpha1.Trap, tracingPolicyName string) *ciliumiov1alpha1.TracingPolicy {
 	/*
 		The `security_file_permission` function is a common execution point for the execution of
 		system calls related to filesystem access, such as read, write, etc.
@@ -224,15 +235,9 @@ func generateTetragonTracingPolicy(deceptionPolicy *v1alpha1.DeceptionPolicy, tr
 		}
 	}
 
-	// A compiled regex to check if the containerSelector contains filepath.Match wildcards
-	compiledRegex, err := regexp.Compile(constants.WildcardContainerSelectorRegex)
-	if err != nil {
-		return nil, err
-	}
-
 	for _, resourceFilter := range trap.MatchResources.Any {
-		// If containerSelector is empty, *, or includes wildcards, match all containers
-		if matching.ContainerSelectorSelectsAll(resourceFilter.ContainerSelector) || compiledRegex.MatchString(resourceFilter.ContainerSelector) {
+
+		if matching.ContainerSelectorSelectsAll(resourceFilter.ContainerSelector) {
 			// Empty the ContainerSelector, so that the TracingPolicy matches all containers
 			if len(tracingPolicy.Spec.ContainerSelector.MatchExpressions) > 0 {
 				tracingPolicy.Spec.ContainerSelector.MatchExpressions = []slimv1.LabelSelectorRequirement{}
@@ -262,5 +267,91 @@ func generateTetragonTracingPolicy(deceptionPolicy *v1alpha1.DeceptionPolicy, tr
 		}
 	}
 
-	return tracingPolicy, nil
+	return tracingPolicy
+}
+
+// generateKivePolicy generates a Kive tracing policy for a filesystem honeytoken trap.
+func generateKivePolicy(deceptionPolicy *v1alpha1.DeceptionPolicy,
+	trap v1alpha1.Trap, tracingPolicyName string) *kivev1.KivePolicy {
+
+	tracingPolicy := &kivev1.KivePolicy{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "KivePolicy",
+			APIVersion: "kivebpf.san7o.github.io/v1",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name: tracingPolicyName,
+			Labels: map[string]string{
+				constants.LabelKeyDeceptionPolicyRef: deceptionPolicy.Name,
+			},
+			Namespace: constants.KivePolicyNamespace,
+			OwnerReferences: []metav1.OwnerReference{
+				{
+					APIVersion:         deceptionPolicy.APIVersion,
+					Kind:               deceptionPolicy.Kind,
+					Name:               deceptionPolicy.Name,
+					UID:                deceptionPolicy.UID,
+					BlockOwnerDeletion: &[]bool{true}[0], // A pointer to a bool
+					Controller:         &[]bool{true}[0],
+				},
+			},
+		},
+		Spec: kivev1.KivePolicySpec{},
+	}
+
+	kiveTrap := kivev1.KiveTrap{
+		Path:     trap.FilesystemHoneytoken.FilePath,
+		Callback: constants.KiveWebhookUrl,
+		Metadata: map[string]string{
+			constants.MetadataKeyDeceptionPolicyName: deceptionPolicy.Name,
+		},
+		MatchAny: []kivev1.KiveTrapMatch{},
+	}
+	for _, resource := range trap.MatchResources.Any {
+
+		kiveTrapMatches := []kivev1.KiveTrapMatch{}
+
+		// If no namespaces are present, create a KiveTrapMatch anyway
+		// with the other fields
+		if len(resource.Namespaces) == 0 {
+			kiveTrapMatch := kivev1.KiveTrapMatch{
+				ContainerName: resource.ContainerSelector,
+				MatchLabels:   map[string]string{},
+			}
+
+			for _, resourceFilter := range trap.MatchResources.Any {
+				for key, value := range resourceFilter.Selector.MatchLabels {
+					kiveTrapMatch.MatchLabels[key] = value
+				}
+			}
+
+			kiveTrapMatches = append(kiveTrapMatches, kiveTrapMatch)
+
+		} else {
+
+			for _, namespace := range resource.Namespaces {
+
+				kiveTrapMatch := kivev1.KiveTrapMatch{
+					Namespace:     namespace,
+					ContainerName: resource.ContainerSelector,
+					MatchLabels:   map[string]string{},
+				}
+
+				for _, resourceFilter := range trap.MatchResources.Any {
+					for key, value := range resourceFilter.Selector.MatchLabels {
+						kiveTrapMatch.MatchLabels[key] = value
+					}
+				}
+
+				kiveTrapMatches = append(kiveTrapMatches, kiveTrapMatch)
+			}
+		}
+
+		kiveTrap.MatchAny = append(kiveTrap.MatchAny, kiveTrapMatches...)
+	}
+
+	kiveTraps := []kivev1.KiveTrap{kiveTrap}
+	tracingPolicy.Spec.Traps = kiveTraps
+
+	return tracingPolicy
 }

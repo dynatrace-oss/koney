@@ -33,15 +33,24 @@ const (
 	// Koney might create resources such as a TracingPolicy for captors.
 	LabelKeyDeceptionPolicyRef = "koney/deception-policy"
 
+	// The name used by our controller to claim ownership of fields when doing server-side apply in Kubernetes.
+	FieldOwnerKoneyController = "koney-controller"
+
+	// MetadataKeyDeceptionPolicyName is the key that custom metadata in foreign resources holds to store the deception policy name
+	MetadataKeyDeceptionPolicyName = "koney-deception-policy-name"
+
 	// If reconciliation fails, retry after this interval.
 	NormalFailureRetryInterval = 1 * time.Minute
 
 	// If resources are not ready yet for traps (e.g., containers are still starting), retry reconciliation after this shorter interval.
 	ShortStatusCheckInterval = 10 * time.Second
 
-	// WildcardContainerSelectorRegex is a regex that matches wildcard characters in container selector fields.
-	WildcardContainerSelectorRegex = `\*|\?|\[|\]`
-
 	// TetragonWebhookUrl is the URL of the alert forwarder that receives alerts from Tetragon.
 	TetragonWebhookUrl = "http://koney-alert-forwarder-service." + KoneyNamespace + ".svc:8000/handlers/tetragon"
+
+	// KiveWebhookUrl is the URL of the service where the KiveAlerts will be forwarded to.
+	KiveWebhookUrl = "http://koney-alert-forwarder-service." + KoneyNamespace + ".svc:8000/handlers/kive"
+
+	// KivePolicyNamespace is the namespace in which KivePolicy objects are created.
+	KivePolicyNamespace = "koney-system"
 )

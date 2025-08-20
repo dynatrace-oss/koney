@@ -32,6 +32,7 @@ from .types import (
     PodMetadata,
     ProcessMetadata,
 )
+from .utils import _normalize_container_id
 
 # group, version, plural of the Tetragon TracingPolicy CRD
 TETRAGON_TRACING_POLICIES_GVP = "cilium.io", "v1alpha1", "tracingpolicies"
@@ -193,13 +194,6 @@ def _extract_pod_metadata(event: dict) -> PodMetadata | None:
                     name=pod.get("container", {}).get("name"),
                 ),
             )
-
-
-def _normalize_container_id(container_id: str) -> str:
-    if container_id is None:
-        return None
-    scheme_pattern = r"^\w+://"  # remove prefixes such as "docker://"
-    return re.sub(scheme_pattern, "", container_id).strip()
 
 
 def _extract_node_metadata(event: dict) -> NodeMetadata | None:

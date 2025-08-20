@@ -39,6 +39,7 @@ import (
 
 	"github.com/dynatrace-oss/koney/api/v1alpha1"
 	"github.com/dynatrace-oss/koney/internal/controller/annotations"
+	"github.com/dynatrace-oss/koney/internal/controller/constants"
 	"github.com/dynatrace-oss/koney/internal/controller/matching"
 	trapsapi "github.com/dynatrace-oss/koney/internal/controller/traps/api"
 	"github.com/dynatrace-oss/koney/internal/controller/utils"
@@ -190,6 +191,14 @@ func (r *FilesystemHoneytokenReconciler) DeployCaptor(ctx context.Context, decep
 				log.Error(nil, "Tetragon is not installed - cannot deploy captors with Tetragon")
 			}
 			return trapsapi.CaptorDeploymentResult{Trap: &trap, Errors: err, MissingTetragon: missingTetragon}
+		}
+	case "kive":
+		if err := r.deployCaptorWithKive(ctx, deceptionPolicy, trap); err != nil {
+			missingKive := errors.Is(err, &meta.NoKindMatchError{})
+			if missingKive {
+				log.Error(nil, "Kive is not installed - cannot deploy captors with Kive")
+			}
+			return trapsapi.CaptorDeploymentResult{Trap: &trap, Errors: err, MissingTetragon: missingKive}
 		}
 	default:
 		log.Error(nil, fmt.Sprintf("captor deployment strategy '%s' unknown", trap.CaptorDeployment.Strategy))
@@ -396,11 +405,7 @@ func (r *FilesystemHoneytokenReconciler) deployCaptorWithTetragon(ctx context.Co
 			return err
 		}
 
-		tracingPolicy, err := generateTetragonTracingPolicy(deceptionPolicy, trap, tracingPolicyName)
-		if err != nil {
-			log.Error(err, "unable to generate Tetragon tracing policy")
-			return err
-		}
+		tracingPolicy := generateTetragonTracingPolicy(deceptionPolicy, trap, tracingPolicyName)
 
 		if err := r.Client.Create(ctx, tracingPolicy); err != nil {
 			log.Error(err, "unable to create Tetragon tracing policy")
@@ -409,6 +414,33 @@ func (r *FilesystemHoneytokenReconciler) deployCaptorWithTetragon(ctx context.Co
 
 		log.Info("Tetragon tracing policy created", "policy", tracingPolicy)
 	}
+
+	return nil
+}
+
+// deployCaptorWithKive generates a Kive tracing policy
+// to trace the filesystem access of a filesystem honeytoken trap and applies it to the cluster.
+func (r *FilesystemHoneytokenReconciler) deployCaptorWithKive(ctx context.Context, deceptionPolicy *v1alpha1.DeceptionPolicy, trap v1alpha1.Trap) error {
+	log := log.FromContext(ctx)
+
+	tracingPolicyName, err := GenerateKivePolicyName(trap)
+	if err != nil {
+		log.Error(err, "unable to generate Kive tracing policy name")
+		return err
+	}
+
+	tracingPolicy := generateKivePolicy(deceptionPolicy, trap, tracingPolicyName)
+	if err != nil {
+		log.Error(err, "unable to generate Kive tracing policy")
+		return err
+	}
+
+	if err := r.Client.Patch(ctx, tracingPolicy, client.Apply, client.ForceOwnership, client.FieldOwner(constants.FieldOwnerKoneyController)); err != nil {
+		log.Error(err, "unable to create Kive tracing policy")
+		return err
+	}
+
+	log.Info("Kive tracing policy created", "policy", tracingPolicy)
 
 	return nil
 }

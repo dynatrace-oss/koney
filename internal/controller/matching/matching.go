@@ -18,7 +18,6 @@ package matching
 import (
 	"context"
 	"fmt"
-	"path/filepath"
 
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -321,10 +320,13 @@ func selectContainers(resource client.Object, containerSelector string) ([]strin
 	}
 
 	for _, container := range containers {
-		matched, err := filepath.Match(containerSelector, container.Name)
+
+		matched, err := utils.MatchContainerName(containerSelector, container.Name)
 		if err != nil {
-			return nil, err
-		} else if matched {
+			return []string{}, fmt.Errorf("invalid container selector: %w", err)
+		}
+
+		if matched {
 			selectedContainers = append(selectedContainers, container.Name)
 		}
 	}

@@ -16,23 +16,21 @@
 package filesystoken
 
 import (
-	"regexp"
-
 	slimv1 "github.com/cilium/cilium/pkg/k8s/slim/k8s/apis/meta/v1"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/dynatrace-oss/koney/api/v1alpha1"
-	"github.com/dynatrace-oss/koney/internal/controller/constants"
+	"github.com/dynatrace-oss/koney/internal/controller/matching"
 )
 
 var (
 	containerSelectorValues = []string{
 		"name",
-		"namewithwildcard*",
-		"namewithwildcard?",
-		"*",
+		"glob:namewithwildcard*",
+		"glob:namewithwildcard?",
+		"regex:.*",
 	}
 
 	labelSelectorValues = metav1.LabelSelector{
@@ -83,8 +81,7 @@ var _ = Describe("generateTetragonTracingPolicy", func() {
 						Traps: []v1alpha1.Trap{trap},
 					},
 				}
-				tracingPolicy, err := generateTetragonTracingPolicy(&deceptionPolicy, trap, "test-tracing-policy")
-				Expect(err).ToNot(HaveOccurred())
+				tracingPolicy := generateTetragonTracingPolicy(&deceptionPolicy, trap, "test-tracing-policy")
 				Expect(tracingPolicy.Name).To(Equal("test-tracing-policy"))
 
 				// Check the label selector
@@ -95,11 +92,8 @@ var _ = Describe("generateTetragonTracingPolicy", func() {
 				}
 
 				// Check the container selector
-				compiledRegex, err := regexp.Compile(constants.WildcardContainerSelectorRegex)
-				Expect(err).ToNot(HaveOccurred())
-
 				for _, resourceFilter := range trap.MatchResources.Any {
-					if resourceFilter.ResourceDescription.ContainerSelector == "" || resourceFilter.ResourceDescription.ContainerSelector == "*" || compiledRegex.MatchString(resourceFilter.ResourceDescription.ContainerSelector) {
+					if matching.ContainerSelectorSelectsAll(resourceFilter.ResourceDescription.ContainerSelector) {
 						Expect(tracingPolicy.Spec.ContainerSelector.MatchExpressions).To(BeEmpty())
 					} else {
 						Expect(tracingPolicy.Spec.ContainerSelector.MatchExpressions).To(HaveLen(1))
