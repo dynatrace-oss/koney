@@ -1,5 +1,8 @@
 kubernetes~=33.0
 fastapi[standard]~=0.116
+
 uvicorn[standard] # indirect dependency of fastapi
 requests # indirect dependency of fastapi
 rich # indirect dependency of fastapi
+
+h11>=0.16 # pin to resolve CVE-2025-43859
