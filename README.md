@@ -346,4 +346,4 @@ For general questions or inquiries please get in touch with one of the following
 
 ---
 
-_ℹ️ **Note:** Honeyquest is a research project and not officially supported by Dynatrace._
+_ℹ️ **Note:** Koney is a research project and not officially supported by Dynatrace._
