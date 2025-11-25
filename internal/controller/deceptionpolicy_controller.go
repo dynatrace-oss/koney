@@ -26,6 +26,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/record"
 	"k8s.io/client-go/util/retry"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -44,6 +45,7 @@ import (
 type DeceptionPolicyReconciler struct {
 	client.Client
 	Scheme    *runtime.Scheme
+	Recorder  record.EventRecorder
 	Clientset kubernetes.Clientset
 	Config    rest.Config
 }
@@ -320,6 +322,7 @@ func (r *DeceptionPolicyReconciler) SetupWithManager(mgr ctrl.Manager) error {
 
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&v1alpha1.DeceptionPolicy{}).
+		Named("deceptionpolicy").
 		Watches(&corev1.Pod{}, watchHandler).
 		Watches(&appsv1.Deployment{}, watchHandler).
 		WithEventFilter(predicate.Funcs{

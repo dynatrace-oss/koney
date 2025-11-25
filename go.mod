@@ -1,8 +1,6 @@
 module github.com/dynatrace-oss/koney
 
-go 1.23.0
-
-toolchain go1.23.1
+go 1.24
 
 require (
 	github.com/cilium/cilium v1.17.3
