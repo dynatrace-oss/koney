@@ -261,8 +261,8 @@ kind: Kustomization
 # Will be patched by the Makefile
 images:
 - name: alert-forwarder
-  newName: registry.lab.dynatrace.org/research/koney-alert-forwarder
-  newTag: e2e-tests-1764096402
+  newName: ghcr.io/dynatrace-oss/koney-alert-forwarder
+  newTag: 0.1.0
 - name: controller
-  newName: registry.lab.dynatrace.org/research/koney-controller
-  newTag: e2e-tests-1764096402
+  newName: ghcr.io/dynatrace-oss/koney-controller
+  newTag: 0.1.0

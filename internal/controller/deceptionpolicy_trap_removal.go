@@ -22,7 +22,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/log"
+	k8slog "sigs.k8s.io/controller-runtime/pkg/log"
 
 	"github.com/dynatrace-oss/koney/internal/controller/annotations"
 	"github.com/dynatrace-oss/koney/internal/controller/constants"
@@ -95,12 +95,12 @@ func (r *DeceptionPolicyReconciler) cleanupRemovedTraps(ctx context.Context, dec
 
 // cleanupRemovedCaptors cleans up the captors that have been removed from a DeceptionPolicy
 func (r *DeceptionPolicyReconciler) cleanupRemovedCaptors(ctx context.Context, deceptionPolicy *v1alpha1.DeceptionPolicy) error {
-	log := log.FromContext(ctx)
+	log := k8slog.FromContext(ctx)
 
 	// Get all the TracingPolicies that are associated with this DeceptionPolicy
 	// TODO: move this to a function RemoveDecoy in the FilesystemHoneytokenReconciler ?
 	tracingPolicies := &ciliumiov1alpha1.TracingPolicyList{}
-	if err := r.Client.List(ctx, tracingPolicies, client.MatchingLabels{constants.LabelKeyDeceptionPolicyRef: deceptionPolicy.Name}); err != nil {
+	if err := r.List(ctx, tracingPolicies, client.MatchingLabels{constants.LabelKeyDeceptionPolicyRef: deceptionPolicy.Name}); err != nil {
 		// If the error is *meta.NoKindMatchError, ignore it
 		if _, ok := err.(*meta.NoKindMatchError); ok {
 			// Tetragon is not installed
@@ -131,7 +131,7 @@ func (r *DeceptionPolicyReconciler) cleanupRemovedCaptors(ctx context.Context, d
 
 		// Delete the Tetragon tracing policies that are not found in the DeceptionPolicy
 		for _, tracingPolicyName := range notFoundTracingPolicies {
-			if err := r.Client.Delete(ctx, &ciliumiov1alpha1.TracingPolicy{
+			if err := r.Delete(ctx, &ciliumiov1alpha1.TracingPolicy{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: tracingPolicyName,
 				},

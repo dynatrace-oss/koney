@@ -89,7 +89,7 @@ var _ = Describe("generateTetragonTracingPolicy", func() {
 
 				// Check the label selector
 				for _, resourceFilter := range trap.MatchResources.Any {
-					for key, value := range resourceFilter.ResourceDescription.Selector.MatchLabels {
+					for key, value := range resourceFilter.Selector.MatchLabels {
 						Expect(tracingPolicy.Spec.PodSelector.MatchLabels[key]).To(Equal(value))
 					}
 				}
@@ -99,13 +99,13 @@ var _ = Describe("generateTetragonTracingPolicy", func() {
 				Expect(err).ToNot(HaveOccurred())
 
 				for _, resourceFilter := range trap.MatchResources.Any {
-					if resourceFilter.ResourceDescription.ContainerSelector == "" || resourceFilter.ResourceDescription.ContainerSelector == "*" || compiledRegex.MatchString(resourceFilter.ResourceDescription.ContainerSelector) {
+					if resourceFilter.ContainerSelector == "" || resourceFilter.ContainerSelector == "*" || compiledRegex.MatchString(resourceFilter.ContainerSelector) {
 						Expect(tracingPolicy.Spec.ContainerSelector.MatchExpressions).To(BeEmpty())
 					} else {
 						Expect(tracingPolicy.Spec.ContainerSelector.MatchExpressions).To(HaveLen(1))
 						Expect(tracingPolicy.Spec.ContainerSelector.MatchExpressions[0].Key).To(Equal("name"))
 						Expect(tracingPolicy.Spec.ContainerSelector.MatchExpressions[0].Operator).To(Equal(slimv1.LabelSelectorOpIn))
-						Expect(tracingPolicy.Spec.ContainerSelector.MatchExpressions[0].Values).To(ConsistOf(resourceFilter.ResourceDescription.ContainerSelector))
+						Expect(tracingPolicy.Spec.ContainerSelector.MatchExpressions[0].Values).To(ConsistOf(resourceFilter.ContainerSelector))
 					}
 				}
 			}

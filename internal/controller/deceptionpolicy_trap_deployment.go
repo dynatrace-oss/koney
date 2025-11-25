@@ -20,7 +20,7 @@ import (
 	"errors"
 	"fmt"
 
-	"sigs.k8s.io/controller-runtime/pkg/log"
+	k8slog "sigs.k8s.io/controller-runtime/pkg/log"
 
 	"github.com/dynatrace-oss/koney/api/v1alpha1"
 	trapsapi "github.com/dynatrace-oss/koney/internal/controller/traps/api"
@@ -61,7 +61,7 @@ func (r *DeceptionPolicyReconciler) buildFilesystemTokenReconciler(deceptionPoli
 }
 
 func (r *DeceptionPolicyReconciler) reconcileDecoys(ctx context.Context, deceptionPolicy *v1alpha1.DeceptionPolicy, reconcileTraps []v1alpha1.Trap) TrapReconcileResult {
-	log := log.FromContext(ctx)
+	log := k8slog.FromContext(ctx)
 
 	results := make([]trapsapi.DecoyDeploymentResult, 0, len(reconcileTraps))
 	for _, trap := range reconcileTraps {
@@ -104,7 +104,7 @@ func (r *DeceptionPolicyReconciler) reconcileDecoys(ctx context.Context, decepti
 }
 
 func (r *DeceptionPolicyReconciler) reconcileCaptors(ctx context.Context, deceptionPolicy *v1alpha1.DeceptionPolicy, reconcileTraps []v1alpha1.Trap) TrapReconcileResult {
-	log := log.FromContext(ctx)
+	log := k8slog.FromContext(ctx)
 
 	results := make([]trapsapi.CaptorDeploymentResult, 0, len(reconcileTraps))
 	for _, trap := range reconcileTraps {

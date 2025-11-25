@@ -21,14 +21,14 @@ import (
 
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/log"
+	k8slog "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	"github.com/dynatrace-oss/koney/api/v1alpha1"
 )
 
 func HandleWatchEvent(r client.Reader, ctx context.Context, obj client.Object) []reconcile.Request {
-	log := log.FromContext(ctx)
+	log := k8slog.FromContext(ctx)
 	resourceName := types.NamespacedName{Name: obj.GetName(), Namespace: obj.GetNamespace()}
 
 	if obj.GetDeletionTimestamp() != nil {
