@@ -27,6 +27,22 @@ jobs:
     - name: Verify kind installation
       run: kind version
 
+    - name: Start cluster
+      run: make setup-test-e2e
+
+    - name: Install Helm
+      run: |
+        curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-4
+        chmod 700 get_helm.sh
+        ./get_helm.sh
+
+    - name: Install Tetragon
+      run: |
+        helm repo add cilium https://helm.cilium.io
+        helm repo update
+        helm install tetragon cilium/tetragon -n kube-system --set dnsPolicy=ClusterFirstWithHostNet
+        kubectl rollout status -n kube-system ds/tetragon -w
+
     - name: Running Test e2e
       run: |
         go mod tidy
