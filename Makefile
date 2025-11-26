@@ -36,7 +36,7 @@ BUNDLE_METADATA_OPTS ?= $(BUNDLE_CHANNELS) $(BUNDLE_DEFAULT_CHANNEL)
 #
 # For example, running 'make bundle-build bundle-push catalog-build catalog-push' will build and push both
 # ghcr.io/dynatrace-oss/koney-bundle:$VERSION and ghcr.io/dynatrace-oss/koney-catalog:$VERSION.
-IMAGE_TAG_BASE ?= ghcr.io/dynatrace-oss/koney
+IMAGE_TAG_BASE ?= localhost:5001/koney
 
 # BUNDLE_IMG defines the image:tag used for the bundle.
 # You can use it as an arg. (E.g make bundle-build BUNDLE_IMG=<some-registry>/<project-name-bundle>:<tag>)
@@ -138,7 +138,7 @@ setup-test-e2e: ## Set up a Kind cluster for e2e tests if it does not exist
 			echo "Kind cluster '$(KIND_CLUSTER)' already exists. Skipping creation." ;; \
 		*) \
 			echo "Creating Kind cluster '$(KIND_CLUSTER)'..."; \
-			$(KIND) create cluster --name $(KIND_CLUSTER) ;; \
+			KIND_CLUSTER_NAME=$(KIND_CLUSTER) CONTAINER_TOOL=$(CONTAINER_TOOL) KIND=$(KIND) sh ./hack/make/kind-with-registry.sh ;; \
 	esac
 
 .PHONY: test-e2e
