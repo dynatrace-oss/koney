@@ -1,16 +1,16 @@
 name: E2E Tests
 
 on:
-  push:
   pull_request:
+  push:
 
 
 jobs:
   test-e2e:
-    name: Run on Ubuntu
+    name: Run end-to-end tests
     runs-on: ubuntu-latest
     steps:
-    - name: Clone the code
+    - name: Checkout repository
       uses: actions/checkout@v4
 
     - name: Setup Go
@@ -18,7 +18,7 @@ jobs:
       with:
         go-version-file: go.mod
 
-    - name: Install the latest version of kind
+    - name: Install kind
       run: |
         curl -Lo ./kind https://kind.sigs.k8s.io/dl/latest/kind-linux-amd64
         chmod +x ./kind
@@ -43,7 +43,7 @@ jobs:
         helm install tetragon cilium/tetragon -n kube-system --set dnsPolicy=ClusterFirstWithHostNet
         kubectl rollout status -n kube-system ds/tetragon -w
 
-    - name: Running Test e2e
+    - name: Run end-to-end tests
       run: |
         go mod tidy
         make test-e2e

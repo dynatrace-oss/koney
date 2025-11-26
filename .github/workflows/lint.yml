@@ -1,16 +1,16 @@
 name: Lint
 
 on:
-  push:
   pull_request:
+  push:
 
 
 jobs:
   lint:
-    name: Run on Ubuntu
+    name: Lint Go source code
     runs-on: ubuntu-latest
     steps:
-    - name: Clone the code
+    - name: Checkout repository
       uses: actions/checkout@v4
 
     - name: Setup Go

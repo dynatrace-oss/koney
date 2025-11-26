@@ -1,16 +1,16 @@
-name: Tests
+name: Unit Tests
 
 on:
-  push:
   pull_request:
+  push:
 
 
 jobs:
   test:
-    name: Run on Ubuntu
+    name: Run unit tests
     runs-on: ubuntu-latest
     steps:
-    - name: Clone the code
+    - name: Checkout repository
       uses: actions/checkout@v4
 
     - name: Setup Go
@@ -18,7 +18,7 @@ jobs:
       with:
         go-version-file: go.mod
 
-    - name: Running Tests
+    - name: Run tests
       run: |
         go mod tidy
         make test

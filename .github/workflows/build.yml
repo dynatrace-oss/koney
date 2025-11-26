@@ -1,4 +1,4 @@
-name: build-koney
+name: Build
 
 on:
   pull_request:
@@ -14,6 +14,7 @@ env:
 
 jobs:
   build-koney-controller:
+    name: Build Koney controller image
     runs-on: ubuntu-latest
     steps:
     - name: Checkout repository
@@ -56,6 +57,7 @@ jobs:
         cache-to: ${{ github.event_name == 'push' && format('type=registry,ref={0}:buildcache,mode=max', env.CONTROLLER_IMAGE) || '' }}
 
   build-koney-alert-forwarder:
+    name: Build Koney alert forwarder image
     runs-on: ubuntu-latest
     steps:
     - name: Checkout repository
