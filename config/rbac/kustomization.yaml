@@ -11,7 +11,7 @@ resources:
 - leader_election_role_binding.yaml
 # The alert forwarder receives and forwards alerts from components
 # that are external to Koney.
-- alert_forwarder_service.yaml
+- alert_forwarder_webhook.yaml
 - alert_forwarder_role.yaml
 - alert_forwarder_role_binding.yaml
 # The following RBAC configurations are used to protect
