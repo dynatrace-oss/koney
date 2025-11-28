@@ -747,7 +747,7 @@ metadata:
     app.kubernetes.io/managed-by: kustomize
     app.kubernetes.io/name: koney
     control-plane: controller-manager
-  name: koney-alert-forwarder-service
+  name: koney-alert-forwarder-webhook
   namespace: koney-system
 spec:
   ports:
@@ -801,7 +801,7 @@ spec:
         control-plane: controller-manager
     spec:
       containers:
-      - image: registry.lab.dynatrace.org/research/koney-alert-forwarder:0.1.0
+      - image: ghcr.io/dynatrace-oss/koney-alert-forwarder:0.1.0
         livenessProbe:
           httpGet:
             path: /healthz
@@ -831,7 +831,7 @@ spec:
         - --health-probe-bind-address=:8081
         command:
         - /manager
-        image: registry.lab.dynatrace.org/research/koney-controller:0.1.0
+        image: ghcr.io/dynatrace-oss/koney-controller:0.1.0
         livenessProbe:
           httpGet:
             path: /healthz

@@ -43,5 +43,5 @@ const (
 	WildcardContainerSelectorRegex = `\*|\?|\[|\]`
 
 	// TetragonWebhookUrl is the URL of the alert forwarder that receives alerts from Tetragon.
-	TetragonWebhookUrl = "http://koney-alert-forwarder-service." + KoneyNamespace + ".svc:8000/handlers/tetragon"
+	TetragonWebhookUrl = "http://koney-alert-forwarder-webhook." + KoneyNamespace + ".svc:8000/handlers/tetragon"
 )

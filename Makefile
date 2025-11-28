@@ -248,6 +248,7 @@ CONTROLLER_GEN ?= $(LOCALBIN)/controller-gen
 ENVTEST ?= $(LOCALBIN)/setup-envtest
 GOLANGCI_LINT = $(LOCALBIN)/golangci-lint
 GOIMPORTS = $(LOCALBIN)/goimports
+HELM ?= $(LOCALBIN)/helm
 
 ## Tool Versions
 KUSTOMIZE_VERSION ?= v5.6.0
@@ -258,6 +259,7 @@ ENVTEST_VERSION ?= $(shell go list -m -f "{{ .Version }}" sigs.k8s.io/controller
 ENVTEST_K8S_VERSION ?= $(shell go list -m -f "{{ .Version }}" k8s.io/api | awk -F'[v.]' '{printf "1.%d", $$3}')
 GOLANGCI_LINT_VERSION ?= v2.1.0
 GOIMPORTS_VERSION ?= v0.39.0
+HELM_VERSION ?= v3.19.2
 
 .PHONY: kustomize
 kustomize: $(KUSTOMIZE) ## Download kustomize locally if necessary.
@@ -291,6 +293,11 @@ $(GOLANGCI_LINT): $(LOCALBIN)
 goimports: $(GOIMPORTS) ## Download goimports locally if necessary.
 $(GOIMPORTS): $(LOCALBIN)
 	$(call go-install-tool,$(GOIMPORTS),golang.org/x/tools/cmd/goimports,$(GOIMPORTS_VERSION))
+
+.PHONY: helm
+helm: $(HELM) ## Download helm locally if necessary.
+$(HELM): $(LOCALBIN)
+	$(call go-install-tool,$(HELM),helm.sh/helm/v3/cmd/helm,$(HELM_VERSION))
 
 # go-install-tool will 'go install' any package with custom target and name of binary, if it doesn't exist
 # $1 - target path with name of binary
