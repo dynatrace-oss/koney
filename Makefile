@@ -209,6 +209,11 @@ build-installer: manifests generate kustomize ## Generate a consolidated YAML wi
 	cd config/default && $(KUSTOMIZE) edit set image alert-forwarder=${IMG_ALERT_FORWARDER}
 	$(KUSTOMIZE) build config/default > dist/install.yaml
 
+.PHONY: build-chart
+build-chart: build-installer kubebuilder helm ## Generate a Helm chart from the installer YAML.
+	$(KUBEBUILDER) edit --plugins=helm/v2-alpha --force
+	$(HELM) package -u -d dist ./dist/chart
+
 ##@ Deployment
 
 ifndef ignore-not-found
@@ -248,6 +253,7 @@ CONTROLLER_GEN ?= $(LOCALBIN)/controller-gen
 ENVTEST ?= $(LOCALBIN)/setup-envtest
 GOLANGCI_LINT = $(LOCALBIN)/golangci-lint
 GOIMPORTS = $(LOCALBIN)/goimports
+KUBEBUILDER ?= $(LOCALBIN)/kubebuilder
 HELM ?= $(LOCALBIN)/helm
 
 ## Tool Versions
@@ -259,6 +265,7 @@ ENVTEST_VERSION ?= $(shell go list -m -f "{{ .Version }}" sigs.k8s.io/controller
 ENVTEST_K8S_VERSION ?= $(shell go list -m -f "{{ .Version }}" k8s.io/api | awk -F'[v.]' '{printf "1.%d", $$3}')
 GOLANGCI_LINT_VERSION ?= v2.1.0
 GOIMPORTS_VERSION ?= v0.39.0
+KUBEBUILDER_VERSION ?= v4.10.1
 HELM_VERSION ?= v3.19.2
 
 .PHONY: kustomize
@@ -293,6 +300,11 @@ $(GOLANGCI_LINT): $(LOCALBIN)
 goimports: $(GOIMPORTS) ## Download goimports locally if necessary.
 $(GOIMPORTS): $(LOCALBIN)
 	$(call go-install-tool,$(GOIMPORTS),golang.org/x/tools/cmd/goimports,$(GOIMPORTS_VERSION))
+
+.PHONY: kubebuilder
+kubebuilder: $(KUBEBUILDER) ## Download kubebuilder locally if necessary.
+$(KUBEBUILDER): $(LOCALBIN)
+	$(call go-install-tool,$(KUBEBUILDER),sigs.k8s.io/kubebuilder/v4,$(KUBEBUILDER_VERSION))
 
 .PHONY: helm
 helm: $(HELM) ## Download helm locally if necessary.

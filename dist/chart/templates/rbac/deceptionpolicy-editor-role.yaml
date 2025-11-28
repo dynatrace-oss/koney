@@ -1,0 +1,28 @@
+{{- if .Values.rbacHelpers.enable }}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+    labels:
+        app.kubernetes.io/managed-by: {{ .Release.Service }}
+        app.kubernetes.io/name: koney
+    name: koney-deceptionpolicy-editor-role
+rules:
+    - apiGroups:
+        - research.dynatrace.com
+      resources:
+        - deceptionpolicies
+      verbs:
+        - create
+        - delete
+        - get
+        - list
+        - patch
+        - update
+        - watch
+    - apiGroups:
+        - research.dynatrace.com
+      resources:
+        - deceptionpolicies/status
+      verbs:
+        - get
+{{- end }}
