@@ -13,6 +13,7 @@ KIND="${KIND:-kind}"
 reg_name='kind-registry'
 reg_port='5001'
 if [ "$(${CONTAINER_TOOL} inspect -f '{{.State.Running}}' "${reg_name}" 2>/dev/null || true)" != 'true' ]; then
+  echo "Creating registry container..."
   ${CONTAINER_TOOL} run \
     -d --restart=always -p "127.0.0.1:${reg_port}:5000" --network bridge --name "${reg_name}" \
     registry:2
@@ -45,6 +46,7 @@ EOF
 #
 # We want a consistent name that works from both ends, so we tell containerd to
 # alias localhost:${reg_port} to the registry container when pulling images
+echo "Configuring registry on cluster nodes..."
 REGISTRY_DIR="/etc/containerd/certs.d/localhost:${reg_port}"
 for node in $(${KIND} get nodes --name "${KIND_CLUSTER_NAME}"); do
   ${CONTAINER_TOOL} exec "${node}" mkdir -p "${REGISTRY_DIR}"
@@ -56,6 +58,7 @@ done
 # 4. Connect the registry to the cluster network if not already connected
 # This allows kind to bootstrap the network but ensures they're on the same network
 if [ "$(${CONTAINER_TOOL} inspect -f='{{json .NetworkSettings.Networks.kind}}' "${reg_name}")" = 'null' ]; then
+  echo "Connecting registry to cluster network..."
   ${CONTAINER_TOOL} network connect "kind" "${reg_name}"
 fi
 

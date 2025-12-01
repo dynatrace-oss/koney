@@ -129,7 +129,7 @@ func (r *DeceptionPolicyReconciler) updateStatusConditions(ctx context.Context, 
 		}
 
 		// TODO: Can we use patch instead of update to avoid conflicts?
-		err := r.Client.Status().Update(ctx, deceptionPolicy)
+		err := r.Status().Update(ctx, deceptionPolicy)
 		return err
 	})
 }
