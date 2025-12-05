@@ -23,7 +23,7 @@ fi
 #
 # NOTE: the containerd config patch is not necessary with images from kind v0.27.0+
 # It may enable some older images to work similarly.
-# If you're only supporting newer relases, you can just use `kind create cluster` here.
+# If you're only supporting newer releases, you can just use `kind create cluster` here.
 #
 # See:
 # https://github.com/kubernetes-sigs/kind/issues/2875
@@ -57,7 +57,7 @@ done
 
 # 4. Connect the registry to the cluster network if not already connected
 # This allows kind to bootstrap the network but ensures they're on the same network
-if [ "$(${CONTAINER_TOOL} inspect -f='{{json .NetworkSettings.Networks.kind}}' "${reg_name}")" = 'null' ]; then
+if [ "$(${CONTAINER_TOOL} inspect -f '{{json .NetworkSettings.Networks.kind}}' "${reg_name}")" = 'null' ]; then
   echo "Connecting registry to cluster network..."
   ${CONTAINER_TOOL} network connect "kind" "${reg_name}"
 fi
