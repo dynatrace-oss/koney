@@ -93,7 +93,7 @@ var _ = Describe("generateTetragonTracingPolicy", func() {
 
 				// Check the container selector
 				for _, resourceFilter := range trap.MatchResources.Any {
-					if matching.ContainerSelectorSelectsAll(resourceFilter.ResourceDescription.ContainerSelector) {
+					if matching.ContainerSelectorSelectsAll(resourceFilter.ContainerSelector) {
 						Expect(tracingPolicy.Spec.ContainerSelector.MatchExpressions).To(BeEmpty())
 					} else {
 						Expect(tracingPolicy.Spec.ContainerSelector.MatchExpressions).To(HaveLen(1))
