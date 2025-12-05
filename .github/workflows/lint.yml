@@ -1,0 +1,24 @@
+name: Lint
+
+on:
+  pull_request:
+  push:
+
+
+jobs:
+  lint:
+    name: Lint Go source code
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Setup Go
+      uses: actions/setup-go@v5
+      with:
+        go-version-file: go.mod
+
+    - name: Run linter
+      uses: golangci/golangci-lint-action@v8
+      with:
+        version: v2.1.0

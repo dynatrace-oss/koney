@@ -24,7 +24,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/util/retry"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/log"
+	k8slog "sigs.k8s.io/controller-runtime/pkg/log"
 
 	"github.com/dynatrace-oss/koney/api/v1alpha1"
 	"github.com/dynatrace-oss/koney/internal/controller/annotations"
@@ -34,7 +34,7 @@ import (
 // RemoveDecoy removes a FilesystemHoneytoken decoy from a resource.
 // The trap is only removed from the resources where the trap is deployed.
 func (r *FilesystemHoneytokenReconciler) RemoveDecoy(ctx context.Context, crdName string, trap v1alpha1.TrapAnnotation, resource client.Object) error {
-	log := log.FromContext(ctx)
+	log := k8slog.FromContext(ctx)
 
 	var joinedErrors error
 	var removedFromContainers []string
@@ -76,7 +76,7 @@ func (r *FilesystemHoneytokenReconciler) RemoveDecoy(ctx context.Context, crdNam
 		// Use RetryOnConflict to elegantly avoid conflicts when updating a resource
 		// as explained in https://github.com/kubernetes-sigs/controller-runtime/issues/1748
 		err := retry.RetryOnConflict(retry.DefaultBackoff, func() error {
-			if err := r.Client.Get(ctx, client.ObjectKeyFromObject(resource), resource); err != nil {
+			if err := r.Get(ctx, client.ObjectKeyFromObject(resource), resource); err != nil {
 				return err
 			}
 
@@ -88,7 +88,7 @@ func (r *FilesystemHoneytokenReconciler) RemoveDecoy(ctx context.Context, crdNam
 			}
 
 			// TODO: Can we use patch instead of update to avoid conflicts?
-			return r.Client.Update(ctx, resource)
+			return r.Update(ctx, resource)
 		})
 		if err != nil {
 			log.Error(err, "unable to update resource", "resource", resource.GetName())
@@ -105,7 +105,7 @@ func (r *FilesystemHoneytokenReconciler) RemoveDecoy(ctx context.Context, crdNam
 
 		// Use RetryOnConflict to elegantly avoid conflicts when updating a resource
 		err := retry.RetryOnConflict(retry.DefaultBackoff, func() error {
-			if err := r.Client.Get(ctx, client.ObjectKeyFromObject(resource), resource); err != nil {
+			if err := r.Get(ctx, client.ObjectKeyFromObject(resource), resource); err != nil {
 				return err
 			}
 
@@ -117,7 +117,7 @@ func (r *FilesystemHoneytokenReconciler) RemoveDecoy(ctx context.Context, crdNam
 			}
 
 			// TODO: Can we use patch instead of update to avoid conflicts?
-			return r.Client.Update(ctx, resource)
+			return r.Update(ctx, resource)
 		})
 		if err != nil {
 			log.Error(err, "unable to update resource", "resource", resource.GetName())
@@ -130,7 +130,7 @@ func (r *FilesystemHoneytokenReconciler) RemoveDecoy(ctx context.Context, crdNam
 
 // removeDecoyWithContainerExec removes a FilesystemHoneytoken trap from a pod using the containerExec strategy.
 func (r *FilesystemHoneytokenReconciler) removeDecoyWithContainerExec(ctx context.Context, trap v1alpha1.TrapAnnotation, pod corev1.Pod, containerName string) error {
-	log := log.FromContext(ctx)
+	log := k8slog.FromContext(ctx)
 
 	var joinedErrors error
 
@@ -162,7 +162,7 @@ func (r *FilesystemHoneytokenReconciler) removeDecoyWithContainerExec(ctx contex
 
 // removeDecoyWithVolumeMount removes a FilesystemHoneytoken trap a deployment using the volumeMount strategy.
 func (r *FilesystemHoneytokenReconciler) removeDecoyWithVolumeMount(ctx context.Context, trap v1alpha1.TrapAnnotation, deployment appsv1.Deployment, containerName string) error {
-	log := log.FromContext(ctx)
+	log := k8slog.FromContext(ctx)
 
 	var joinedErrors error
 
@@ -193,7 +193,7 @@ func (r *FilesystemHoneytokenReconciler) removeDecoyWithVolumeMount(ctx context.
 		if volume.Name != volumeName {
 			newVolumes = append(newVolumes, deployment.Spec.Template.Spec.Volumes[i])
 		} else {
-			secretName = volume.VolumeSource.Secret.SecretName
+			secretName = volume.Secret.SecretName
 			log.Info("Removing volume from deployment", "volume", volumeName)
 		}
 	}
@@ -202,7 +202,7 @@ func (r *FilesystemHoneytokenReconciler) removeDecoyWithVolumeMount(ctx context.
 	// Use RetryOnConflict to elegantly avoid conflicts when updating a resource
 	err := retry.RetryOnConflict(retry.DefaultBackoff, func() error {
 		// TODO: Can we use patch instead of update to avoid conflicts?
-		return r.Client.Update(ctx, &deployment)
+		return r.Update(ctx, &deployment)
 	})
 	if err != nil {
 		log.Error(err, "unable to update pod", "pod", deployment.Name)
@@ -214,13 +214,13 @@ func (r *FilesystemHoneytokenReconciler) removeDecoyWithVolumeMount(ctx context.
 	// Delete the secret, if it was created by the trap
 	if secretName != "" {
 		secret := corev1.Secret{}
-		err = r.Client.Get(ctx, client.ObjectKey{Namespace: deployment.Namespace, Name: secretName}, &secret)
+		err = r.Get(ctx, client.ObjectKey{Namespace: deployment.Namespace, Name: secretName}, &secret)
 		if err != nil {
 			log.Error(err, "unable to get secret", "secret", secretName)
 			joinedErrors = errors.Join(joinedErrors, err)
 		} else {
 			// This might fail if the secret is still being used by another pod, we ignore the error
-			_ = r.Client.Delete(ctx, &secret)
+			_ = r.Delete(ctx, &secret)
 		}
 	}
 

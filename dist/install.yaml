@@ -11,7 +11,71 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.16.1
+    controller-gen.kubebuilder.io/version: v0.18.0
+  name: deceptionalertsinks.research.dynatrace.com
+spec:
+  group: research.dynatrace.com
+  names:
+    kind: DeceptionAlertSink
+    listKind: DeceptionAlertSinkList
+    plural: deceptionalertsinks
+    singular: deceptionalertsink
+  scope: Namespaced
+  versions:
+  - name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        description: DeceptionAlertSink is the Schema for the deceptionalertsinks
+          API
+        properties:
+          apiVersion:
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            type: string
+          kind:
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: Spec is the specification of the DeceptionAlertSinkSpec.
+            properties:
+              dynatrace:
+                description: Dynatrace describes how to send alerts to Dynatrace
+                properties:
+                  secretName:
+                    description: SecretName references the name of a secret holding
+                      `apiToken` and `apiUrl` to connect to the Dynatrace environment.
+                    type: string
+                  severity:
+                    default: HIGH
+                    description: Severity describes the severity level upong ingest
+                      to Dynatrace.
+                    enum:
+                    - CRITICAL
+                    - HIGH
+                    - MEDIUM
+                    - LOW
+                    type: string
+                type: object
+            type: object
+        type: object
+    served: true
+    storage: true
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.18.0
   name: deceptionpolicies.research.dynatrace.com
 spec:
   group: research.dynatrace.com
@@ -341,6 +405,113 @@ rules:
   - pods/log
   verbs:
   - get
+- apiGroups:
+  - ""
+  resources:
+  - namespaces
+  verbs:
+  - get
+  - list
+- apiGroups:
+  - research.dynatrace.com
+  resources:
+  - deceptionalertsinks
+  verbs:
+  - get
+  - list
+  - watch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: koney
+  name: koney-deceptionalertsink-admin-role
+rules:
+- apiGroups:
+  - research.dynatrace.com
+  resources:
+  - deceptionalertsinks
+  verbs:
+  - '*'
+- apiGroups:
+  - research.dynatrace.com
+  resources:
+  - deceptionalertsinks/status
+  verbs:
+  - get
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: koney
+  name: koney-deceptionalertsink-editor-role
+rules:
+- apiGroups:
+  - research.dynatrace.com
+  resources:
+  - deceptionalertsinks
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - research.dynatrace.com
+  resources:
+  - deceptionalertsinks/status
+  verbs:
+  - get
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: koney
+  name: koney-deceptionalertsink-viewer-role
+rules:
+- apiGroups:
+  - research.dynatrace.com
+  resources:
+  - deceptionalertsinks
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - research.dynatrace.com
+  resources:
+  - deceptionalertsinks/status
+  verbs:
+  - get
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: koney
+  name: koney-deceptionpolicy-admin-role
+rules:
+- apiGroups:
+  - research.dynatrace.com
+  resources:
+  - deceptionpolicies
+  verbs:
+  - '*'
+- apiGroups:
+  - research.dynatrace.com
+  resources:
+  - deceptionpolicies/status
+  verbs:
+  - get
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
@@ -398,28 +569,6 @@ metadata:
   name: koney-manager-role
 rules:
 - apiGroups:
-  - apps
-  resources:
-  - deployments
-  verbs:
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - cilium.io
-  resources:
-  - tracingpolicies
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
   - ""
   resources:
   - deployments/status
@@ -450,6 +599,28 @@ rules:
   - delete
   - get
   - list
+  - update
+  - watch
+- apiGroups:
+  - apps
+  resources:
+  - deployments
+  verbs:
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - cilium.io
+  resources:
+  - tracingpolicies
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
   - update
   - watch
 - apiGroups:
@@ -603,6 +774,7 @@ spec:
     protocol: TCP
     targetPort: 8443
   selector:
+    app.kubernetes.io/name: koney
     control-plane: controller-manager
 ---
 apiVersion: apps/v1
@@ -618,16 +790,18 @@ spec:
   replicas: 1
   selector:
     matchLabels:
+      app.kubernetes.io/name: koney
       control-plane: controller-manager
   template:
     metadata:
       annotations:
         kubectl.kubernetes.io/default-container: manager
       labels:
+        app.kubernetes.io/name: koney
         control-plane: controller-manager
     spec:
       containers:
-      - image: ghcr.io/dynatrace-oss/koney-alert-forwarder:0.1.0
+      - image: registry.lab.dynatrace.org/research/koney-alert-forwarder:0.1.0
         livenessProbe:
           httpGet:
             path: /healthz
@@ -657,7 +831,7 @@ spec:
         - --health-probe-bind-address=:8081
         command:
         - /manager
-        image: ghcr.io/dynatrace-oss/koney-controller:0.1.0
+        image: registry.lab.dynatrace.org/research/koney-controller:0.1.0
         livenessProbe:
           httpGet:
             path: /healthz
@@ -665,6 +839,7 @@ spec:
           initialDelaySeconds: 15
           periodSeconds: 20
         name: manager
+        ports: []
         readinessProbe:
           httpGet:
             path: /readyz
@@ -673,17 +848,21 @@ spec:
           periodSeconds: 10
         resources:
           limits:
-            cpu: 250m
+            cpu: 500m
             memory: 128Mi
           requests:
-            cpu: 5m
+            cpu: 10m
             memory: 64Mi
         securityContext:
           allowPrivilegeEscalation: false
           capabilities:
             drop:
             - ALL
+        volumeMounts: []
       securityContext:
         runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
       serviceAccountName: koney-controller-manager
       terminationGracePeriodSeconds: 10
+      volumes: []

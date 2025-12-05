@@ -26,13 +26,14 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/record"
 	"k8s.io/client-go/util/retry"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
-	"sigs.k8s.io/controller-runtime/pkg/log"
+	k8slog "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
@@ -44,6 +45,7 @@ import (
 type DeceptionPolicyReconciler struct {
 	client.Client
 	Scheme    *runtime.Scheme
+	Recorder  record.EventRecorder
 	Clientset kubernetes.Clientset
 	Config    rest.Config
 }
@@ -62,7 +64,7 @@ type DeceptionPolicyReconciler struct {
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
 func (r *DeceptionPolicyReconciler) Reconcile(ctx context.Context, req ctrl.Request) (reconcilResult ctrl.Result, reconcileErr error) {
-	log := log.FromContext(ctx)
+	log := k8slog.FromContext(ctx)
 	log.Info("Reconciling DeceptionPolicy ...", "DeceptionPolicy", req.NamespacedName)
 
 	// Fetch the DeceptionPolicy instance
@@ -211,7 +213,7 @@ func (r *DeceptionPolicyReconciler) Reconcile(ctx context.Context, req ctrl.Requ
 }
 
 func (r *DeceptionPolicyReconciler) runFinalizerIfMarkedForDeletion(ctx context.Context, req ctrl.Request, deceptionPolicy *v1alpha1.DeceptionPolicy) (bool, error) {
-	log := log.FromContext(ctx)
+	log := k8slog.FromContext(ctx)
 
 	markedForDeletion := deceptionPolicy.GetDeletionTimestamp() != nil
 	if markedForDeletion {
@@ -265,7 +267,7 @@ func (r *DeceptionPolicyReconciler) putFinalizer(ctx context.Context, req ctrl.R
 }
 
 func (r *DeceptionPolicyReconciler) filterValidTraps(ctx context.Context, deceptionPolicy *v1alpha1.DeceptionPolicy) []v1alpha1.Trap {
-	log := log.FromContext(ctx)
+	log := k8slog.FromContext(ctx)
 
 	validTraps := make([]v1alpha1.Trap, 0)
 	for _, trap := range deceptionPolicy.Spec.Traps {
@@ -320,6 +322,7 @@ func (r *DeceptionPolicyReconciler) SetupWithManager(mgr ctrl.Manager) error {
 
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&v1alpha1.DeceptionPolicy{}).
+		Named("deceptionpolicy").
 		Watches(&corev1.Pod{}, watchHandler).
 		Watches(&appsv1.Deployment{}, watchHandler).
 		WithEventFilter(predicate.Funcs{

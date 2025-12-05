@@ -17,10 +17,10 @@ spec:
         demo.koney/honeytoken: "true"
     spec:
       containers:
-        - name: nginx
-          image: nginx
-          ports:
-            - containerPort: 80
-        - name: alpine
-          image: alpine
-          command: ["/bin/sh", "-c", 'trap "exit 0" SIGTERM SIGINT SIGKILL; /bin/sleep infinity & wait']
+      - name: nginx
+        image: nginx
+        ports:
+        - containerPort: 80
+      - name: alpine
+        image: alpine
+        command: [ "/bin/sh", "-c", 'trap "exit 0" SIGTERM SIGINT SIGKILL; /bin/sleep infinity & wait' ]

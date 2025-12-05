@@ -7,21 +7,21 @@ spec:
   mutateExisting: true
 
   traps:
-    - filesystemHoneytoken:
-        filePath: /run/secrets/koney/service_token
-        fileContent: >
-          someverysecrettoken
-        readOnly: true
+  - filesystemHoneytoken:
+      filePath: /run/secrets/koney/service_token
+      fileContent: >
+        someverysecrettoken
+      readOnly: true
 
-      match:
-        any:
-          - resources:
-              containerSelector: "*"
-              selector:
-                matchLabels:
-                  demo.koney/honeytoken: "true"
+    match:
+      any:
+      - resources:
+          containerSelector: "*"
+          selector:
+            matchLabels:
+              demo.koney/honeytoken: "true"
 
-      decoyDeployment:
-        strategy: containerExec
-      captorDeployment:
-        strategy: tetragon
+    decoyDeployment:
+      strategy: containerExec
+    captorDeployment:
+      strategy: tetragon

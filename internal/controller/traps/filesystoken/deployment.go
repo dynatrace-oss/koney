@@ -35,7 +35,7 @@ import (
 	"k8s.io/client-go/tools/remotecommand"
 	"k8s.io/client-go/util/retry"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/log"
+	k8slog "sigs.k8s.io/controller-runtime/pkg/log"
 
 	"github.com/dynatrace-oss/koney/api/v1alpha1"
 	"github.com/dynatrace-oss/koney/internal/controller/annotations"
@@ -57,7 +57,7 @@ type FilesystemHoneytokenReconciler struct {
 // The trap is only deployed to the resources where the trap is not already deployed.
 // The boolean return type indicates if any of the resources was not ready yet and this function should be called again later.
 func (r *FilesystemHoneytokenReconciler) DeployDecoy(ctx context.Context, deceptionPolicy *v1alpha1.DeceptionPolicy, trap v1alpha1.Trap) trapsapi.DecoyDeploymentResult {
-	log := log.FromContext(ctx)
+	log := k8slog.FromContext(ctx)
 	var joinedErrors error
 
 	// If we aren't allowed to mutate existing resources, we avoid matching resources created before the policy was created
@@ -151,7 +151,7 @@ func (r *FilesystemHoneytokenReconciler) DeployDecoy(ctx context.Context, decept
 		if len(deployedToContainers) > 0 {
 			// Use RetryOnConflict to elegantly avoid conflicts when updating a resource
 			err := retry.RetryOnConflict(retry.DefaultBackoff, func() error {
-				if err := r.Client.Get(ctx, client.ObjectKeyFromObject(resource), resource); err != nil {
+				if err := r.Get(ctx, client.ObjectKeyFromObject(resource), resource); err != nil {
 					return err
 				}
 
@@ -163,7 +163,7 @@ func (r *FilesystemHoneytokenReconciler) DeployDecoy(ctx context.Context, decept
 				}
 
 				// TODO: Can we use patch instead of update to avoid conflicts?
-				return r.Client.Update(ctx, resource)
+				return r.Update(ctx, resource)
 			})
 			if err != nil {
 				log.Error(err, "unable to update resource", "resource", resource.GetName())
@@ -180,7 +180,7 @@ func (r *FilesystemHoneytokenReconciler) DeployDecoy(ctx context.Context, decept
 
 // DeployCaptor deploys a captor for a filesystem honeytoken trap.
 func (r *FilesystemHoneytokenReconciler) DeployCaptor(ctx context.Context, deceptionPolicy *v1alpha1.DeceptionPolicy, trap v1alpha1.Trap) trapsapi.CaptorDeploymentResult {
-	log := log.FromContext(ctx)
+	log := k8slog.FromContext(ctx)
 
 	switch trap.CaptorDeployment.Strategy {
 	case "tetragon":
@@ -202,7 +202,7 @@ func (r *FilesystemHoneytokenReconciler) DeployCaptor(ctx context.Context, decep
 // deployDecoyWithContainerExec deploys a FilesystemHoneytoken trap to a list of pods using the containerExec strategy.
 // The trap is only deployed to the pods where the trap is not already deployed.
 func (r *FilesystemHoneytokenReconciler) deployDecoyWithContainerExec(ctx context.Context, trap v1alpha1.Trap, pod corev1.Pod, containerName string) error {
-	log := log.FromContext(ctx)
+	log := k8slog.FromContext(ctx)
 
 	var joinedErrors error
 	var cmd []string
@@ -275,7 +275,7 @@ func (r *FilesystemHoneytokenReconciler) deployDecoyWithContainerExec(ctx contex
 // a list of deployments using the volumeMount strategy.
 // The trap is only deployed to the pods where the trap is not already deployed.
 func (r *FilesystemHoneytokenReconciler) deployDecoyWithVolumeMount(ctx context.Context, trap v1alpha1.Trap, deployment appsv1.Deployment, containerName string) error {
-	log := log.FromContext(ctx)
+	log := k8slog.FromContext(ctx)
 
 	var joinedErrors error
 
@@ -305,7 +305,7 @@ func (r *FilesystemHoneytokenReconciler) deployDecoyWithVolumeMount(ctx context.
 	volumeName := generateVolumeName(trap.FilesystemHoneytoken.FilePath)
 
 	// Get the pod
-	if err := r.Client.Get(ctx, client.ObjectKeyFromObject(&deployment), &deployment); err != nil {
+	if err := r.Get(ctx, client.ObjectKeyFromObject(&deployment), &deployment); err != nil {
 		log.Error(err, "unable to get deployment", "deployment", deployment.Name)
 		joinedErrors = errors.Join(joinedErrors, err)
 	}
@@ -359,7 +359,7 @@ func (r *FilesystemHoneytokenReconciler) deployDecoyWithVolumeMount(ctx context.
 
 	err := retry.RetryOnConflict(retry.DefaultBackoff, func() error {
 		// TODO: Can we use patch instead of update to avoid conflicts?
-		return r.Client.Update(ctx, &deployment)
+		return r.Update(ctx, &deployment)
 	})
 	if err != nil {
 		log.Error(err, "unable to update deployment", "deployment", deployment.Name)
@@ -374,7 +374,7 @@ func (r *FilesystemHoneytokenReconciler) deployDecoyWithVolumeMount(ctx context.
 // deployCaptorWithTetragon generates a Tetragon tracing policy
 // to trace the filesystem access of a filesystem honeytoken trap and applies it to the cluster.
 func (r *FilesystemHoneytokenReconciler) deployCaptorWithTetragon(ctx context.Context, deceptionPolicy *v1alpha1.DeceptionPolicy, trap v1alpha1.Trap) error {
-	log := log.FromContext(ctx)
+	log := k8slog.FromContext(ctx)
 
 	tracingPolicyName, err := GenerateTetragonTracingPolicyName(trap)
 	if err != nil {
@@ -386,7 +386,7 @@ func (r *FilesystemHoneytokenReconciler) deployCaptorWithTetragon(ctx context.Co
 	// If the tracing policy already exists, we don't need to do anything
 	// since the name is unique for each unique trap
 	existingTracingPolicy := &ciliumiov1alpha1.TracingPolicy{}
-	err = r.Client.Get(ctx, client.ObjectKey{Name: tracingPolicyName}, existingTracingPolicy)
+	err = r.Get(ctx, client.ObjectKey{Name: tracingPolicyName}, existingTracingPolicy)
 
 	// If the policy does not exist, err is not nil and is a NotFound error
 	if err != nil {
@@ -402,7 +402,7 @@ func (r *FilesystemHoneytokenReconciler) deployCaptorWithTetragon(ctx context.Co
 			return err
 		}
 
-		if err := r.Client.Create(ctx, tracingPolicy); err != nil {
+		if err := r.Create(ctx, tracingPolicy); err != nil {
 			log.Error(err, "unable to create Tetragon tracing policy")
 			return err
 		}
