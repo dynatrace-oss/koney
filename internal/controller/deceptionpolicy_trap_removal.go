@@ -104,7 +104,7 @@ func (r *DeceptionPolicyReconciler) cleanupRemovedCaptors(ctx context.Context, d
 	// Get all the TracingPolicies that are associated with this DeceptionPolicy
 	// TODO: move this to a function RemoveDecoy in the FilesystemHoneytokenReconciler ?
 	tetragonTracingPolicies := &ciliumiov1alpha1.TracingPolicyList{}
-	if err := r.Client.List(ctx, tetragonTracingPolicies, client.MatchingLabels{constants.LabelKeyDeceptionPolicyRef: deceptionPolicy.Name}); err != nil {
+	if err := r.List(ctx, tetragonTracingPolicies, client.MatchingLabels{constants.LabelKeyDeceptionPolicyRef: deceptionPolicy.Name}); err != nil {
 		// If the error is *meta.NoKindMatchError, ignore it
 		_, ok := err.(*meta.NoKindMatchError)
 		if !ok {
@@ -135,7 +135,7 @@ func (r *DeceptionPolicyReconciler) cleanupRemovedCaptors(ctx context.Context, d
 
 			// Delete the captor tracing policies that are not found in the DeceptionPolicy
 			for _, tracingPolicyName := range notFoundTracingPolicies {
-				if err := r.Client.Delete(ctx, &ciliumiov1alpha1.TracingPolicy{
+				if err := r.Delete(ctx, &ciliumiov1alpha1.TracingPolicy{
 					ObjectMeta: metav1.ObjectMeta{
 						Name: tracingPolicyName,
 					},
@@ -150,7 +150,7 @@ func (r *DeceptionPolicyReconciler) cleanupRemovedCaptors(ctx context.Context, d
 
 	// Get all the TracingPolicies that are associated with this DeceptionPolicy
 	kiveTracingPolicies := &kivev1.KivePolicyList{}
-	if err := r.Client.List(ctx, kiveTracingPolicies, client.MatchingLabels{constants.LabelKeyDeceptionPolicyRef: deceptionPolicy.Name}); err != nil {
+	if err := r.List(ctx, kiveTracingPolicies, client.MatchingLabels{constants.LabelKeyDeceptionPolicyRef: deceptionPolicy.Name}); err != nil {
 		// If the error is *meta.NoKindMatchError, ignore it
 		if _, ok := err.(*meta.NoKindMatchError); ok {
 			// Kive is not installed
@@ -180,7 +180,7 @@ func (r *DeceptionPolicyReconciler) cleanupRemovedCaptors(ctx context.Context, d
 
 		// Delete the captor tracing policies that are not found in the DeceptionPolicy
 		for _, tracingPolicyName := range notFoundTracingPolicies {
-			if err := r.Client.Delete(ctx, &kivev1.KivePolicy{
+			if err := r.Delete(ctx, &kivev1.KivePolicy{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      tracingPolicyName,
 					Namespace: utils.GetKoneyNamespace(),

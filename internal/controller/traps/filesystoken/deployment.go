@@ -421,7 +421,7 @@ func (r *FilesystemHoneytokenReconciler) deployCaptorWithTetragon(ctx context.Co
 // deployCaptorWithKive generates a Kive tracing policy
 // to trace the filesystem access of a filesystem honeytoken trap and applies it to the cluster.
 func (r *FilesystemHoneytokenReconciler) deployCaptorWithKive(ctx context.Context, deceptionPolicy *v1alpha1.DeceptionPolicy, trap v1alpha1.Trap) error {
-	log := log.FromContext(ctx)
+	log := k8slog.FromContext(ctx)
 
 	tracingPolicyName, err := GenerateKivePolicyName(trap)
 	if err != nil {
@@ -435,7 +435,7 @@ func (r *FilesystemHoneytokenReconciler) deployCaptorWithKive(ctx context.Contex
 		return err
 	}
 
-	if err := r.Client.Patch(ctx, tracingPolicy, client.Apply, client.ForceOwnership, client.FieldOwner(constants.FieldOwnerKoneyController)); err != nil {
+	if err := r.Patch(ctx, tracingPolicy, client.Apply, client.ForceOwnership, client.FieldOwner(constants.FieldOwnerKoneyController)); err != nil {
 		log.Error(err, "unable to create Kive tracing policy")
 		return err
 	}
