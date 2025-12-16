@@ -1,0 +1,10 @@
+apiVersion: v2
+name: koney
+description: The Koney Helm chart for deception in Kubernetes
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
+icon: "https://github.com/dynatrace-oss/koney/raw/main/docs/images/koney.png"
+home: https://github.com/dynatrace-oss/koney
+sources:
+- https://github.com/dynatrace-oss/koney

@@ -1,0 +1,86 @@
+# Configure the controller manager deployment.
+manager:
+
+  # -- Image settings for the controller manager
+  image:
+    repository: ghcr.io/dynatrace-oss/koney-controller # patch:manager
+    tag: 0.1.0
+    pullPolicy: IfNotPresent
+  # -- Arguments
+  args: []
+  # -- Environment variables
+  env: []
+  # -- Pod-level security settings
+  podSecurityContext:
+    runAsNonRoot: true
+    seccompProfile:
+      type: RuntimeDefault
+  # -- Container-level security settings
+  containerSecurityContext:
+    allowPrivilegeEscalation: false
+    capabilities:
+      drop:
+      - ALL
+  # -- Number of controller manager replicas
+  replicas: 1
+  # -- Resource limits and requests
+  resources:
+    limits:
+      cpu: 500m
+      memory: 256Mi
+    requests:
+      cpu: 10m
+      memory: 128Mi
+
+# Configure the alert forwarder deployment.
+# TEMPORARY VALUES - DO NOT USE !!!
+# WILL BE REMOVED ONCE #18 IS DONE.
+alertForwarder:
+
+  # -- Image settings for the alert forwarder
+  image:
+    repository: ghcr.io/dynatrace-oss/koney-alert-forwarder # patch:alert-forwarder
+    tag: 0.1.0
+    pullPolicy: IfNotPresent
+
+# Helper RBAC roles for managing custom resources
+# These provide convenient admin/editor/viewer roles for each CRD type
+# Useful for giving users different levels of access to your custom resources
+rbacHelpers:
+
+  # -- Install convenience admin/editor/viewer roles for CRDs
+  enable: false
+
+# Custom Resource Definitions.
+crd:
+
+  # -- Install CRDs with the chart
+  enable: true
+  # -- Keep CRDs when uninstalling
+  keep: false
+
+# Controller metrics endpoint.
+metrics:
+
+  # -- Enable to expose /metrics endpoint with RBAC protection.
+  enable: true
+  # -- Metrics server port
+  port: 8443
+
+# Prometheus ServiceMonitor for metrics scraping.
+# Requires prometheus-operator to be installed in the cluster.
+prometheus:
+
+  # -- Enable ServiceMonitor creation
+  enable: false
+
+# Configure manifest specific labels.
+# You probably never want to change these unless you want
+# to generate manifests with other templating tools.
+template:
+
+  # -- Add Helm-specific labels to all resources
+  helmLabels: true
+
+  # -- Create an explicit namespace resource
+  createNamespace: false

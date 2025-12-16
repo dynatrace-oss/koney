@@ -1,0 +1,8 @@
+{{- if .Values.template.createNamespace }}
+apiVersion: v1
+kind: Namespace
+metadata:
+  labels:
+    {{- include "chart.labels" . | nindent 4 }}
+  name: {{ include "chart.namespaceName" . }}
+{{- end }}

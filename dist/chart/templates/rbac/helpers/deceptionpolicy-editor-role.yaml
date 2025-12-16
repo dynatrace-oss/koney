@@ -1,0 +1,28 @@
+{{- if .Values.rbacHelpers.enable }}
+# Permissions for end users to edit deceptionpolicies
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    {{- include "chart.labels" . | nindent 4 }}
+  name: koney-deceptionpolicy-editor-role
+rules:
+- apiGroups:
+  - research.dynatrace.com
+  resources:
+  - deceptionpolicies
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - research.dynatrace.com
+  resources:
+  - deceptionpolicies/status
+  verbs:
+  - get
+{{- end }}

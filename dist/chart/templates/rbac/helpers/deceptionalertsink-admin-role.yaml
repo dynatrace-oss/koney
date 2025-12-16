@@ -1,0 +1,22 @@
+{{- if .Values.rbacHelpers.enable }}
+# Permissions for end users to administrate deceptionalertsinks
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    {{- include "chart.labels" . | nindent 4 }}
+  name: koney-deceptionalertsink-admin-role
+rules:
+- apiGroups:
+  - research.dynatrace.com
+  resources:
+  - deceptionalertsinks
+  verbs:
+  - '*'
+- apiGroups:
+  - research.dynatrace.com
+  resources:
+  - deceptionalertsinks/status
+  verbs:
+  - get
+{{- end }}

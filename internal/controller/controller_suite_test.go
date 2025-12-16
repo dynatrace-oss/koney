@@ -19,11 +19,14 @@ import (
 	"context"
 	"os"
 	"path/filepath"
+	"regexp"
 	"testing"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
+	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
+	"k8s.io/apimachinery/pkg/util/yaml"
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -66,8 +69,10 @@ var _ = BeforeSuite(func() {
 
 	By("bootstrapping test environment")
 	testEnv = &envtest.Environment{
-		CRDDirectoryPaths:     []string{filepath.Join("..", "..", "config", "crd", "bases")},
-		ErrorIfCRDPathMissing: true,
+		CRDs: []*apiextensionsv1.CustomResourceDefinition{
+			loadCRD(filepath.Join("..", "..", "dist", "chart", "templates", "crd", "research.dynatrace.com_deceptionpolicies.yaml")),
+			loadCRD(filepath.Join("..", "..", "dist", "chart", "templates", "crd", "research.dynatrace.com_deceptionalertsinks.yaml")),
+		},
 	}
 
 	// Retrieve the first found binary directory to allow running tests from IDEs
@@ -113,4 +118,18 @@ func getFirstFoundEnvTestBinaryDir() string {
 		}
 	}
 	return ""
+}
+
+func loadCRD(path string) *apiextensionsv1.CustomResourceDefinition {
+	data, err := os.ReadFile(path)
+	Expect(err).NotTo(HaveOccurred())
+
+	// Remove Helm templating
+	re := regexp.MustCompile(`\{\{.*?\}\}`)
+	data = re.ReplaceAll(data, []byte(""))
+
+	crd := &apiextensionsv1.CustomResourceDefinition{}
+	err = yaml.Unmarshal(data, crd)
+	Expect(err).NotTo(HaveOccurred())
+	return crd
 }
