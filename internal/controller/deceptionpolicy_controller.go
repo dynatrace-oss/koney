@@ -50,17 +50,6 @@ type DeceptionPolicyReconciler struct {
 	Config    rest.Config
 }
 
-// +kubebuilder:rbac:groups=research.dynatrace.com,resources=deceptionpolicies,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=research.dynatrace.com,resources=deceptionpolicies/status,verbs=get;update;patch
-// +kubebuilder:rbac:groups=research.dynatrace.com,resources=deceptionpolicies/finalizers,verbs=update
-// +kubebuilder:rbac:groups=core,resources=pods,verbs=get;list;watch;update
-// +kubebuilder:rbac:groups=core,resources=pods/status,verbs=get
-// +kubebuilder:rbac:groups=core,resources=pods/exec,verbs=create
-// +kubebuilder:rbac:groups=core,resources=secrets,verbs=get;list;watch;update;create;delete
-// +kubebuilder:rbac:groups=apps,resources=deployments,verbs=get;list;watch;update;patch
-// +kubebuilder:rbac:groups=core,resources=deployments/status,verbs=get
-// +kubebuilder:rbac:groups=cilium.io,resources=tracingpolicies,verbs=get;list;watch;update;patch;create;delete
-
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
 func (r *DeceptionPolicyReconciler) Reconcile(ctx context.Context, req ctrl.Request) (reconcilResult ctrl.Result, reconcileErr error) {

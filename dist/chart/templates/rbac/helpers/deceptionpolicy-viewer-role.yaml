@@ -1,0 +1,24 @@
+{{- if .Values.rbacHelpers.enable }}
+# Permissions for end users to view deceptionpolicies
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    {{- include "chart.labels" . | nindent 4 }}
+  name: koney-deceptionpolicy-viewer-role
+rules:
+- apiGroups:
+  - research.dynatrace.com
+  resources:
+  - deceptionpolicies
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - research.dynatrace.com
+  resources:
+  - deceptionpolicies/status
+  verbs:
+  - get
+{{- end }}
