@@ -1,5 +1,5 @@
-#!/bin/sh
-set -o errexit
+#!/bin/bash
+set -e
 
 KIND_CLUSTER_NAME="${KIND_CLUSTER_NAME:-kind}"
 CONTAINER_TOOL="${CONTAINER_TOOL:-docker}"
