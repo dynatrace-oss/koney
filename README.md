@@ -20,12 +20,27 @@ Currently, Koney supports the deployment of [honeytokens](https://en.wikipedia.o
 
 ## 🚀 Quickstart
 
-Install the operator in your cluster and wait for it to be ready:
+You can install Koney with `kubectl` or `helm`. If you have Helm installed, we recommend Helm.
+
+**Option A:** (recommended) Install Koney with `helm`
+
+```sh
+helm install koney --create-namespace -n koney-system https://raw.githubusercontent.com/dynatrace-oss/koney/refs/heads/main/dist/koney-0.1.0.tgz
+```
+
+**Option B:** Install Koney with `kubectl` (in default namespace `koney-system`)
 
 ```sh
 kubectl apply -f https://raw.githubusercontent.com/dynatrace-oss/koney/refs/tags/v0.1.0/dist/install.yaml
+```
+
+In both cases, wait for Koney to be ready:
+
+```sh
 kubectl wait --for=condition=ready pod -n koney-system -l control-plane=controller-manager
 ```
+
+### Configure a honeytoken and test it
 
 Deploy a sample deception policy:
 

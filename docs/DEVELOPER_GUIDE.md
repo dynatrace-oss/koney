@@ -24,13 +24,7 @@ make docker-build docker-push IMAGE_TAG_BASE="your.local.registry/koney" VERSION
 
 ℹ️ **Note:** You can create an `.env` file in the repository root to set some arguments directly.
 
-Before deploying the operator, install the Custom Resource Definitions (CRDs) to the cluster:
-
-```sh
-make install
-```
-
-Then, deploy the manager to the cluster with the specified version:
+Deploy the controller and all resources to the cluster with the specified version:
 
 ```sh
 make deploy IMAGE_TAG_BASE="your.local.registry/koney" VERSION="demo"
@@ -54,33 +48,33 @@ Delete deception policies and give the operator a chance to clean up traps:
 kubectl delete -f config/samples/deceptionpolicy-servicetoken.yaml
 ```
 
-Undeploy the controller from the cluster:
+Undeploy the controller and all resources from the cluster:
 
 ```sh
 make undeploy
 ```
 
-Finally, delete the APIs (CRDs) from the cluster:
-
-```sh
-make uninstall
-```
-
 ## 🏗️ Project Distribution
 
-Build the installer for the image built and published in the registry:
+Create the Helm chart and package it:
 
 ```sh
-make build-installer IMAGE_TAG_BASE="your.local.registry/koney" VERSION="x.y.z"
+make build-chart IMAGE_TAG_BASE="your.local.registry/koney" VERSION="x.y.z"
 ```
 
-ℹ️ **Note**: The makefile target mentioned above generates an `install.yaml` file in the `dist` directory. This file contains all the resources built with Kustomize, which are necessary to install this project without its dependencies.
+Render the Helm chart to create a consolidated YAML file for easy installation:
+
+```sh
+make render-template IMAGE_TAG_BASE="your.local.registry/koney" VERSION="x.y.z"
+```
+
+ℹ️ **Note**: The makefile target mentioned above generates an `install.yaml` file in the `dist` directory. This file contains a rendered version of the Helm chart.
 
 ### New Release Process
 
 1. Bump the version in the `Makefile`
 2. Bump the version in the `README.md`
-3. Build the installer (see above) with the new version
+3. Build the chart and `install.yaml` (see above) with the new version
 4. Commit, tag, push, and let the pipeline push the image to the registry
 5. Create a new release on GitHub
 
