@@ -1,0 +1,57 @@
+name: Test Helm Chart
+
+on:
+  pull_request:
+  push:
+
+
+jobs:
+  test-e2e:
+    name: Install Helm chart
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Setup Go
+      uses: actions/setup-go@v5
+      with:
+        go-version-file: go.mod
+
+    - name: Install kind
+      run: |
+        curl -Lo ./kind https://kind.sigs.k8s.io/dl/latest/kind-linux-$(go env GOARCH)
+        chmod +x ./kind
+        sudo mv ./kind /usr/local/bin/kind
+
+    - name: Verify kind installation
+      run: kind version
+
+    - name: Start cluster
+      run: make setup-test-e2e
+
+    - name: Prepare images
+      run: |
+        go mod tidy
+        make docker-build docker-push
+
+    - name: Install Helm
+      run: |
+        curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-4
+        chmod 700 get_helm.sh
+        ./get_helm.sh
+
+    - name: Verify Helm installation
+      run: helm version
+
+    - name: Lint Helm Chart
+      run: |
+        helm lint ./dist/chart
+
+    - name: Install Helm chart
+      run: |
+        helm install test-koney-release ./dist/chart --create-namespace --namespace koney-system
+
+    - name: Check Helm release status
+      run: |
+        helm status test-koney-release --namespace koney-system
