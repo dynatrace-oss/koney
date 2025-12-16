@@ -75,7 +75,7 @@ manifests: controller-gen ## Generate CustomResourceDefinition YAML manifests fr
 	./hack/make/patch-crds.sh dist/chart/templates/crd
 
 .PHONY: generate
-generate: controller-gen ## Generate Go code for deep-copy from API definitions.
+generate: controller-gen goimports ## Generate Go code for deep-copy from API definitions.
 	@echo "Generating zz_generated.deepcopy.go from API definitions ..."
 	$(CONTROLLER_GEN) object paths="./..."
 	$(GOIMPORTS) -l -w -local github.com/dynatrace-oss/koney .
@@ -167,7 +167,7 @@ build-chart: manifests helm ## Generate a Helm chart from the installer YAML.
 	$(HELM) lint ./dist/chart
 
 .PHONY: render-template
-render-template: build-chart ## Generate a consolidated YAML rendered from the Helm chart.
+render-template: build-chart helm ## Generate a consolidated YAML rendered from the Helm chart.
 	$(HELM) template --namespace $(DEFAULT_NAMESPACE) \
 		--set manager.image.repository=${IMG_CONTROLLER_NAME} \
 		--set manager.image.tag=${VERSION} \
@@ -184,7 +184,7 @@ ifndef ignore-not-found
 endif
 
 .PHONY: deploy
-deploy: manifests ## Deploy Koney to the currently configured cluster.
+deploy: manifests helm ## Deploy Koney to the currently configured cluster.
 	$(HELM) template --namespace $(DEFAULT_NAMESPACE) \
 		--set manager.image.repository=${IMG_CONTROLLER_NAME} \
 		--set manager.image.tag=${VERSION} \
@@ -195,7 +195,7 @@ deploy: manifests ## Deploy Koney to the currently configured cluster.
 		koney ./dist/chart | $(KUBECTL) apply -f -
 
 .PHONY: undeploy
-undeploy: ## Undeploy Koney from the currently configured cluster. Call with ignore-not-found=true to ignore resource not found errors during deletion.
+undeploy: helm ## Undeploy Koney from the currently configured cluster. Call with ignore-not-found=true to ignore resource not found errors during deletion.
 	$(HELM) template --namespace $(DEFAULT_NAMESPACE) --set template.createNamespace=true koney ./dist/chart | $(KUBECTL) delete --ignore-not-found=$(ignore-not-found) -f -
 ##@ Dependencies
 
