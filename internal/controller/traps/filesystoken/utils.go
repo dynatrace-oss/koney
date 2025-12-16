@@ -172,7 +172,7 @@ func generateTetragonTracingPolicy(deceptionPolicy *v1alpha1.DeceptionPolicy, tr
 							MatchActions: []ciliumiov1alpha1.ActionSelector{
 								{
 									Action: "GetUrl",
-									ArgUrl: constants.TetragonWebhookUrl,
+									ArgUrl: buildTetragonWebhookUrl(),
 								},
 							},
 						},
@@ -207,7 +207,7 @@ func generateTetragonTracingPolicy(deceptionPolicy *v1alpha1.DeceptionPolicy, tr
 							MatchActions: []ciliumiov1alpha1.ActionSelector{
 								{
 									Action: "GetUrl",
-									ArgUrl: constants.TetragonWebhookUrl,
+									ArgUrl: buildTetragonWebhookUrl(),
 								},
 							},
 						},
@@ -263,4 +263,8 @@ func generateTetragonTracingPolicy(deceptionPolicy *v1alpha1.DeceptionPolicy, tr
 	}
 
 	return tracingPolicy, nil
+}
+
+func buildTetragonWebhookUrl() string {
+	return "http://koney-alert-forwarder-webhook." + utils.GetKoneyNamespace() + ".svc:8000/handlers/tetragon"
 }

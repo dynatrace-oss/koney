@@ -27,15 +27,15 @@ import (
 
 	"github.com/dynatrace-oss/koney/api/v1alpha1"
 	"github.com/dynatrace-oss/koney/internal/controller/constants"
+	"github.com/dynatrace-oss/koney/internal/controller/utils"
 	testutils "github.com/dynatrace-oss/koney/test/utils"
 )
 
 const (
 	imageTagPrefix = "e2e-tests-"
 
-	managerNamespace = constants.KoneyNamespace
-	testNamespace    = "koney-tests"
-	testCrdName      = "deceptionpolicies.research.dynatrace.com"
+	testNamespace = "koney-tests"
+	testCrdName   = "deceptionpolicies.research.dynatrace.com"
 
 	manifestsDir = "test/e2e/manifests"
 
@@ -70,6 +70,9 @@ var (
 
 	// controllerContainersPolicyShouldMatch is the only list of containers that all policies should match
 	containersPolicyShouldMatch = []string{"nginx"}
+
+	// managerNamespace is the namespace where the controller-manager is deployed
+	managerNamespace = utils.GetKoneyNamespace()
 )
 
 //nolint:dupl

@@ -15,6 +15,7 @@
 
 import base64
 import logging
+import os
 from functools import cache
 from typing import cast
 
@@ -26,7 +27,7 @@ from .alerts import map_to_dynatrace_event
 from .types import AlertSink, DynatraceSink, KoneyAlert
 
 # the namespace where Koney and the DeceptionAlertSink CRDs are located
-KONEY_NAMESPACE = "koney-system"
+KONEY_NAMESPACE = os.environ.get("KONEY_NAMESPACE", "koney-system")
 
 # group, version, plural of the Koney DeceptionAlertSink CRD
 KONEY_DECEPTION_ALERT_SINK_GVNP = (

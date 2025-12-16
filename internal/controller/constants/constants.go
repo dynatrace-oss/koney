@@ -15,12 +15,11 @@
 
 package constants
 
-import "time"
+import (
+	"time"
+)
 
 const (
-	// KoneyNamespace is the namespace where Koney is installed.
-	KoneyNamespace = "koney-system"
-
 	// AnnotationKeyChanges is the annotation key that is placed on resources that have been modified by Koney.
 	// Koney needs this annotation when cleaning up or updating traps. Also, this makes it easier to see modified resources.
 	AnnotationKeyChanges = "koney/changes"
@@ -41,7 +40,4 @@ const (
 
 	// WildcardContainerSelectorRegex is a regex that matches wildcard characters in container selector fields.
 	WildcardContainerSelectorRegex = `\*|\?|\[|\]`
-
-	// TetragonWebhookUrl is the URL of the alert forwarder that receives alerts from Tetragon.
-	TetragonWebhookUrl = "http://koney-alert-forwarder-webhook." + KoneyNamespace + ".svc:8000/handlers/tetragon"
 )

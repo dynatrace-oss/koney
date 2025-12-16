@@ -27,14 +27,14 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/dynatrace-oss/koney/api/v1alpha1"
-	"github.com/dynatrace-oss/koney/internal/controller/constants"
+	"github.com/dynatrace-oss/koney/internal/controller/utils"
 )
 
 var _ = Describe("DeceptionPolicy Controller", func() {
 
 	Context("When reconciling a resource", func() {
 		const resourceName = "test-deceptionpolicy"
-		const resourceNamespace = constants.KoneyNamespace
+		var resourceNamespace = utils.GetKoneyNamespace()
 		namespacedName := types.NamespacedName{Name: resourceName, Namespace: resourceNamespace}
 		deceptionPolicy := &v1alpha1.DeceptionPolicy{}
 
