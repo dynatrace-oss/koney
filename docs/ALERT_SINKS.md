@@ -13,7 +13,7 @@ At the moment, we support sending alerts to the following systems:
 
 1. Open the **'Access Tokens'** app in your Dynatrace environment
 2. Create a new access token with scope `openpipeline.events_security`. Follow the [official documentation](https://docs.dynatrace.com/docs/shortlink/api-authentication#token-format-prefixes) for more information.
-3. Store the created token and your [environment ID](https://docs.dynatrace.com/docs/shortlink/monitoring-environment#environment-id) in a `Secret` resource in the `koney-system` namespace
+3. Store the created token and your [environment ID](https://docs.dynatrace.com/docs/shortlink/monitoring-environment#environment-id) in a `Secret` resource in the same namespace as Koney (default: `koney-system`).
 
 ```yaml
 kubectl create secret generic -n koney-system dynatrace-api-token \
@@ -45,6 +45,8 @@ To apply a deception alert sink resource, use the following command:
 ```sh
 kubectl apply -f <deceptionalertsink-file>.yaml
 ```
+
+ℹ️ **Note**: The `DeceptionAlertSink` resource and the referenced `Secret` resource must be in the same namespace as Koney (default: `koney-system`).
 
 ### Dynatrace Sink Format
 
