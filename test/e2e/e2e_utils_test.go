@@ -318,7 +318,7 @@ func verifyHoneytokenAndAwaitAlert(
 		var attempt int
 
 		for attempt < maxAttempts {
-			alerts, err = findKoneyAlerts(trap.FilesystemHoneytoken.FilePath, "koney-system", &firstAccessTime)
+			alerts, err = findKoneyAlerts(trap.FilesystemHoneytoken.FilePath, managerNamespace, &firstAccessTime)
 			if err != nil {
 				return err
 			}

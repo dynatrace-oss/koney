@@ -1,66 +1,67 @@
 repos:
-  # general pre-commit hooks
-  - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v5.0.0
-    hooks:
-      - id: check-case-conflict
-      - id: check-json
-      - id: check-toml
-      - id: check-xml
-      - id: check-yaml
-        args: [--allow-multiple-documents]
-      - id: detect-private-key
-      - id: end-of-file-fixer
-      - id: mixed-line-ending
-      - id: trailing-whitespace
-        args: [--markdown-linebreak-ext=md]
+# general pre-commit hooks
+- repo: https://github.com/pre-commit/pre-commit-hooks
+  rev: v5.0.0
+  hooks:
+  - id: check-case-conflict
+  - id: check-json
+  - id: check-toml
+  - id: check-xml
+  - id: check-yaml
+    args: [ --allow-multiple-documents ]
+    exclude: ^dist/chart/
+  - id: detect-private-key
+  - id: end-of-file-fixer
+  - id: mixed-line-ending
+  - id: trailing-whitespace
+    args: [ --markdown-linebreak-ext=md ]
 
-  # license headers
-  - repo: https://github.com/Lucas-C/pre-commit-hooks
-    rev: v1.5.5
-    hooks:
-      - id: insert-license
-        name: add license headers (go)
-        files: (?<!zz_generated.deepcopy)\.go$
-        args: [--use-current-year, --license-filepath, LICENSE_HEADER.txt, --comment-style, "//"]
-      - id: insert-license
-        name: add license headers (python)
-        files: (?<!__init__)\.py$
-        args: [--use-current-year, --license-filepath, LICENSE_HEADER.txt, --comment-style, "#"]
+# license headers
+- repo: https://github.com/Lucas-C/pre-commit-hooks
+  rev: v1.5.5
+  hooks:
+  - id: insert-license
+    name: add license headers (go)
+    files: (?<!zz_generated.deepcopy)\.go$
+    args: [ --use-current-year, --license-filepath, LICENSE_HEADER.txt, --comment-style, "//" ]
+  - id: insert-license
+    name: add license headers (python)
+    files: (?<!__init__)\.py$
+    args: [ --use-current-year, --license-filepath, LICENSE_HEADER.txt, --comment-style, "#" ]
 
-  # go files
-  - repo: local
-    hooks:
-      - id: format
-        name: format with gofmt and goimports
-        entry: make fmt
-        language: system
-        pass_filenames: false
-        types: [go]
-  - repo: local
-    hooks:
-      - id: lint
-        name: lint with vet and golangci-lint
-        entry: make vet lint
-        language: system
-        pass_filenames: false
-        types: [go]
-  - repo: local
-    hooks:
-      - id: test
-        name: run unit tests
-        entry: make test
-        language: system
-        pass_filenames: false
+# go files
+- repo: local
+  hooks:
+  - id: format
+    name: format with gofmt and goimports
+    entry: make fmt
+    language: system
+    pass_filenames: false
+    types: [ go ]
+- repo: local
+  hooks:
+  - id: lint
+    name: lint with vet and golangci-lint
+    entry: make vet lint
+    language: system
+    pass_filenames: false
+    types: [ go ]
+- repo: local
+  hooks:
+  - id: test
+    name: run unit tests
+    entry: make test
+    language: system
+    pass_filenames: false
 
-  # python files
-  - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.9.2
-    hooks:
-      - id: ruff
-        args: [--select, I, --fix]
-        name: lint with ruff
-        types: [python]
-      - id: ruff-format
-        name: format with ruff
-        types: [python]
+# python files
+- repo: https://github.com/astral-sh/ruff-pre-commit
+  rev: v0.9.2
+  hooks:
+  - id: ruff
+    args: [ --select, I, --fix ]
+    name: lint with ruff
+    types: [ python ]
+  - id: ruff-format
+    name: format with ruff
+    types: [ python ]

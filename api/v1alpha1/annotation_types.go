@@ -30,7 +30,7 @@ type TrapAnnotation struct {
 	DeploymentStrategy string `json:"deploymentStrategy"`
 
 	// Containers is the list of containers where the trap is deployed.
-	// kubebuilder:validation:UniqueItems=true
+	// +kubebuilder:validation:UniqueItems=true
 	Containers []string `json:"containers"`
 
 	// CreatedAt is the time in the current local time when the trap was injected in the pod.
