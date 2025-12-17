@@ -1,12 +1,26 @@
+---
+# Source: koney/templates/hack/namespace.yaml
 apiVersion: v1
 kind: Namespace
 metadata:
   labels:
-    app.kubernetes.io/managed-by: kustomize
     app.kubernetes.io/name: koney
-    control-plane: controller-manager
+    app.kubernetes.io/instance: koney
+    app.kubernetes.io/version: "0.1.0"
   name: koney-system
 ---
+# Source: koney/templates/rbac/manager/manager-serviceaccount.yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  labels:
+    app.kubernetes.io/name: koney
+    app.kubernetes.io/instance: koney
+    app.kubernetes.io/version: "0.1.0"
+  name: koney-manager-serviceaccount
+  namespace: koney-system
+---
+# Source: koney/templates/crd/research.dynatrace.com_deceptionalertsinks.yaml
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
@@ -71,6 +85,7 @@ spec:
     served: true
     storage: true
 ---
+# Source: koney/templates/crd/research.dynatrace.com_deceptionpolicies.yaml
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
@@ -334,62 +349,14 @@ spec:
     subresources:
       status: {}
 ---
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  labels:
-    app.kubernetes.io/managed-by: kustomize
-    app.kubernetes.io/name: koney
-  name: koney-controller-manager
-  namespace: koney-system
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: Role
-metadata:
-  labels:
-    app.kubernetes.io/managed-by: kustomize
-    app.kubernetes.io/name: koney
-  name: koney-leader-election-role
-  namespace: koney-system
-rules:
-- apiGroups:
-  - ""
-  resources:
-  - configmaps
-  verbs:
-  - get
-  - list
-  - watch
-  - create
-  - update
-  - patch
-  - delete
-- apiGroups:
-  - coordination.k8s.io
-  resources:
-  - leases
-  verbs:
-  - get
-  - list
-  - watch
-  - create
-  - update
-  - patch
-  - delete
-- apiGroups:
-  - ""
-  resources:
-  - events
-  verbs:
-  - create
-  - patch
----
+# Source: koney/templates/rbac/alert-forwarder/alert-forwarder-role.yaml
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
   labels:
-    app.kubernetes.io/managed-by: kustomize
     app.kubernetes.io/name: koney
+    app.kubernetes.io/instance: koney
+    app.kubernetes.io/version: "0.1.0"
   name: koney-alert-forwarder-role
 rules:
 - apiGroups:
@@ -421,151 +388,14 @@ rules:
   - list
   - watch
 ---
+# Source: koney/templates/rbac/manager/manager-role.yaml
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
   labels:
-    app.kubernetes.io/managed-by: kustomize
     app.kubernetes.io/name: koney
-  name: koney-deceptionalertsink-admin-role
-rules:
-- apiGroups:
-  - research.dynatrace.com
-  resources:
-  - deceptionalertsinks
-  verbs:
-  - '*'
-- apiGroups:
-  - research.dynatrace.com
-  resources:
-  - deceptionalertsinks/status
-  verbs:
-  - get
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRole
-metadata:
-  labels:
-    app.kubernetes.io/managed-by: kustomize
-    app.kubernetes.io/name: koney
-  name: koney-deceptionalertsink-editor-role
-rules:
-- apiGroups:
-  - research.dynatrace.com
-  resources:
-  - deceptionalertsinks
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - research.dynatrace.com
-  resources:
-  - deceptionalertsinks/status
-  verbs:
-  - get
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRole
-metadata:
-  labels:
-    app.kubernetes.io/managed-by: kustomize
-    app.kubernetes.io/name: koney
-  name: koney-deceptionalertsink-viewer-role
-rules:
-- apiGroups:
-  - research.dynatrace.com
-  resources:
-  - deceptionalertsinks
-  verbs:
-  - get
-  - list
-  - watch
-- apiGroups:
-  - research.dynatrace.com
-  resources:
-  - deceptionalertsinks/status
-  verbs:
-  - get
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRole
-metadata:
-  labels:
-    app.kubernetes.io/managed-by: kustomize
-    app.kubernetes.io/name: koney
-  name: koney-deceptionpolicy-admin-role
-rules:
-- apiGroups:
-  - research.dynatrace.com
-  resources:
-  - deceptionpolicies
-  verbs:
-  - '*'
-- apiGroups:
-  - research.dynatrace.com
-  resources:
-  - deceptionpolicies/status
-  verbs:
-  - get
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRole
-metadata:
-  labels:
-    app.kubernetes.io/managed-by: kustomize
-    app.kubernetes.io/name: koney
-  name: koney-deceptionpolicy-editor-role
-rules:
-- apiGroups:
-  - research.dynatrace.com
-  resources:
-  - deceptionpolicies
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - research.dynatrace.com
-  resources:
-  - deceptionpolicies/status
-  verbs:
-  - get
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRole
-metadata:
-  labels:
-    app.kubernetes.io/managed-by: kustomize
-    app.kubernetes.io/name: koney
-  name: koney-deceptionpolicy-viewer-role
-rules:
-- apiGroups:
-  - research.dynatrace.com
-  resources:
-  - deceptionpolicies
-  verbs:
-  - get
-  - list
-  - watch
-- apiGroups:
-  - research.dynatrace.com
-  resources:
-  - deceptionpolicies/status
-  verbs:
-  - get
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRole
-metadata:
+    app.kubernetes.io/instance: koney
+    app.kubernetes.io/version: "0.1.0"
   name: koney-manager-role
 rules:
 - apiGroups:
@@ -650,9 +480,14 @@ rules:
   - patch
   - update
 ---
+# Source: koney/templates/rbac/metrics/metrics-auth-role.yaml
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
+  labels:
+    app.kubernetes.io/name: koney
+    app.kubernetes.io/instance: koney
+    app.kubernetes.io/version: "0.1.0"
   name: koney-metrics-auth-role
 rules:
 - apiGroups:
@@ -668,22 +503,126 @@ rules:
   verbs:
   - create
 ---
+# Source: koney/templates/rbac/metrics/metrics-reader-role.yaml
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: koney-metrics-reader
+  labels:
+    app.kubernetes.io/name: koney
+    app.kubernetes.io/instance: koney
+    app.kubernetes.io/version: "0.1.0"
+  name: koney-metrics-reader-role
 rules:
 - nonResourceURLs:
   - /metrics
   verbs:
   - get
 ---
+# Source: koney/templates/rbac/alert-forwarder/alert-forwarder-rolebinding.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  labels:
+    app.kubernetes.io/name: koney
+    app.kubernetes.io/instance: koney
+    app.kubernetes.io/version: "0.1.0"
+  name: koney-alert-forwarder-rolebinding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: koney-alert-forwarder-role
+subjects:
+- kind: ServiceAccount
+  name: koney-manager-serviceaccount
+  namespace: koney-system
+---
+# Source: koney/templates/rbac/manager/manager-rolebinding.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  labels:
+    app.kubernetes.io/name: koney
+    app.kubernetes.io/instance: koney
+    app.kubernetes.io/version: "0.1.0"
+  name: koney-manager-rolebinding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: koney-manager-role
+subjects:
+- kind: ServiceAccount
+  name: koney-manager-serviceaccount
+  namespace: koney-system
+---
+# Source: koney/templates/rbac/metrics/metrics-auth-rolebinding.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  labels:
+    app.kubernetes.io/name: koney
+    app.kubernetes.io/instance: koney
+    app.kubernetes.io/version: "0.1.0"
+  name: koney-metrics-auth-rolebinding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: koney-metrics-auth-role
+subjects:
+- kind: ServiceAccount
+  name: koney-manager-serviceaccount
+  namespace: koney-system
+---
+# Source: koney/templates/rbac/manager/leader-election-role.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  labels:
+    app.kubernetes.io/name: koney
+    app.kubernetes.io/instance: koney
+    app.kubernetes.io/version: "0.1.0"
+  name: koney-leader-election-role
+  namespace: koney-system
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - configmaps
+  verbs:
+  - get
+  - list
+  - watch
+  - create
+  - update
+  - patch
+  - delete
+- apiGroups:
+  - coordination.k8s.io
+  resources:
+  - leases
+  verbs:
+  - get
+  - list
+  - watch
+  - create
+  - update
+  - patch
+  - delete
+- apiGroups:
+  - ""
+  resources:
+  - events
+  verbs:
+  - create
+  - patch
+---
+# Source: koney/templates/rbac/manager/leader-election-rolebinding.yaml
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
   labels:
-    app.kubernetes.io/managed-by: kustomize
     app.kubernetes.io/name: koney
+    app.kubernetes.io/instance: koney
+    app.kubernetes.io/version: "0.1.0"
   name: koney-leader-election-rolebinding
   namespace: koney-system
 roleRef:
@@ -692,60 +631,17 @@ roleRef:
   name: koney-leader-election-role
 subjects:
 - kind: ServiceAccount
-  name: koney-controller-manager
+  name: koney-manager-serviceaccount
   namespace: koney-system
 ---
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRoleBinding
-metadata:
-  labels:
-    app.kubernetes.io/managed-by: kustomize
-    app.kubernetes.io/name: koney
-  name: koney-alert-forwarder-rolebinding
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: ClusterRole
-  name: koney-alert-forwarder-role
-subjects:
-- kind: ServiceAccount
-  name: koney-controller-manager
-  namespace: koney-system
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRoleBinding
-metadata:
-  labels:
-    app.kubernetes.io/managed-by: kustomize
-    app.kubernetes.io/name: koney
-  name: koney-manager-rolebinding
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: ClusterRole
-  name: koney-manager-role
-subjects:
-- kind: ServiceAccount
-  name: koney-controller-manager
-  namespace: koney-system
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRoleBinding
-metadata:
-  name: koney-metrics-auth-rolebinding
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: ClusterRole
-  name: koney-metrics-auth-role
-subjects:
-- kind: ServiceAccount
-  name: koney-controller-manager
-  namespace: koney-system
----
+# Source: koney/templates/manager/alert-forwarder-webhook.yaml
 apiVersion: v1
 kind: Service
 metadata:
   labels:
-    app.kubernetes.io/managed-by: kustomize
     app.kubernetes.io/name: koney
+    app.kubernetes.io/instance: koney
+    app.kubernetes.io/version: "0.1.0"
     control-plane: controller-manager
   name: koney-alert-forwarder-webhook
   namespace: koney-system
@@ -758,12 +654,14 @@ spec:
   selector:
     control-plane: controller-manager
 ---
+# Source: koney/templates/metrics/controller-manager-metrics-service.yaml
 apiVersion: v1
 kind: Service
 metadata:
   labels:
-    app.kubernetes.io/managed-by: kustomize
     app.kubernetes.io/name: koney
+    app.kubernetes.io/instance: koney
+    app.kubernetes.io/version: "0.1.0"
     control-plane: controller-manager
   name: koney-controller-manager-metrics-service
   namespace: koney-system
@@ -775,14 +673,17 @@ spec:
     targetPort: 8443
   selector:
     app.kubernetes.io/name: koney
+    app.kubernetes.io/instance: koney
     control-plane: controller-manager
 ---
+# Source: koney/templates/manager/controller-manager.yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   labels:
-    app.kubernetes.io/managed-by: kustomize
     app.kubernetes.io/name: koney
+    app.kubernetes.io/instance: koney
+    app.kubernetes.io/version: "0.1.0"
     control-plane: controller-manager
   name: koney-controller-manager
   namespace: koney-system
@@ -791,6 +692,7 @@ spec:
   selector:
     matchLabels:
       app.kubernetes.io/name: koney
+      app.kubernetes.io/instance: koney
       control-plane: controller-manager
   template:
     metadata:
@@ -798,48 +700,38 @@ spec:
         kubectl.kubernetes.io/default-container: manager
       labels:
         app.kubernetes.io/name: koney
+        app.kubernetes.io/instance: koney
+        app.kubernetes.io/version: "0.1.0"
         control-plane: controller-manager
     spec:
+      serviceAccountName: koney-manager-serviceaccount
+      terminationGracePeriodSeconds: 10
+      volumes: []
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
       containers:
-      - image: ghcr.io/dynatrace-oss/koney-alert-forwarder:0.1.0
-        livenessProbe:
-          httpGet:
-            path: /healthz
-            port: 8000
-          initialDelaySeconds: 15
-          periodSeconds: 60
-        name: alerts
-        ports:
-        - containerPort: 8000
-          name: http
-          protocol: TCP
-        resources:
-          limits:
-            cpu: 250m
-            memory: 256Mi
-          requests:
-            cpu: 5m
-            memory: 128Mi
-        securityContext:
-          allowPrivilegeEscalation: false
-          capabilities:
-            drop:
-            - ALL
-      - args:
-        - --metrics-bind-address=:8443
-        - --leader-elect
-        - --health-probe-bind-address=:8081
+      - name: manager
+        image: "ghcr.io/dynatrace-oss/koney-controller:0.1.0"
+        imagePullPolicy: IfNotPresent
         command:
         - /manager
-        image: ghcr.io/dynatrace-oss/koney-controller:0.1.0
+        args:
+        - --leader-elect
+        - --health-probe-bind-address=:8081
+        - --metrics-bind-address=:8443
+        env:
+        - name: KONEY_NAMESPACE
+          value: "koney-system"
+        ports: []
+        volumeMounts: []
         livenessProbe:
           httpGet:
             path: /healthz
             port: 8081
           initialDelaySeconds: 15
           periodSeconds: 20
-        name: manager
-        ports: []
         readinessProbe:
           httpGet:
             path: /readyz
@@ -849,20 +741,40 @@ spec:
         resources:
           limits:
             cpu: 500m
-            memory: 128Mi
+            memory: 256Mi
           requests:
             cpu: 10m
-            memory: 64Mi
+            memory: 128Mi
         securityContext:
           allowPrivilegeEscalation: false
           capabilities:
             drop:
             - ALL
-        volumeMounts: []
-      securityContext:
-        runAsNonRoot: true
-        seccompProfile:
-          type: RuntimeDefault
-      serviceAccountName: koney-controller-manager
-      terminationGracePeriodSeconds: 10
-      volumes: []
+      - name: alerts
+        image: "ghcr.io/dynatrace-oss/koney-alert-forwarder:0.1.0"
+        imagePullPolicy: IfNotPresent
+        env:
+        - name: KONEY_NAMESPACE
+          value: "koney-system"
+        ports:
+        - containerPort: 8000
+          protocol: TCP
+          name: http
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 8000
+          initialDelaySeconds: 15
+          periodSeconds: 60
+        resources:
+          limits:
+            cpu: 500m
+            memory: 256Mi
+          requests:
+            cpu: 10m
+            memory: 128Mi
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
