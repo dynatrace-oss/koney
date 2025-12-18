@@ -4,7 +4,7 @@ manager:
   # -- Image settings for the controller manager
   image:
     repository: ghcr.io/dynatrace-oss/koney-controller # patch:manager
-    tag: 0.1.0
+    tag: 0.2.0-rc.0
     pullPolicy: IfNotPresent
   # -- Arguments
   args: []
@@ -40,7 +40,7 @@ alertForwarder:
   # -- Image settings for the alert forwarder
   image:
     repository: ghcr.io/dynatrace-oss/koney-alert-forwarder # patch:alert-forwarder
-    tag: 0.1.0
+    tag: 0.2.0-rc.0
     pullPolicy: IfNotPresent
 
 # Helper RBAC roles for managing custom resources
