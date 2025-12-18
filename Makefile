@@ -23,6 +23,10 @@ IMG_ALERT_FORWARDER_NAME ?=$(IMAGE_TAG_BASE)-alert-forwarder
 IMG_CONTROLLER ?= $(IMG_CONTROLLER_NAME):$(VERSION)
 IMG_ALERT_FORWARDER ?=$(IMG_ALERT_FORWARDER_NAME):$(VERSION)
 
+# HELM_REGISTRY defines the OCI-compatible registry to push Helm charts to.
+# The reference must not contain the basename or tag.
+HELM_REGISTRY ?= $(IMAGE_TAG_BASE)/charts
+
 # OPERATOR_SDK_VERSION sets the Operator SDK version to use.
 # By default, what is installed on the system is used.
 OPERATOR_SDK_VERSION ?= v1.41.0
@@ -176,6 +180,10 @@ helm-render: helm-package helm ## Generate a consolidated YAML rendered from the
 		--set template.helmLabels=false \
 		--set template.createNamespace=true \
 		koney ./dist/chart > dist/install.yaml
+
+.PHONY: helm-push
+helm-push: helm ## Push the Helm chart to an OCI-compatible registry.
+	$(HELM) push ./dist/koney-${VERSION}.tgz oci://$(HELM_REGISTRY)
 
 ##@ Deployment
 

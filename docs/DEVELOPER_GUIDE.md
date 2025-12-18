@@ -4,33 +4,33 @@ This document describes how to build, test, and deploy the Koney operator.
 
 ## 📋 Prerequisites
 
-- `go` version v1.23.0+
-- `docker` version 17.03+.
-- `kubectl` version v1.11.3+.
+- `go` version v1.24.0+
+- `docker` version 17.03+
+- `kubectl` version v1.11.3+
 - Access to a Kubernetes v1.11.3+ cluster.
-- [Tetragon](https://tetragon.io/) v1.1.0+ installed in the cluster, if you also want to monitor traps.
+- [Tetragon](https://tetragon.io/) v1.1.0+ installed in the cluster, if you also want to monitor traps (recommended).
 - `pre-commit` to run checks before committing changes.
+
+Other dependencies such as `operator-sdk` and `helm` are automatically downloaded to `bin/` when needed.
 
 ## ⚓ Deploy the Operator to the Cluster
 
 Build and push the images with the following command.
 The images are pushed to the registry specified in the `IMAGE_TAG_BASE` variable with the `VERSION` tag.
+Currently, we build and push two images, `your.local.registry/koney-controller:demo` and `your.local.registry/research/koney-alert-forwarder:demo`.
 
 ```sh
 make docker-build docker-push IMAGE_TAG_BASE="your.local.registry/koney" VERSION="demo"
 ```
 
-ℹ️ **Note:** This actually builds and pushes two images: `your.local.registry/koney-controller:demo` and `your.local.registry/research/koney-alert-forwarder:demo`.
+ℹ️ **Note:** You can create an `.env` file in the repository root to set arguments such as `IMAGE_TAG_BASE` easily.
 
-ℹ️ **Note:** You can create an `.env` file in the repository root to set some arguments directly.
-
-Deploy the controller and all resources to the cluster with the specified version:
+Deploy the controller and all resources to the cluster with the following command.
+If you encounter RBAC errors, you may need to grant yourself cluster-admin privileges or be logged in as admin.
 
 ```sh
 make deploy IMAGE_TAG_BASE="your.local.registry/koney" VERSION="demo"
 ```
-
-ℹ️ **Note**: If you encounter RBAC errors, you may need to grant yourself cluster-admin privileges or be logged in as admin.
 
 You can find samples (examples) deception policies in the `config/sample/` directory and apply them to the cluster.
 
@@ -56,27 +56,36 @@ make undeploy
 
 ## 🏗️ Project Distribution
 
-Create the Helm chart and package it:
+Package the Helm chart for distribution:
 
 ```sh
-make build-chart IMAGE_TAG_BASE="your.local.registry/koney" VERSION="x.y.z"
+make helm-package IMAGE_TAG_BASE="your.local.registry/koney" VERSION="x.y.z"
 ```
 
-Render the Helm chart to create a consolidated YAML file for easy installation:
+Render the Helm chart to create a consolidated YAML file for easy installation.
+This creates a `install.yaml` file in the `dist` directory which can be applied directly to a cluster.
 
 ```sh
-make render-template IMAGE_TAG_BASE="your.local.registry/koney" VERSION="x.y.z"
+make helm-render IMAGE_TAG_BASE="your.local.registry/koney" VERSION="x.y.z"
 ```
 
-ℹ️ **Note**: The makefile target mentioned above generates an `install.yaml` file in the `dist` directory. This file contains a rendered version of the Helm chart.
+Push the Helm chart to an OCI-compatible registry with the following command.
+This pushes the chart package at `your.local.registry/koney/charts/koney:x.y.z`.
+This can be overridden by setting the `HELM_REGISTRY` variable explicitly.
+
+```sh
+make helm-push IMAGE_TAG_BASE="your.local.registry/koney" VERSION="x.y.z"
+```
 
 ### New Release Process
 
 1. Bump the version in the `Makefile`
-2. Bump the version in the `README.md`
-3. Build the chart and `install.yaml` (see above) with the new version
-4. Commit, tag, push, and let the pipeline push the image to the registry
-5. Create a new release on GitHub
+2. Bump the version in the `README.md` in the installation instructions
+3. Build the images with `make docker-build` to verify that the build works
+4. Package the chart with `make helm-package` to verify that the chart looks good
+5. Render the chart with `make helm-render` to have the `install.yaml` ready
+6. Commit, tag, e.g., with `v1.2.3`, push, and let the GitHub actions do the rest
+7. Create a new release on GitHub
 
 ℹ️ **Note**: Image version tags are formatted as `1.2.3` while git version tags are formatted as `v1.2.3` (with a `v` prefix).
 
@@ -92,21 +101,13 @@ Please refer to the 📄 [DEBUGGING](./DEBUGGING.md) document for instructions o
 
 ## 🔎 Testing
 
-Run all unit tests:
+Run all unit tests.
 
 ```sh
 make test
 ```
 
-If you are missing dependencies like `goimports`, install them first:
-
-```sh
-go install golang.org/x/tools/cmd/goimports@latest
-```
-
-Run all end-to-end tests:
-
-⚠️ **Warning**: This will deploy resources in your currently active cluster! Make sure that this is a playground cluster.
+Run all end-to-end tests in a real cluster. Make sure to set the correct context to your playground cluster.
 
 ℹ️ **Note**: Tetragon must be installed in the cluster to run all the end-to-end tests.
 
@@ -115,17 +116,15 @@ kubectl config set-context your-playground-cluster
 make test-e2e
 ```
 
-Run test manually from the command line:
+### Run tests manually with Ginkgo
 
-We use Ginkgo to run tests, make sure to have it installed locally.
-The locally installed version must match the version that Koney has in its dependencies.
+Install Ginkgo locally first. Make sure to install a version compatible with the one used in the project.
 
 ```sh
-go install github.com/onsi/ginkgo/v2/ginkgo
+go install github.com/onsi/ginkgo/v2/ginkgo@v2.23.4
 ```
 
 Then, navigate to a directory with tests and run `ginkgo` there.
-You will get a more context-rich output.
 
 ```sh
 cd ./internal/controller
@@ -134,10 +133,16 @@ ginkgo -v
 
 ## 💖 Contributing
 
-After cloning the repository, install the pre-commit hooks:
+After cloning the repository, install the pre-commit hooks.
 
 ```sh
 pre-commit install
 ```
 
 This will then automatically run checks before committing changes.
+
+You can run all checks manually with the following command:
+
+```sh
+pre-commit run --all-files
+```
