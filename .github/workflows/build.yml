@@ -13,12 +13,12 @@ env:
   ALERT_FORWARDER_IMAGE: ghcr.io/dynatrace-oss/koney-alert-forwarder
 
 jobs:
-  build-koney-controller:
-    name: Build Koney controller image
+  build-controller:
+    name: Build controller
     runs-on: ubuntu-latest
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
 
     - name: Extract metadata
       id: meta
@@ -56,12 +56,12 @@ jobs:
         cache-from: type=registry,ref=${{ env.CONTROLLER_IMAGE }}:buildcache
         cache-to: ${{ github.event_name == 'push' && format('type=registry,ref={0}:buildcache,mode=max', env.CONTROLLER_IMAGE) || '' }}
 
-  build-koney-alert-forwarder:
-    name: Build Koney alert forwarder image
+  build-alert-forwarder:
+    name: Build alert forwarder
     runs-on: ubuntu-latest
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
 
     - name: Extract metadata
       id: meta
