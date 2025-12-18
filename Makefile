@@ -103,7 +103,7 @@ test: generate fmt lint setup-envtest ## Run unit tests (no cluster required).
 .PHONY: test-e2e
 test-e2e: generate fmt lint ## Run end-to-end tests (requires an isolated environment).
 	KIND_CLUSTER=$(KIND_CLUSTER) go test ./test/e2e/ -v -ginkgo.v
-	$(MAKE) cleanup-test-e2e
+	$(MAKE) clean-test-e2e
 
 .PHONY: setup-test-e2e
 setup-test-e2e: ## Create a Kind cluster and local registry for end-to-end tests.
@@ -119,8 +119,8 @@ setup-test-e2e: ## Create a Kind cluster and local registry for end-to-end tests
 			KIND_CLUSTER_NAME=$(KIND_CLUSTER) CONTAINER_TOOL=$(CONTAINER_TOOL) KIND=$(KIND) sh ./hack/make/kind-with-registry.sh ;; \
 	esac
 
-.PHONY: cleanup-test-e2e
-cleanup-test-e2e: ## Tear down the Kind cluster and local registry used for end-to-end tests.
+.PHONY: clean-test-e2e
+clean-test-e2e: ## Tear down the Kind cluster and local registry used for end-to-end tests.
 	@$(KIND) delete cluster --name $(KIND_CLUSTER)
 	$(CONTAINER_TOOL) rm -f kind-registry
 
@@ -153,9 +153,9 @@ docker-push: ## Push docker image with the manager and alert forwarder.
 	$(CONTAINER_TOOL) push ${IMG_CONTROLLER}
 	$(CONTAINER_TOOL) push ${IMG_ALERT_FORWARDER}
 
-# TODO (#18): Once we integrate the alert-forwarder into the controller image (#18), simply the sed substitutions here.
-.PHONY: build-chart
-build-chart: manifests helm ## Generate a Helm chart from the installer YAML.
+# TODO (#18): Once we integrate the alert-forwarder into the controller image (#18), simplify the sed substitutions here.
+.PHONY: helm-package
+helm-package: manifests helm ## Generate a Helm chart from the installer YAML.
 	echo "Patching Chart.yaml ..."
 	sed -i 's/^version: .*/version: ${VERSION}/' dist/chart/Chart.yaml
 	sed -i 's/^appVersion: .*/appVersion: "${VERSION}"/' dist/chart/Chart.yaml
@@ -166,8 +166,8 @@ build-chart: manifests helm ## Generate a Helm chart from the installer YAML.
 	$(HELM) package --app-version ${VERSION} -u -d dist ./dist/chart
 	$(HELM) lint ./dist/chart
 
-.PHONY: render-template
-render-template: build-chart helm ## Generate a consolidated YAML rendered from the Helm chart.
+.PHONY: helm-render
+helm-render: helm-package helm ## Generate a consolidated YAML rendered from the Helm chart.
 	$(HELM) template --namespace $(DEFAULT_NAMESPACE) \
 		--set manager.image.repository=${IMG_CONTROLLER_NAME} \
 		--set manager.image.tag=${VERSION} \
