@@ -10,7 +10,7 @@ endif
 # - set the VERSION argument (e.g make docker-build VERSION=0.0.2)
 # - set the VERSION environment variable (e.g export VERSION=0.0.2)
 # - set the VERSION environment variable in the .env file (e.g VERSION=0.0.2 in .env)
-VERSION ?= 0.1.0
+VERSION ?= 0.2.0-rc.0
 
 # IMAGE_TAG_BASE defines the "basename" of the full name of container images.
 # Currently, two images are built: the 'controller' and the 'alert-forwarder', i.e., resulting in

@@ -6,7 +6,7 @@ metadata:
   labels:
     app.kubernetes.io/name: koney
     app.kubernetes.io/instance: koney
-    app.kubernetes.io/version: "0.1.0"
+    app.kubernetes.io/version: "0.2.0-rc.0"
   name: koney-system
 ---
 # Source: koney/templates/rbac/manager/manager-serviceaccount.yaml
@@ -16,7 +16,7 @@ metadata:
   labels:
     app.kubernetes.io/name: koney
     app.kubernetes.io/instance: koney
-    app.kubernetes.io/version: "0.1.0"
+    app.kubernetes.io/version: "0.2.0-rc.0"
   name: koney-manager-serviceaccount
   namespace: koney-system
 ---
@@ -356,7 +356,7 @@ metadata:
   labels:
     app.kubernetes.io/name: koney
     app.kubernetes.io/instance: koney
-    app.kubernetes.io/version: "0.1.0"
+    app.kubernetes.io/version: "0.2.0-rc.0"
   name: koney-alert-forwarder-role
 rules:
 - apiGroups:
@@ -395,7 +395,7 @@ metadata:
   labels:
     app.kubernetes.io/name: koney
     app.kubernetes.io/instance: koney
-    app.kubernetes.io/version: "0.1.0"
+    app.kubernetes.io/version: "0.2.0-rc.0"
   name: koney-manager-role
 rules:
 - apiGroups:
@@ -487,7 +487,7 @@ metadata:
   labels:
     app.kubernetes.io/name: koney
     app.kubernetes.io/instance: koney
-    app.kubernetes.io/version: "0.1.0"
+    app.kubernetes.io/version: "0.2.0-rc.0"
   name: koney-metrics-auth-role
 rules:
 - apiGroups:
@@ -510,7 +510,7 @@ metadata:
   labels:
     app.kubernetes.io/name: koney
     app.kubernetes.io/instance: koney
-    app.kubernetes.io/version: "0.1.0"
+    app.kubernetes.io/version: "0.2.0-rc.0"
   name: koney-metrics-reader-role
 rules:
 - nonResourceURLs:
@@ -525,7 +525,7 @@ metadata:
   labels:
     app.kubernetes.io/name: koney
     app.kubernetes.io/instance: koney
-    app.kubernetes.io/version: "0.1.0"
+    app.kubernetes.io/version: "0.2.0-rc.0"
   name: koney-alert-forwarder-rolebinding
 roleRef:
   apiGroup: rbac.authorization.k8s.io
@@ -543,7 +543,7 @@ metadata:
   labels:
     app.kubernetes.io/name: koney
     app.kubernetes.io/instance: koney
-    app.kubernetes.io/version: "0.1.0"
+    app.kubernetes.io/version: "0.2.0-rc.0"
   name: koney-manager-rolebinding
 roleRef:
   apiGroup: rbac.authorization.k8s.io
@@ -561,7 +561,7 @@ metadata:
   labels:
     app.kubernetes.io/name: koney
     app.kubernetes.io/instance: koney
-    app.kubernetes.io/version: "0.1.0"
+    app.kubernetes.io/version: "0.2.0-rc.0"
   name: koney-metrics-auth-rolebinding
 roleRef:
   apiGroup: rbac.authorization.k8s.io
@@ -579,7 +579,7 @@ metadata:
   labels:
     app.kubernetes.io/name: koney
     app.kubernetes.io/instance: koney
-    app.kubernetes.io/version: "0.1.0"
+    app.kubernetes.io/version: "0.2.0-rc.0"
   name: koney-leader-election-role
   namespace: koney-system
 rules:
@@ -622,7 +622,7 @@ metadata:
   labels:
     app.kubernetes.io/name: koney
     app.kubernetes.io/instance: koney
-    app.kubernetes.io/version: "0.1.0"
+    app.kubernetes.io/version: "0.2.0-rc.0"
   name: koney-leader-election-rolebinding
   namespace: koney-system
 roleRef:
@@ -641,7 +641,7 @@ metadata:
   labels:
     app.kubernetes.io/name: koney
     app.kubernetes.io/instance: koney
-    app.kubernetes.io/version: "0.1.0"
+    app.kubernetes.io/version: "0.2.0-rc.0"
     control-plane: controller-manager
   name: koney-alert-forwarder-webhook
   namespace: koney-system
@@ -661,7 +661,7 @@ metadata:
   labels:
     app.kubernetes.io/name: koney
     app.kubernetes.io/instance: koney
-    app.kubernetes.io/version: "0.1.0"
+    app.kubernetes.io/version: "0.2.0-rc.0"
     control-plane: controller-manager
   name: koney-controller-manager-metrics-service
   namespace: koney-system
@@ -683,7 +683,7 @@ metadata:
   labels:
     app.kubernetes.io/name: koney
     app.kubernetes.io/instance: koney
-    app.kubernetes.io/version: "0.1.0"
+    app.kubernetes.io/version: "0.2.0-rc.0"
     control-plane: controller-manager
   name: koney-controller-manager
   namespace: koney-system
@@ -701,7 +701,7 @@ spec:
       labels:
         app.kubernetes.io/name: koney
         app.kubernetes.io/instance: koney
-        app.kubernetes.io/version: "0.1.0"
+        app.kubernetes.io/version: "0.2.0-rc.0"
         control-plane: controller-manager
     spec:
       serviceAccountName: koney-manager-serviceaccount
@@ -713,7 +713,7 @@ spec:
           type: RuntimeDefault
       containers:
       - name: manager
-        image: "ghcr.io/dynatrace-oss/koney-controller:0.1.0"
+        image: "ghcr.io/dynatrace-oss/koney-controller:0.2.0-rc.0"
         imagePullPolicy: IfNotPresent
         command:
         - /manager
@@ -751,7 +751,7 @@ spec:
             drop:
             - ALL
       - name: alerts
-        image: "ghcr.io/dynatrace-oss/koney-alert-forwarder:0.1.0"
+        image: "ghcr.io/dynatrace-oss/koney-alert-forwarder:0.2.0-rc.0"
         imagePullPolicy: IfNotPresent
         env:
         - name: KONEY_NAMESPACE
