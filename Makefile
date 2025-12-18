@@ -203,7 +203,8 @@ deploy: manifests helm ## Deploy Koney to the currently configured cluster.
 		koney ./dist/chart | $(KUBECTL) apply -f -
 
 .PHONY: undeploy
-undeploy: helm ## Undeploy Koney from the currently configured cluster. Call with ignore-not-found=true to ignore resource not found errors during deletion.
+undeploy: helm ## Remove all deception policies and undeploy Koney from the currently configured cluster.
+	$(KUBECTL) delete deceptionpolicies --all --all-namespaces --ignore-not-found=$(ignore-not-found) --wait=true
 	$(HELM) template --namespace $(DEFAULT_NAMESPACE) --set template.createNamespace=true koney ./dist/chart | $(KUBECTL) delete --ignore-not-found=$(ignore-not-found) -f -
 ##@ Dependencies
 
