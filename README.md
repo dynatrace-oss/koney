@@ -20,50 +20,49 @@ Currently, Koney supports the deployment of [honeytokens](https://en.wikipedia.o
 
 ## 🚀 Quickstart
 
+<!-- (HELM WILL ONLY BE AVAILABLE WITH 0.2.0+)
+
 You can install Koney with `kubectl` or `helm`. If you have Helm installed, we recommend Helm.
 
-**Option A:** (recommended) Install Koney with `helm`
+**Option A:** (recommended) Install Koney with `helm`.
 
 ```sh
-helm install koney --create-namespace -n koney-system https://raw.githubusercontent.com/dynatrace-oss/koney/refs/heads/main/dist/koney-0.1.0.tgz
+helm install koney --create-namespace -n koney-system --wait oci://ghcr.io/dynatrace-oss/koney/charts/koney --version 0.1.0
 ```
 
-**Option B:** Install Koney with `kubectl` (in default namespace `koney-system`)
+-->
+
+Install Koney with `kubectl` in default namespace `koney-system`.
 
 ```sh
 kubectl apply -f https://raw.githubusercontent.com/dynatrace-oss/koney/refs/tags/v0.1.0/dist/install.yaml
-```
-
-In both cases, wait for Koney to be ready:
-
-```sh
 kubectl wait --for=condition=ready pod -n koney-system -l control-plane=controller-manager
 ```
 
 ### Configure a honeytoken and test it
 
-Deploy a sample deception policy:
+Deploy a sample deception policy.
 
 ```sh
 kubectl apply -f https://raw.githubusercontent.com/dynatrace-oss/koney/main/config/samples/deceptionpolicy-servicetoken.yaml
 ```
 
 This policy will add a honeytoken at `/run/secrets/koney/service_token` in all pods that have the label `demo.koney/honeytoken=true` set.
-Place that label on a pod or deployment to see the honeytoken in action:
+Place that label on a pod or deployment to see the honeytoken in action.
 
 ```sh
-kubectl label pod <pod-name> demo.koney/honeytoken=true
+kubectl label pod <POD_NAME> demo.koney/honeytoken=true
 ```
 
-Try accessing the honeytoken:
+Try accessing the honeytoken.
 
 ```sh
-kubectl exec -it <pod-name> -- cat /run/secrets/koney/service_token
+kubectl exec -it <POD_NAME> -- cat /run/secrets/koney/service_token
 ```
 
 ℹ️ **Note:** To monitor traps and receive alerts, [Tetragon](https://tetragon.io/docs/installation/kubernetes/) must also be installed with the `dnsPolicy=ClusterFirstWithHostNet` configuration. See [Captor Deployment](#captor-deployment) for more information.
 
-Wait a few seconds, and observe the alert that is generated when the honeytoken is accessed:
+Wait a few seconds, and observe the alert that is generated when the honeytoken is accessed.
 
 ```sh
 kubectl logs -n koney-system -l control-plane=controller-manager -c alerts -f --since 1h
@@ -246,7 +245,7 @@ Koney uses a single JSON-structured annotation, `koney/changes`. This annotation
 To see the traps deployed in a pod, use the following command:
 
 ```sh
-kubectl get pod <pod-name> -n <namespace> -o jsonpath='{.metadata.annotations.koney/changes}' | jq
+kubectl get pod <POD_NAME> -n <NAMESPACE> -o jsonpath='{.metadata.annotations.koney/changes}' | jq
 ```
 
 ℹ️ **Note**: The `jq` command is used to format the JSON output and can also be omitted.
@@ -352,12 +351,14 @@ Please refer to the 📄 [DEVELOPER_GUIDE](./docs/DEVELOPER_GUIDE.md) document.
 
 We value all kinds of contributions, from bug reports, feedback, feature requests, to pull requests.
 Read the 📄 [CONTRIBUTING](./.github/CONTRIBUTING.md) document for more information.
-For general questions or inquiries please get in touch with one of the following individuals:
+We thank all our contributors who made this project better!
 
 | [<img src="https://github.com/blu3r4y.png" alt="Mario Kahlhofer" width="100"/>](https://github.com/blu3r4y) | [<img src="https://github.com/Golim.png"  alt="Matteo Golinelli" width="100"/>](https://github.com/Golim) |
 | :---------------------------------------------------------------------------------------------------------: | :-------------------------------------------------------------------------------------------------------: |
 |                                [Mario Kahlhofer](https://github.com/blu3r4y)                                |                               [Matteo Golinelli](https://github.com/Golim)                                |
 |                                             Dynatrace Research                                              |                                           University of Trento                                            |
+
+For general questions or inquiries please send an e-mail to <mario.kahlhofer@dynatrace.com>.
 
 ---
 

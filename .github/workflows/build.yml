@@ -9,6 +9,7 @@ on:
     - v*
 
 env:
+  IMAGE_TAG_BASE: ghcr.io/dynatrace-oss/koney
   CONTROLLER_IMAGE: ghcr.io/dynatrace-oss/koney-controller
   ALERT_FORWARDER_IMAGE: ghcr.io/dynatrace-oss/koney-alert-forwarder
 
@@ -98,3 +99,26 @@ jobs:
         platforms: linux/amd64,linux/arm64
         cache-from: type=registry,ref=${{ env.ALERT_FORWARDER_IMAGE }}:buildcache
         cache-to: ${{ github.event_name == 'push' && format('type=registry,ref={0}:buildcache,mode=max', env.ALERT_FORWARDER_IMAGE) || '' }}
+
+  push-chart:
+    name: Push Helm chart
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs:
+    - build-controller
+    - build-alert-forwarder
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v6
+
+    - name: Install Helm
+      uses: azure/setup-helm@v4
+
+    - name: Package Helm chart
+      run: VERSION=${GITHUB_REF_NAME#v} make helm-package
+
+    - name: Login to GHCR
+      run: echo ${{ secrets.GITHUB_TOKEN }} | helm registry login ghcr.io -u ${{ github.repository_owner }} --password-stdin
+
+    - name: Push Helm chart
+      run: VERSION=${GITHUB_REF_NAME#v} make helm-push
