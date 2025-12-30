@@ -43,6 +43,12 @@ jobs:
         helm install tetragon cilium/tetragon -n kube-system --set dnsPolicy=ClusterFirstWithHostNet
         kubectl rollout status -n kube-system ds/tetragon -w --timeout=5m
 
+    - name: Install Kive
+      run: |
+        kubectl apply -f https://raw.githubusercontent.com/San7o/kivebpf/refs/heads/main/dist/install-remote.yaml
+        kubectl set image -n kivebpf-system daemonset kivebpf-manager "*=ghcr.io/san7o/kivebpf:dev"
+        kubectl rollout status -n kivebpf-system ds/kivebpf-manager -w --timeout=5m
+
     - name: Run end-to-end tests
       run: |
         go mod tidy
