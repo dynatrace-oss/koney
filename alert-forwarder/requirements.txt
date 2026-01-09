@@ -6,3 +6,4 @@ requests # indirect dependency of fastapi
 rich # indirect dependency of fastapi
 
 h11>=0.16 # pin to resolve CVE-2025-43859
+urllib3>=2.6.3 # pin to resolve CVE-2026-21441
