@@ -23,11 +23,11 @@ repos:
   - id: insert-license
     name: add license headers (go)
     files: (?<!zz_generated.deepcopy)\.go$
-    args: [ --use-current-year, --license-filepath, LICENSE_HEADER.txt, --comment-style, "//" ]
+    args: [ --allow-past-years, --license-filepath, LICENSE_HEADER.txt, --comment-style, "//" ]
   - id: insert-license
     name: add license headers (python)
     files: (?<!__init__)\.py$
-    args: [ --use-current-year, --license-filepath, LICENSE_HEADER.txt, --comment-style, "#" ]
+    args: [ --allow-past-years, --license-filepath, LICENSE_HEADER.txt, --comment-style, "#" ]
 
 # go files
 - repo: local
