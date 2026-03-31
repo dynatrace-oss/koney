@@ -6,7 +6,7 @@ toolchain go1.24.6
 
 require (
 	github.com/San7o/kivebpf v1.0.0-pre2
-	github.com/cilium/cilium v1.17.3
+	github.com/cilium/cilium v1.17.14
 	github.com/cilium/tetragon/pkg/k8s v0.0.0-20241213091129-4a6643e71e23
 	github.com/onsi/ginkgo/v2 v2.23.4
 	github.com/onsi/gomega v1.37.0
@@ -98,7 +98,7 @@ require (
 	k8s.io/component-base v0.33.3 // indirect
 	k8s.io/klog/v2 v2.130.1 // indirect
 	k8s.io/kube-openapi v0.0.0-20250318190949-c8a335a9a2ff // indirect
-	k8s.io/utils v0.0.0-20250604170112-4c0f3b243397 // indirect
+	k8s.io/utils v0.0.0-20260210185600-b8788abfbbc2 // indirect
 	sigs.k8s.io/apiserver-network-proxy/konnectivity-client v0.33.0 // indirect
 	sigs.k8s.io/json v0.0.0-20241014173422-cfa47c3a1cc8 // indirect
 	sigs.k8s.io/randfill v1.0.0 // indirect
