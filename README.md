@@ -130,13 +130,12 @@ The `any` field is a list and holds one or more `resources` objects, which conta
 
 - `namespaces`: a list of namespaces. It does NOT support wildcards. The trap is only deployed in pods that belong to any of the namespaces in the list.
 - `selector`: a label selector. It does NOT support wildcards. The trap is only deployed in pods with labels that match the selector. If you specify multiple labels or expressions, all of them have to match for traps to be deployed. `selector` has two fields:
-
   - `matchLabels`: a map of key-value pairs.
   - `matchExpressions`: a list of label selector requirements evaluated as a logical AND operation. **(not implemented yet)**
 
 - `containerSelector`: selects the container(s) in the matched pods or deployments where the trap is deployed.
   - if this field is prepended by `regex:`, the rest of the string will represent a regular expression matched with go [regexp](https://golang.org/s/re2syntax) library.
-  - if the field is prepended by `glob:`, then this is a [glob](https://en.wikipedia.org/wiki/Glob_(programming)) pattern, as described in go [filepath.Match](https://pkg.go.dev/path/filepath#Match) library
+  - if the field is prepended by `glob:`, then this is a [glob](<https://en.wikipedia.org/wiki/Glob_(programming)>) pattern, as described in go [filepath.Match](https://pkg.go.dev/path/filepath#Match) library
   - if it is empty, the trap is deployed in all containers in the matched pods.
   - otherwise, the name of the container will be compared exactly.
 
@@ -163,7 +162,6 @@ match:
 The `decoyDeployment` field defines how a trap is deployed. It has the following fields:
 
 - `strategy`: the strategy used to deploy the trap. It can be `volumeMount`, `containerExec`, or `kyvernoPolicy`. The default value is `volumeMount`. Based on the strategy, Koney matches different types of resources. The strategies are:
-
   - `volumeMount`: the trap is deployed by mounting a volume in the matched pods. Koney matches deployments.
   - `containerExec`: the trap is deployed by executing a command in the container(s) of the matched pods. Koney matches pods.
   - `kyvernoPolicy`: the trap is deployed by creating a Kyverno policy that mutates manifests such that they also contain traps. Requires that [Kyverno](https://kyverno.io/) is installed in the cluster. **(not implemented yet)**
@@ -184,7 +182,6 @@ decoyDeployment:
 The `captorDeployment` field defines how a captor is deployed. It has the following fields:
 
 - `strategy`: the strategy used to deploy the captor. At the moment, it can only be `tetragon`. The default value is `tetragon`. The strategies are:
-
   - `tetragon`: the captor is deployed by creating and applying a Tetragon `TracingPolicy` CR in the cluster. Requires that [Tetragon](https://tetragon.io/) is installed in the cluster with the `dnsPolicy=ClusterFirstWithHostNet` configuration.
   - `kive`: the captor is deployed with `Kive`, a light-weight operator which performs inode-based monitoring instead of path-based monitoring. Requires that [Kive](https://github.com/San7o/kivebpf) is installed in the cluster.
 
@@ -360,10 +357,10 @@ We value all kinds of contributions, from bug reports, feedback, feature request
 Read the 📄 [CONTRIBUTING](./.github/CONTRIBUTING.md) document for more information.
 We thank all our contributors who made this project better!
 
-| [<img src="https://github.com/blu3r4y.png" alt="Mario Kahlhofer" width="100"/>](https://github.com/blu3r4y) | [<img src="https://github.com/Golim.png"  alt="Matteo Golinelli" width="100"/>](https://github.com/Golim) |
-| :---------------------------------------------------------------------------------------------------------: | :-------------------------------------------------------------------------------------------------------: |
-|                                [Mario Kahlhofer](https://github.com/blu3r4y)                                |                               [Matteo Golinelli](https://github.com/Golim)                                |
-|                                             Dynatrace Research                                              |                                           University of Trento                                            |
+| [<img src="https://github.com/blu3r4y.png" alt="Mario Kahlhofer" width="100"/>](https://github.com/blu3r4y) | [<img src="https://github.com/Golim.png"  alt="Matteo Golinelli" width="100"/>](https://github.com/Golim) | [<img src="https://github.com/San7o.png"  alt="Giovanni Santini " width="100"/>](https://github.com/San7o) | [<img src="https://github.com/jjsanda.png"  alt="Josef Šanda" width="100"/>](https://github.com/jjsanda) |
+| :---------------------------------------------------------------------------------------------------------: | :-------------------------------------------------------------------------------------------------------: | :--------------------------------------------------------------------------------------------------------: | :------------------------------------------------------------------------------------------------------: |
+|                                [Mario Kahlhofer](https://github.com/blu3r4y)                                |                               [Matteo Golinelli](https://github.com/Golim)                                |                                [Giovanni Santini](https://github.com/San7o)                                |                                [Josef Šanda](https://github.com/jjsanda)                                 |
+|                                          Dynatrace <br/> Research                                           |                                        University <br/> of Trento                                         |                                         University <br/> of Trento                                         |                                  Johannes Kepler <br/> University Linz                                   |
 
 For general questions or inquiries please send an e-mail to <mario.kahlhofer@dynatrace.com>.
 
