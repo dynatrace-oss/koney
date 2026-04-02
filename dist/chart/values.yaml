@@ -51,6 +51,14 @@ rbacHelpers:
   # -- Install convenience admin/editor/viewer roles for CRDs
   enable: false
 
+# Cleanup hooks.
+# Removes all DeceptionPolicy and DeceptionAlertSink resources before uninstalling Koney.
+# Ensures that finalizers are executed and traps are cleaned up before the controller is removed.
+cleanup:
+
+  # -- Deploy the pre-delete cleanup hook
+  enable: true
+
 # Custom Resource Definitions.
 crd:
 
