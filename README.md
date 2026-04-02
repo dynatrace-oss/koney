@@ -68,6 +68,36 @@ Wait a few seconds, and observe the alert that is generated when the honeytoken 
 kubectl logs -n koney-system -l control-plane=controller-manager -c alerts -f --since 1h
 ```
 
+## 🧹 Uninstalling Koney
+
+Before uninstalling Koney, you should delete all deception policies and alert sinks first.
+Otherwise, the finalizers that clean up deployed traps will never run, leaving deception policies stuck in a terminating state that cannot be deleted.
+
+Run the following commands before uninstalling:
+
+```sh
+kubectl delete deceptionpolicy --ignore-not-found --wait --all
+kubectl delete deceptionalertsink --ignore-not-found --wait --all --all-namespaces
+```
+
+<!-- (HELM WILL ONLY BE AVAILABLE WITH 0.2.0+)
+
+**Option A:** Uninstall Koney like so, when installed with `helm`.
+
+```sh
+helm uninstall koney -n koney-system
+```
+
+> **Note:** When using Helm, the chart includes a `pre-delete` hook that automatically deletes all `DeceptionPolicy` and `DeceptionAlertSink` resources before the controller is removed. The manual commands above are typically only required when Koney was previously installed via `kubectl` or manual cleanup is needed for any reason.
+
+-->
+
+Uninstall Koney like so, when installed with `kubectl`.
+
+```sh
+kubectl delete -f https://raw.githubusercontent.com/dynatrace-oss/koney/refs/tags/v0.1.0/dist/install.yaml
+```
+
 ## 📃 Usage
 
 |                               🚨 **Important: Koney is an early-stage research project!** 🚨                                |

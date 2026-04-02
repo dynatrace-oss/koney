@@ -76,3 +76,26 @@ Only includes name and instance for consistent selection.
 app.kubernetes.io/name: {{ include "chart.name" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end }}
+
+{{/*
+Common labels for pre-delete cleanup hook resources.
+*/}}
+{{- define "cleanup.labels" -}}
+app.kubernetes.io/name: {{ include "chart.name" . }}
+app.kubernetes.io/instance: {{ .Release.Name }}
+app.kubernetes.io/part-of: {{ .Chart.Name }}
+{{- if and .Chart.Version .Values.template.helmLabels }}
+helm.sh/chart: {{ .Chart.Version | quote }}
+{{- end }}
+{{- if .Values.template.helmLabels }}
+app.kubernetes.io/managed-by: {{ .Release.Service }}
+{{- end }}
+{{- end }}
+
+{{/*
+Common annotations for pre-delete cleanup hook resources.
+*/}}
+{{- define "cleanup.annotations" -}}
+helm.sh/hook: pre-delete
+helm.sh/hook-delete-policy: hook-succeeded,before-hook-creation
+{{- end }}

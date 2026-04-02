@@ -1,0 +1,94 @@
+{{- if .Values.cleanup.enable }}
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: {{ .Release.Name }}-cleanup
+  namespace: {{ include "chart.namespaceName" . }}
+  labels:
+    {{- include "cleanup.labels" . | nindent 4 }}
+  annotations:
+    {{- include "cleanup.annotations" . | nindent 4 }}
+    helm.sh/hook-weight: "-5"
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: {{ .Release.Name }}-cleanup
+  labels:
+    {{- include "cleanup.labels" . | nindent 4 }}
+  annotations:
+    {{- include "cleanup.annotations" . | nindent 4 }}
+    helm.sh/hook-weight: "-5"
+rules:
+- apiGroups:
+  - research.dynatrace.com
+  resources:
+  - deceptionpolicies
+  - deceptionalertsinks
+  verbs:
+  - get
+  - list
+  - delete
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: {{ .Release.Name }}-cleanup
+  labels:
+    {{- include "cleanup.labels" . | nindent 4 }}
+  annotations:
+    {{- include "cleanup.annotations" . | nindent 4 }}
+    helm.sh/hook-weight: "-5"
+subjects:
+- kind: ServiceAccount
+  name: {{ .Release.Name }}-cleanup
+  namespace: {{ include "chart.namespaceName" . }}
+roleRef:
+  kind: ClusterRole
+  name: {{ .Release.Name }}-cleanup
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ .Release.Name }}-cleanup
+  namespace: {{ include "chart.namespaceName" . }}
+  labels:
+    {{- include "cleanup.labels" . | nindent 4 }}
+  annotations:
+    {{- include "cleanup.annotations" . | nindent 4 }}
+    helm.sh/hook-weight: "0"
+spec:
+  template:
+    spec:
+      serviceAccountName: {{ .Release.Name }}-cleanup
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+      - name: kubectl
+        image: cgr.dev/chainguard/kubectl:latest
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+        command:
+        - /usr/bin/kubectl
+        - delete
+        - deceptionpolicy,deceptionalertsink
+        - --all-namespaces
+        - --ignore-not-found
+        - --timeout=60s
+        - --wait
+        - --all
+        resources:
+          limits:
+            cpu: 100m
+            memory: 64Mi
+          requests:
+            cpu: 10m
+            memory: 32Mi
+      restartPolicy: Never
+{{- end }}
