@@ -13,6 +13,7 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import fnmatch
 import json
 import re
 from collections import defaultdict
@@ -47,6 +48,8 @@ TETRAGON_POD_LABEL_SELECTOR = "app.kubernetes.io/name=tetragon"
 TETRAGON_POD_CONTAINER_NAME = "export-stdout"
 # the label key that references the deception policy in a tracing policy
 TETRAGON_DECEPTION_POLICY_REF = "koney/deception-policy"
+# the annotation key that stores the original container selectors for client-side filtering
+TETRAGON_CONTAINER_SELECTORS_ANNOTATION = "koney/container-selectors"
 
 # stores hashes of already processed events to prevent duplicates
 event_cache = set()
@@ -154,6 +157,50 @@ def is_filtered_alert(alert: KoneyAlert) -> bool:
 
     # if any fingerprint is present, filter this event
     return any(fp in arguments for fp in fingerprints)
+
+
+def resolve_container_selectors(tracing_policy_name: str) -> list[str] | None:
+    try:
+        api = client.CustomObjectsApi()
+        tracing_policy = cast(
+            dict,
+            api.get_cluster_custom_object(
+                *TETRAGON_TRACING_POLICIES_GVP, tracing_policy_name
+            ),
+        )
+        selectors_json = (
+            tracing_policy.get("metadata", {})
+            .get("annotations", {})
+            .get(TETRAGON_CONTAINER_SELECTORS_ANNOTATION)
+        )
+        if selectors_json:
+            return json.loads(selectors_json)
+    except Exception:
+        pass
+    return None
+
+
+def container_matches_selectors(
+    container_name: str | None, selectors: list[str]
+) -> bool:
+    if not container_name:
+        return False
+
+    for selector in selectors:
+        if not selector:
+            return True  # empty selector matches all
+        elif selector.startswith("regex:"):
+            pattern = selector[len("regex:") :]
+            if re.search(pattern, container_name):
+                return True
+        elif selector.startswith("glob:"):
+            pattern = selector[len("glob:") :]
+            if fnmatch.fnmatch(container_name, pattern):
+                return True
+        elif selector == container_name:
+            return True
+
+    return False
 
 
 ###############################################################################

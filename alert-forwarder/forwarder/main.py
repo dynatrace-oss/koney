@@ -23,7 +23,13 @@ from rich.console import Console
 
 from .kive import process_kive_alert
 from .sink import K8S_SINK_READ_ERROR, SINK_SEND_ERROR, send_alert, try_read_alert_sinks
-from .tetragon import is_filtered_alert, map_tetragon_event, read_tetragon_events
+from .tetragon import (
+    container_matches_selectors,
+    is_filtered_alert,
+    map_tetragon_event,
+    read_tetragon_events,
+    resolve_container_selectors,
+)
 
 # various error messages
 K8S_AUTH_ERROR = "failed to authenticate with Kubernetes API"
@@ -96,12 +102,25 @@ def load_new_alerts(timestamp: float):
         if logger.level <= logging.DEBUG:
             console.print(f"Transforming {len(events)} alerts for policy {policy_name}")
 
+        # resolve container selectors once per policy for client-side filtering (if needed)
+        container_selectors = resolve_container_selectors(policy_name)
+
         for event in events:
             koney_alert = map_tetragon_event(event)
             if is_filtered_alert(koney_alert):
                 if logger.level <= logging.DEBUG:
-                    console.print(f"Skipping event ", koney_alert)
+                    console.print("Skipping event (filtered) ", koney_alert)
                 continue
+
+            # filter by container selector when Tetragon matched all containers due to wildcards.
+            if container_selectors is not None:
+                container_name = (
+                    (koney_alert.get("pod") or {}).get("container", {}).get("name")
+                )
+                if not container_matches_selectors(container_name, container_selectors):
+                    if logger.level <= logging.DEBUG:
+                        console.print("Skipping event (container filter) ", koney_alert)
+                    continue
 
             # write to stdout
             koney_alert_str = json.dumps(koney_alert)
