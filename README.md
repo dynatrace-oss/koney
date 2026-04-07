@@ -164,8 +164,8 @@ The `any` field is a list and holds one or more `resources` objects, which conta
   - `matchExpressions`: a list of label selector requirements evaluated as a logical AND operation. **(not implemented yet)**
 
 - `containerSelector`: selects the container(s) in the matched pods or deployments where the trap is deployed.
-  - if this field is prepended by `regex:`, the rest of the string will represent a regular expression matched with go [regexp](https://golang.org/s/re2syntax) library.
-  - if the field is prepended by `glob:`, then this is a [glob](<https://en.wikipedia.org/wiki/Glob_(programming)>) pattern, as described in go [filepath.Match](https://pkg.go.dev/path/filepath#Match) library
+  - if this field is prepended by `regex:`, the rest of the string will represent a regular expression matched with go [regexp](https://golang.org/s/re2syntax) library. The pattern is searched inside the container name (i.e., a partial match also counts), so a pattern like `regex:app` matches any container whose name contains `app`. Use `^` and `$` anchors to enforce exact boundaries (e.g., `regex:^app$` matches only a container named exactly `app`).
+  - if the field is prepended by `glob:`, then this is a [glob](<https://en.wikipedia.org/wiki/Glob_(programming)>) pattern, as described in go [filepath.Match](https://pkg.go.dev/path/filepath#Match) library. Unlike regex, glob patterns are always matched against the full container name.
   - if it is empty, the trap is deployed in all containers in the matched pods.
   - otherwise, the name of the container will be compared exactly.
 
