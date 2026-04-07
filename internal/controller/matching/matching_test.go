@@ -1239,6 +1239,12 @@ var _ = Describe("selectContainers", func() {
 			Expect(selection).To(ConsistOf("bar", "baz"))
 		})
 
+		It("regex should perform a substring match, not a full-string match", func() {
+			selection, err := selectContainers(&pod, "regex:oo")
+			Expect(err).ToNot(HaveOccurred())
+			Expect(selection).To(ConsistOf("foo"))
+		})
+
 		It("glob should select all containers", func() {
 			selection, err := selectContainers(&pod, "glob:*")
 			Expect(err).ToNot(HaveOccurred())
