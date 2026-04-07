@@ -235,34 +235,69 @@ func generateTetragonTracingPolicy(deceptionPolicy *v1alpha1.DeceptionPolicy,
 		}
 	}
 
+	// Determine how to populate the ContainerSelector:
+	//
+	//  1. If ANY resourceFilter selects all containers (empty, "regex:.*", "glob:*") → leave
+	//     ContainerSelector empty so Tetragon matches every container, no client filtering needed.
+	//
+	//  2. Else if ANY resourceFilter has a wildcard pattern that Tetragon cannot evaluate
+	//     ("regex:<pattern>" or "glob:<pattern>") → also leave ContainerSelector empty but store
+	//     ALL container selectors in an annotation so the alert forwarder can filter client-side.
+	//
+	//  3. Otherwise (all exact container names) → populate ContainerSelector via MatchExpressions
+	//     so Tetragon filters server-side; no annotation needed.
+
+	hasSelectAll := false
 	for _, resourceFilter := range trap.MatchResources.Any {
-
 		if matching.ContainerSelectorSelectsAll(resourceFilter.ContainerSelector) {
-			// Empty the ContainerSelector, so that the TracingPolicy matches all containers
-			if len(tracingPolicy.Spec.ContainerSelector.MatchExpressions) > 0 {
-				tracingPolicy.Spec.ContainerSelector.MatchExpressions = []slimv1.LabelSelectorRequirement{}
-			}
-
-			// Break the loop, so that the ContainerSelector is not added to the TracingPolicy and we match all containers
+			hasSelectAll = true
 			break
-		} else {
-			// Append the containerSelector to the ContainerSelector
-			if len(tracingPolicy.Spec.ContainerSelector.MatchExpressions) == 0 {
-				// Initialize the MatchExpressions
-				tracingPolicy.Spec.ContainerSelector.MatchExpressions = []slimv1.LabelSelectorRequirement{}
+		}
+	}
 
-				matchExpression := slimv1.LabelSelectorRequirement{
-					Key:      "name",
-					Operator: slimv1.LabelSelectorOpIn,
-					Values:   []string{resourceFilter.ContainerSelector},
-				}
-
-				tracingPolicy.Spec.ContainerSelector.MatchExpressions = append(tracingPolicy.Spec.ContainerSelector.MatchExpressions, matchExpression)
+	if hasSelectAll {
+		// Case 1: leave ContainerSelector empty (TracingPolicy matches all containers).
+		tracingPolicy.Spec.ContainerSelector.MatchExpressions = nil
+	} else {
+		needsClientFiltering := false
+		for _, resourceFilter := range trap.MatchResources.Any {
+			if matching.ContainerSelectorNeedsClientFiltering(resourceFilter.ContainerSelector) {
+				needsClientFiltering = true
+				break
 			}
+		}
 
-			// If the containerSelector is not already in the MatchExpressions, add it
-			if !utils.Contains(tracingPolicy.Spec.ContainerSelector.MatchExpressions[0].Values, resourceFilter.ContainerSelector) {
-				tracingPolicy.Spec.ContainerSelector.MatchExpressions[0].Values = append(tracingPolicy.Spec.ContainerSelector.MatchExpressions[0].Values, resourceFilter.ContainerSelector)
+		if needsClientFiltering {
+			// Case 2: leave ContainerSelector empty and annotate for client-side filtering.
+			tracingPolicy.Spec.ContainerSelector.MatchExpressions = nil
+
+			allSelectors := make([]string, 0, len(trap.MatchResources.Any))
+			for _, resourceFilter := range trap.MatchResources.Any {
+				allSelectors = append(allSelectors, resourceFilter.ContainerSelector)
+			}
+			if selectorsJSON, err := json.Marshal(allSelectors); err == nil {
+				if tracingPolicy.Annotations == nil {
+					tracingPolicy.Annotations = make(map[string]string)
+				}
+				tracingPolicy.Annotations[constants.AnnotationKeyContainerSelectors] = string(selectorsJSON)
+			}
+		} else {
+			// Case 3: populate ContainerSelector with exact container names for server-side filtering.
+			for _, resourceFilter := range trap.MatchResources.Any {
+				if len(tracingPolicy.Spec.ContainerSelector.MatchExpressions) == 0 {
+					tracingPolicy.Spec.ContainerSelector.MatchExpressions = []slimv1.LabelSelectorRequirement{
+						{
+							Key:      "name",
+							Operator: slimv1.LabelSelectorOpIn,
+							Values:   []string{resourceFilter.ContainerSelector},
+						},
+					}
+				} else if !utils.Contains(tracingPolicy.Spec.ContainerSelector.MatchExpressions[0].Values, resourceFilter.ContainerSelector) {
+					tracingPolicy.Spec.ContainerSelector.MatchExpressions[0].Values = append(
+						tracingPolicy.Spec.ContainerSelector.MatchExpressions[0].Values,
+						resourceFilter.ContainerSelector,
+					)
+				}
 			}
 		}
 	}

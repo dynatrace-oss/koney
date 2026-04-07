@@ -44,6 +44,8 @@ const (
 	// If resources are not ready yet for traps (e.g., containers are still starting), retry reconciliation after this shorter interval.
 	ShortStatusCheckInterval = 10 * time.Second
 
-	// WildcardContainerSelectorRegex is a regex that matches wildcard characters in container selector fields.
-	WildcardContainerSelectorRegex = `\*|\?|\[|\]`
+	// AnnotationKeyContainerSelectors is the annotation key on a TracingPolicy that stores the original container selectors.
+	// It is set so that the alert forward can possibly perform client-side filtering of alerts (typically for regex- and glob-based selectors).
+	// This is needed for captor strategies that do not support setting complex container selectors directly, e.g., in the tracing policy.
+	AnnotationKeyContainerSelectors = "koney/container-selectors"
 )

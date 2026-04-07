@@ -16,12 +16,15 @@
 package filesystoken
 
 import (
+	"encoding/json"
+
 	slimv1 "github.com/cilium/cilium/pkg/k8s/slim/k8s/apis/meta/v1"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/dynatrace-oss/koney/api/v1alpha1"
+	"github.com/dynatrace-oss/koney/internal/controller/constants"
 	"github.com/dynatrace-oss/koney/internal/controller/matching"
 )
 
@@ -94,12 +97,23 @@ var _ = Describe("generateTetragonTracingPolicy", func() {
 				// Check the container selector
 				for _, resourceFilter := range trap.MatchResources.Any {
 					if matching.ContainerSelectorSelectsAll(resourceFilter.ContainerSelector) {
+						// Case 1: selects all → empty ContainerSelector, no annotation
 						Expect(tracingPolicy.Spec.ContainerSelector.MatchExpressions).To(BeEmpty())
+						Expect(tracingPolicy.Annotations).NotTo(HaveKey(constants.AnnotationKeyContainerSelectors))
+					} else if matching.ContainerSelectorNeedsClientFiltering(resourceFilter.ContainerSelector) {
+						// Case 2: wildcard pattern → empty ContainerSelector, annotation with all selectors
+						Expect(tracingPolicy.Spec.ContainerSelector.MatchExpressions).To(BeEmpty())
+						Expect(tracingPolicy.Annotations).To(HaveKey(constants.AnnotationKeyContainerSelectors))
+						var selectors []string
+						Expect(json.Unmarshal([]byte(tracingPolicy.Annotations[constants.AnnotationKeyContainerSelectors]), &selectors)).To(Succeed())
+						Expect(selectors).To(ContainElement(resourceFilter.ContainerSelector))
 					} else {
+						// Case 3: exact name → ContainerSelector with MatchExpressions, no annotation
 						Expect(tracingPolicy.Spec.ContainerSelector.MatchExpressions).To(HaveLen(1))
 						Expect(tracingPolicy.Spec.ContainerSelector.MatchExpressions[0].Key).To(Equal("name"))
 						Expect(tracingPolicy.Spec.ContainerSelector.MatchExpressions[0].Operator).To(Equal(slimv1.LabelSelectorOpIn))
 						Expect(tracingPolicy.Spec.ContainerSelector.MatchExpressions[0].Values).To(ConsistOf(resourceFilter.ContainerSelector))
+						Expect(tracingPolicy.Annotations).NotTo(HaveKey(constants.AnnotationKeyContainerSelectors))
 					}
 				}
 			}

@@ -15,10 +15,25 @@
 
 package matching
 
-import "sigs.k8s.io/controller-runtime/pkg/client"
+import (
+	"strings"
 
+	"sigs.k8s.io/controller-runtime/pkg/client"
+)
+
+// ContainerSelectorSelectsAll reports whether the given containerSelector selects all containers.
+// This is the case if the selector is empty or if it is a wildcard pattern that matches all containers.
 func ContainerSelectorSelectsAll(containerSelector string) bool {
 	return containerSelector == "regex:.*" || containerSelector == "" || containerSelector == "glob:*"
+}
+
+// ContainerSelectorNeedsClientFiltering reports whether the given containerSelector contains a pattern
+// that captors like Tetragon cannot evaluate natively, i.e., a regex or glob pattern that is not equivalent to "match all".
+func ContainerSelectorNeedsClientFiltering(containerSelector string) bool {
+	if ContainerSelectorSelectsAll(containerSelector) {
+		return false
+	}
+	return strings.HasPrefix(containerSelector, "regex:") || strings.HasPrefix(containerSelector, "glob:")
 }
 
 // extractObjectNames is a helper function that extracts the names of the objects from a list of objects.
