@@ -200,6 +200,9 @@ func (r *FilesystemHoneytokenReconciler) DeployCaptor(ctx context.Context, decep
 			}
 			return trapsapi.CaptorDeploymentResult{Trap: &trap, Errors: err, MissingTetragon: missingKive}
 		}
+	case "none":
+		log.Info("Captor deployment strategy is 'none' - skipping captor deployment")
+		return trapsapi.CaptorDeploymentResult{Trap: &trap}
 	default:
 		log.Error(nil, fmt.Sprintf("captor deployment strategy '%s' unknown", trap.CaptorDeployment.Strategy))
 		return trapsapi.CaptorDeploymentResult{Trap: &trap, Errors: errors.New("captor deployment strategy unknown")}

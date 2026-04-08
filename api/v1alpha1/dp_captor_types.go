@@ -18,9 +18,10 @@ package v1alpha1
 // CaptorDeployment is the entity that monitors access to the traps.
 type CaptorDeployment struct {
 	// Strategy is the technical method to deploy the captor.
-	// Currently, only "tetragon" is supported, which is also the default.
-	// It requires the Tetragon controller to be installed.
-	// +kubebuilder:validation:Enum=tetragon;kive
+	// "tetragon" (default) requires the Tetragon controller to be installed.
+	// "kive" requires the Kive controller to be installed.
+	// "none" disables captor deployment entirely for this trap.
+	// +kubebuilder:validation:Enum=tetragon;kive;none
 	// +optional
 	// +kubebuilder:default="tetragon"
 	Strategy string `json:"strategy,omitempty" yaml:"strategy,omitempty"`

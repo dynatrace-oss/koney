@@ -116,6 +116,9 @@ func (r *DeceptionPolicyReconciler) cleanupRemovedCaptors(ctx context.Context, d
 	if isTetragonInstalled {
 		tetragonPolicyNamesFromTraps := []string{}
 		for _, trap := range deceptionPolicy.Spec.Traps {
+			if trap.CaptorDeployment.Strategy == "none" {
+				continue
+			}
 			tracingPolicyName, err := filesystoken.GenerateTetragonTracingPolicyName(trap)
 			if err != nil {
 				return err
@@ -161,6 +164,9 @@ func (r *DeceptionPolicyReconciler) cleanupRemovedCaptors(ctx context.Context, d
 
 	kivePolicyNamesFromTraps := []string{}
 	for _, trap := range deceptionPolicy.Spec.Traps {
+		if trap.CaptorDeployment.Strategy == "none" {
+			continue
+		}
 		tracingPolicyName, err := filesystoken.GenerateKivePolicyName(trap)
 		if err != nil {
 			return err

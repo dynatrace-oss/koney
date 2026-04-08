@@ -157,11 +157,13 @@ spec:
                           default: tetragon
                           description: |-
                             Strategy is the technical method to deploy the captor.
-                            Currently, only "tetragon" is supported, which is also the default.
-                            It requires the Tetragon controller to be installed.
+                            "tetragon" (default) requires the Tetragon controller to be installed.
+                            "kive" requires the Kive controller to be installed.
+                            "none" disables captor deployment entirely for this trap.
                           enum:
                           - tetragon
                           - kive
+                          - none
                           type: string
                       type: object
                     decoyDeployment:

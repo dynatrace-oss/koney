@@ -170,4 +170,14 @@ var _ = Describe("IsValid", func() {
 			}
 		})
 	})
+
+	Context("when checking a trap with captor strategy 'none'", func() {
+		It("should be valid", func() {
+			for _, trap := range testTraps {
+				trap.CaptorDeployment = CaptorDeployment{Strategy: "none"}
+				err := trap.IsValid()
+				Expect(err).ShouldNot(HaveOccurred())
+			}
+		})
+	})
 })

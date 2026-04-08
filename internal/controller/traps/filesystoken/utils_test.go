@@ -16,6 +16,7 @@
 package filesystoken
 
 import (
+	"context"
 	"encoding/json"
 
 	slimv1 "github.com/cilium/cilium/pkg/k8s/slim/k8s/apis/meta/v1"
@@ -120,4 +121,31 @@ var _ = Describe("generateTetragonTracingPolicy", func() {
 		})
 	})
 
+})
+
+var _ = Describe("DeployCaptor", func() {
+	Context("with captor strategy 'none'", func() {
+		It("should return success without deploying any resources", func() {
+			trap := v1alpha1.Trap{
+				FilesystemHoneytoken: v1alpha1.FilesystemHoneytoken{
+					FilePath: "/run/secrets/koney/service_token",
+				},
+				CaptorDeployment: v1alpha1.CaptorDeployment{
+					Strategy: "none",
+				},
+				MatchResources: v1alpha1.MatchResources{
+					Any: []v1alpha1.ResourceFilter{
+						{ResourceDescription: v1alpha1.ResourceDescription{
+							Namespaces: []string{"koney"},
+						}},
+					},
+				},
+			}
+			deceptionPolicy := &v1alpha1.DeceptionPolicy{}
+			reconciler := FilesystemHoneytokenReconciler{}
+			result := reconciler.DeployCaptor(context.Background(), deceptionPolicy, trap)
+			Expect(result.Errors).ToNot(HaveOccurred())
+			Expect(result.MissingTetragon).To(BeFalse())
+		})
+	})
 })

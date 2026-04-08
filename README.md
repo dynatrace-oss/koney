@@ -214,6 +214,7 @@ The `captorDeployment` field defines how a captor is deployed. It has the follow
 - `strategy`: the strategy used to deploy the captor. At the moment, it can only be `tetragon`. The default value is `tetragon`. The strategies are:
   - `tetragon`: the captor is deployed by creating and applying a Tetragon `TracingPolicy` CR in the cluster. Requires that [Tetragon](https://tetragon.io/) is installed in the cluster with the `dnsPolicy=ClusterFirstWithHostNet` configuration.
   - `kive`: the captor is deployed with `Kive`, a light-weight operator which performs inode-based monitoring instead of path-based monitoring. Requires that [Kive](https://github.com/San7o/kivebpf) is installed in the cluster.
+  - `none`: no captor is deployed for this trap. Access to the trap will not be monitored or reported as alerts.
 
 🧪 For example, the following `captorDeployment` field deploys a captor using the `tetragon` strategy:
 
