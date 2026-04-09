@@ -323,6 +323,25 @@ spec:
         strategy: tetragon
 ```
 
+## Resources on Writing Policies
+
+Looking for inspiration on what traps to deploy? Here are some starting points:
+
+- **Generate traps with LLMs.** Use a large language model to brainstorm and generate deception policy YAML files. Describe your cluster setup and ask it to suggest realistic-looking honeytokens and file paths.
+- **Explore similar projects.** Several open-source projects are similar to Koney and some provide highly valuable blueprints for traps:
+  - [baitroute](https://github.com/utkusen/baitroute): a software library for adding deceptive HTTP endpoints to web applications, including great examples in the `/rules` directory of the repository.
+  - [HASH](https://github.com/DataDog/HASH): a honeypot for creating deceptive web applications.
+  - [beelzebub](https://github.com/beelzebub-labs/beelzebub): a feature-rich honeypot framework for various protocols.
+  - [beesting](https://github.com/patrickpichler/beesting): a research project for injecting honeytokens into Kubernetes workloads.
+- **Read research papers.** The Honeyquest paper offers empirical insights into what makes a good honeytoken. A key finding: prefer a medium-enticing but believable filename (e.g., `config.ini`) over a highly-enticing but hardly believable one (e.g., `passwords.txt`).
+
+> M. Kahlhofer, S. Achleitner, S. Rass, and R. Mayrhofer,
+> "Honeyquest: Rapidly Measuring the Enticingness of Cyber Deception Techniques with Code-based Questionnaires,"
+> in *Proceedings of the 27th International Symposium on Research in Attacks, Intrusions and Defenses (RAID '24)*,
+> Padua, Italy: ACM, Oct. 2024, pp. 317–336.
+> doi: [10.1145/3678890.3678897](https://doi.org/10.1145/3678890.3678897).
+> arXiv: [2408.10796](https://arxiv.org/abs/2408.10796).
+
 ## 🚨 Alerts
 
 Koney automatically collects alerts from the Tetragon operator and logs them in the `alerts` container. Each line contains a JSON object with the following fields:
@@ -394,6 +413,33 @@ We thank all our contributors who made this project better!
 |                                          Dynatrace <br/> Research                                           |                                        University <br/> of Trento                                         |                                         University <br/> of Trento                                         |                                  Johannes Kepler <br/> University Linz                                   |
 
 For general questions or inquiries please send an e-mail to <mario.kahlhofer@dynatrace.com>.
+
+## 🎤 Talks and Videos
+
+- Catch Hackers with Koney: Automated Honeytokens for Cloud-Native Apps – *Cloud Native Days Austria*, Oct. 2025 **\[[slides](https://doi.org/10.5281/zenodo.17287794)\]** **\[[video](https://www.youtube.com/watch?v=ha6KcyjR55E)\]**
+- Koney: A Cyber Deception Orchestration Framework for Kubernetes – *4th Workshop on Active Defense and Deception (AD&D) co-located with EuroS&P*, Jul. 2025 **\[[slides](https://doi.org/10.5281/zenodo.15793720)\]**
+- Koney: Cyber Deception Policies for Kubernetes – *The Honeynet Project Annual Workshop*, Jun. 2025 **\[[slides](https://doi.org/10.5281/zenodo.15575531)\]** **\[[video](https://youtu.be/uxbzGcIegVU?t=5461)\]**
+- Catch More Hackers with Koney: Automated Honeytokens for Cloud Native Apps – *KubeCon + CloudNativeCon Europe*, Apr. 2025 **\[[slides](https://doi.org/10.5281/zenodo.15594862)\]**
+
+## ⚖️ License and Attribution
+
+The source code is licensed under [GNU Affero General Public License (AGPL) 3.0](./LICENSE.txt).
+
+In brief, this means that you can use (even for commercial purposes), modify, distribute, and contribute to the code,
+but you must retain the original copyright notice and license, state changes,
+also license any derivative work under the same AGPL-3.0 license,
+and provide access to the source code of the derivative work when it is distributed.
+This terms also apply when you distribute Koney as a network service (e.g., a SaaS offering).
+Note that this brief summary is not a substitute for the actual license.
+
+If you use Koney or want to read more about it, please cite the following work:
+
+> M. Kahlhofer, M. Golinelli, and S. Rass,
+> "Koney: A Cyber Deception Orchestration Framework for Kubernetes,"
+> in *2025 IEEE European Symposium on Security and Privacy Workshops (EuroS&PW '25)*,
+> Venice, Italy: IEEE, Jul. 2025, pp. 690–702.
+> doi: [10.1109/EuroSPW67616.2025.00084](https://doi.org/10.1109/EuroSPW67616.2025.00084).
+> arXiv: [2504.02431](https://arxiv.org/abs/2504.02431).
 
 ---
 

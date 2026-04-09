@@ -1,0 +1,46 @@
+cff-version: 1.2.0
+title: Koney
+license: AGPL-3.0
+type: software
+identifiers:
+- type: url
+  value: "https://github.com/dynatrace-oss/koney"
+authors:
+- given-names: Mario
+  family-names: Kahlhofer
+  orcid: https://orcid.org/0000-0002-6820-4953
+- given-names: Matteo
+  family-names: Golinelli
+  orcid: https://orcid.org/0000-0002-8743-0825
+- given-names: Stefan
+  family-names: Rass
+  orcid: https://orcid.org/0000-0003-2821-2489
+message: If you use Koney, please cite our research paper.
+preferred-citation:
+  type: conference-paper
+  title: "Koney: A Cyber Deception Orchestration Framework for Kubernetes"
+  doi: 10.1109/EuroSPW67616.2025.00084
+  year: 2025
+  month: 7
+  start: 690
+  end: 702
+  collection-title: "2025 IEEE European Symposium on Security and Privacy Workshops (EuroS&PW)"
+  conference:
+    name: "2025 IEEE European Symposium on Security and Privacy Workshops"
+    city: Venice
+    country: IT
+    date-start: 2025-06-30
+    date-end: 2025-07-04
+  publisher:
+    name: IEEE
+    city: New York, NY, USA
+  authors:
+  - given-names: Mario
+    family-names: Kahlhofer
+    orcid: https://orcid.org/0000-0002-6820-4953
+  - given-names: Matteo
+    family-names: Golinelli
+    orcid: https://orcid.org/0000-0002-8743-0825
+  - given-names: Stefan
+    family-names: Rass
+    orcid: https://orcid.org/0000-0003-2821-2489
