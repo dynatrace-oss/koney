@@ -21,6 +21,7 @@ from typing import cast
 
 import requests
 from kubernetes import client
+from kubernetes.client.exceptions import ApiException
 from rich.console import Console
 
 from .alerts import map_to_dynatrace_event
@@ -119,10 +120,27 @@ def _extract_dynatrace_sink(obj: dict) -> DynatraceSink | None:
 
 def _get_decoded_secret_data(secret_name: str) -> dict | None:
     api = client.CoreV1Api()
-    secret = cast(
-        client.V1Secret,
-        api.read_namespaced_secret(secret_name, KONEY_NAMESPACE),
-    )
+    try:
+        secret = cast(
+            client.V1Secret,
+            api.read_namespaced_secret(secret_name, KONEY_NAMESPACE),
+        )
+    except ApiException as e:
+        if e.status and e.status == 404:
+            if logger.level <= logging.ERROR:
+                console.print(
+                    f"Secret '{secret_name}' not found in namespace '{KONEY_NAMESPACE}': {e}",
+                    style="bold red",
+                )
+            return None
+        elif e.status and e.status >= 500:
+            if logger.level <= logging.WARNING:
+                console.print(
+                    f"Failed to read secret '{secret_name}': {e}",
+                    style="bold yellow",
+                )
+            return None
+        raise
 
     if not secret.data:
         return None  # empty secret
@@ -139,7 +157,17 @@ def _get_decoded_secret_data(secret_name: str) -> dict | None:
 def _get_cluster_uid() -> str | None:
     # get the uid of the kube-system namespace
     api = client.CoreV1Api()
-    namespace = cast(client.V1Namespace, api.read_namespace("kube-system"))
+    try:
+        namespace = cast(client.V1Namespace, api.read_namespace("kube-system"))
+    except ApiException as e:
+        if e.status and e.status >= 500:
+            if logger.level <= logging.WARNING:
+                console.print(
+                    f"Failed to read kube-system namespace: {e}",
+                    style="bold yellow",
+                )
+            return None
+        raise
     if not namespace.metadata or not namespace.metadata.uid:
         return None
     return namespace.metadata.uid
