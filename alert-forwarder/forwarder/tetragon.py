@@ -64,13 +64,23 @@ event_cache = set()
 def read_tetragon_events(since_seconds=60) -> dict[str, list[dict]]:
     v1 = client.CoreV1Api()
 
-    pod_list = cast(
-        client.V1PodList,
-        v1.list_namespaced_pod(
-            namespace=TETRAGON_NAMESPACE,
-            label_selector=TETRAGON_POD_LABEL_SELECTOR,
-        ),
-    )
+    try:
+        pod_list = cast(
+            client.V1PodList,
+            v1.list_namespaced_pod(
+                namespace=TETRAGON_NAMESPACE,
+                label_selector=TETRAGON_POD_LABEL_SELECTOR,
+            ),
+        )
+    except ApiException as e:
+        if e.status and e.status >= 500:
+            if logger.level <= logging.WARNING:
+                console.print(
+                    f"Failed to list Tetragon pods: {e}",
+                    style="bold yellow",
+                )
+            return {}
+        raise
 
     if not pod_list.items:
         return {}  # no Tetragon pods found
@@ -131,6 +141,7 @@ def read_tetragon_events(since_seconds=60) -> dict[str, list[dict]]:
 
 
 def map_tetragon_event(event: dict) -> KoneyAlert:
+    tracing_policy_name = None
     deception_policy_name = None
     trap_type = "unknown"
     metadata = dict()
@@ -139,8 +150,17 @@ def map_tetragon_event(event: dict) -> KoneyAlert:
         # attempt to resolve the DeceptionPolicy name (calls Kubernetes API)
         if tracing_policy_name := _extract_tracing_policy_name(event):
             deception_policy_name = _resolve_deception_policy_name(tracing_policy_name)
-    except client.ApiException:
-        pass
+    except ApiException as e:
+        if e.status and e.status == 404:
+            pass  # tracing policy might have been deleted in the meantime
+        elif e.status and e.status >= 500:
+            if logger.level <= logging.WARNING:
+                console.print(
+                    f"Failed to resolve DeceptionPolicy name for {tracing_policy_name}: {e}",
+                    style="bold yellow",
+                )
+        else:
+            raise
 
     # infer trap type and metadata by inspecting the event
     if kprobe := event.get("process_kprobe"):
