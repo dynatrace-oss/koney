@@ -15,11 +15,14 @@
 
 import fnmatch
 import json
+import logging
 import re
 from collections import defaultdict
 from typing import cast
 
 from kubernetes import client
+from kubernetes.client.exceptions import ApiException
+from rich.console import Console
 
 from .fingerprint import (
     KONEY_FINGERPRINT,
@@ -51,6 +54,9 @@ TETRAGON_DECEPTION_POLICY_REF = "koney/deception-policy"
 # the annotation key that stores the original container selectors for client-side filtering
 TETRAGON_CONTAINER_SELECTORS_ANNOTATION = "koney/container-selectors"
 
+logger = logging.getLogger("uvicorn.error")
+console = Console()
+
 # stores hashes of already processed events to prevent duplicates
 event_cache = set()
 
@@ -71,12 +77,25 @@ def read_tetragon_events(since_seconds=60) -> dict[str, list[dict]]:
 
     events_per_policy = defaultdict(list)
     for pod in pod_list.items:
-        loglines = v1.read_namespaced_pod_log(
-            name=pod.metadata.name,
-            namespace=TETRAGON_NAMESPACE,
-            container=TETRAGON_POD_CONTAINER_NAME,
-            since_seconds=since_seconds,
-        )
+        try:
+            loglines = v1.read_namespaced_pod_log(
+                name=pod.metadata.name,
+                namespace=TETRAGON_NAMESPACE,
+                container=TETRAGON_POD_CONTAINER_NAME,
+                since_seconds=since_seconds,
+            )
+        except ApiException as e:
+            if e.status and e.status == 404:
+                # pod might have been deleted in the meantime
+                continue
+            elif e.status and e.status >= 500:
+                if logger.level <= logging.WARNING:
+                    console.print(
+                        f"Failed to read logs from pod {pod.metadata.name}: {e}",
+                        style="bold yellow",
+                    )
+                continue
+            raise
 
         for line in loglines.splitlines():
             # quickly filter-out lines that cannot match
