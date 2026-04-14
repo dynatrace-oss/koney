@@ -4,7 +4,7 @@ This document describes how to build, test, and deploy the Koney operator.
 
 ## 📋 Prerequisites
 
-- `go` version v1.24.0+
+- `go` version v1.26.0+
 - `docker` version 17.03+
 - `kubectl` version v1.11.3+
 - Access to a Kubernetes v1.11.3+ cluster.
