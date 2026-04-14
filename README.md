@@ -25,13 +25,13 @@ You can install Koney with `kubectl` or `helm`. If you have Helm installed, we r
 **Option A:** (recommended) Install Koney with `helm`.
 
 ```sh
-helm install koney --create-namespace -n koney-system --wait oci://ghcr.io/dynatrace-oss/koney/charts/koney --version 0.2.0-rc.1
+helm install koney --create-namespace -n koney-system --wait oci://ghcr.io/dynatrace-oss/koney/charts/koney --version 0.2.0-rc.2
 ```
 
 **Option B:** Install Koney with `kubectl`.
 
 ```sh
-kubectl apply -f https://raw.githubusercontent.com/dynatrace-oss/koney/refs/tags/0.2.0-rc.1/dist/install.yaml
+kubectl apply -f https://raw.githubusercontent.com/dynatrace-oss/koney/refs/tags/0.2.0-rc.2/dist/install.yaml
 kubectl wait --for=condition=ready pod -n koney-system -l control-plane=controller-manager
 ```
 
@@ -87,7 +87,7 @@ helm uninstall koney -n koney-system
 **Option B:** Uninstall Koney like so, when installed with `kubectl`.
 
 ```sh
-kubectl delete -f https://raw.githubusercontent.com/dynatrace-oss/koney/refs/tags/0.2.0-rc.1/dist/install.yaml
+kubectl delete -f https://raw.githubusercontent.com/dynatrace-oss/koney/refs/tags/0.2.0-rc.2/dist/install.yaml
 ```
 
 ## 📃 Usage
