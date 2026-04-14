@@ -20,22 +20,18 @@ Currently, Koney supports the deployment of [honeytokens](https://en.wikipedia.o
 
 ## 🚀 Quickstart
 
-<!-- (HELM WILL ONLY BE AVAILABLE WITH 0.2.0+)
-
 You can install Koney with `kubectl` or `helm`. If you have Helm installed, we recommend Helm.
 
 **Option A:** (recommended) Install Koney with `helm`.
 
 ```sh
-helm install koney --create-namespace -n koney-system --wait oci://ghcr.io/dynatrace-oss/koney/charts/koney --version 0.1.0
+helm install koney --create-namespace -n koney-system --wait oci://ghcr.io/dynatrace-oss/koney/charts/koney --version 0.2.0-rc.1
 ```
 
--->
-
-Install Koney with `kubectl` in default namespace `koney-system`.
+**Option B:** Install Koney with `kubectl`.
 
 ```sh
-kubectl apply -f https://raw.githubusercontent.com/dynatrace-oss/koney/refs/tags/v0.1.0/dist/install.yaml
+kubectl apply -f https://raw.githubusercontent.com/dynatrace-oss/koney/refs/tags/0.2.0-rc.1/dist/install.yaml
 kubectl wait --for=condition=ready pod -n koney-system -l control-plane=controller-manager
 ```
 
@@ -80,22 +76,18 @@ kubectl delete deceptionpolicy --ignore-not-found --wait --all
 kubectl delete deceptionalertsink --ignore-not-found --wait --all --all-namespaces
 ```
 
-<!-- (HELM WILL ONLY BE AVAILABLE WITH 0.2.0+)
-
 **Option A:** Uninstall Koney like so, when installed with `helm`.
 
 ```sh
 helm uninstall koney -n koney-system
 ```
 
-> **Note:** When using Helm, the chart includes a `pre-delete` hook that automatically deletes all `DeceptionPolicy` and `DeceptionAlertSink` resources before the controller is removed. The manual commands above are typically only required when Koney was previously installed via `kubectl` or manual cleanup is needed for any reason.
+> **Note:** When using Helm, the chart includes a `pre-delete` hook that automatically deletes all `DeceptionPolicy` and `DeceptionAlertSink` resources before the controller is removed. The manual commands above are typically only required when Koney was previously installed via `kubectl` or manual cleanup is needed for any reason. This clean-up hook can be disabled by setting the `cleanup.enable` value to `false` during installation or upgrade.
 
--->
-
-Uninstall Koney like so, when installed with `kubectl`.
+**Option B:** Uninstall Koney like so, when installed with `kubectl`.
 
 ```sh
-kubectl delete -f https://raw.githubusercontent.com/dynatrace-oss/koney/refs/tags/v0.1.0/dist/install.yaml
+kubectl delete -f https://raw.githubusercontent.com/dynatrace-oss/koney/refs/tags/0.2.0-rc.1/dist/install.yaml
 ```
 
 ## 📃 Usage

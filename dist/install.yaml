@@ -6,7 +6,7 @@ metadata:
   labels:
     app.kubernetes.io/name: koney
     app.kubernetes.io/instance: koney
-    app.kubernetes.io/version: "0.2.0-rc.0"
+    app.kubernetes.io/version: "0.2.0-rc.1"
   name: koney-system
 ---
 # Source: koney/templates/rbac/manager/manager-serviceaccount.yaml
@@ -16,7 +16,7 @@ metadata:
   labels:
     app.kubernetes.io/name: koney
     app.kubernetes.io/instance: koney
-    app.kubernetes.io/version: "0.2.0-rc.0"
+    app.kubernetes.io/version: "0.2.0-rc.1"
   name: koney-manager-serviceaccount
   namespace: koney-system
 ---
@@ -25,7 +25,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.18.0
+    controller-gen.kubebuilder.io/version: v0.20.1
   name: deceptionalertsinks.research.dynatrace.com
 spec:
   group: research.dynatrace.com
@@ -90,7 +90,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.18.0
+    controller-gen.kubebuilder.io/version: v0.20.1
   name: deceptionpolicies.research.dynatrace.com
 spec:
   group: research.dynatrace.com
@@ -359,7 +359,7 @@ metadata:
   labels:
     app.kubernetes.io/name: koney
     app.kubernetes.io/instance: koney
-    app.kubernetes.io/version: "0.2.0-rc.0"
+    app.kubernetes.io/version: "0.2.0-rc.1"
   name: koney-alert-forwarder-role
 rules:
 - apiGroups:
@@ -398,7 +398,7 @@ metadata:
   labels:
     app.kubernetes.io/name: koney
     app.kubernetes.io/instance: koney
-    app.kubernetes.io/version: "0.2.0-rc.0"
+    app.kubernetes.io/version: "0.2.0-rc.1"
   name: koney-manager-role
 rules:
 - apiGroups:
@@ -502,7 +502,7 @@ metadata:
   labels:
     app.kubernetes.io/name: koney
     app.kubernetes.io/instance: koney
-    app.kubernetes.io/version: "0.2.0-rc.0"
+    app.kubernetes.io/version: "0.2.0-rc.1"
   name: koney-metrics-auth-role
 rules:
 - apiGroups:
@@ -525,7 +525,7 @@ metadata:
   labels:
     app.kubernetes.io/name: koney
     app.kubernetes.io/instance: koney
-    app.kubernetes.io/version: "0.2.0-rc.0"
+    app.kubernetes.io/version: "0.2.0-rc.1"
   name: koney-metrics-reader-role
 rules:
 - nonResourceURLs:
@@ -540,7 +540,7 @@ metadata:
   labels:
     app.kubernetes.io/name: koney
     app.kubernetes.io/instance: koney
-    app.kubernetes.io/version: "0.2.0-rc.0"
+    app.kubernetes.io/version: "0.2.0-rc.1"
   name: koney-alert-forwarder-rolebinding
 roleRef:
   apiGroup: rbac.authorization.k8s.io
@@ -558,7 +558,7 @@ metadata:
   labels:
     app.kubernetes.io/name: koney
     app.kubernetes.io/instance: koney
-    app.kubernetes.io/version: "0.2.0-rc.0"
+    app.kubernetes.io/version: "0.2.0-rc.1"
   name: koney-manager-rolebinding
 roleRef:
   apiGroup: rbac.authorization.k8s.io
@@ -576,7 +576,7 @@ metadata:
   labels:
     app.kubernetes.io/name: koney
     app.kubernetes.io/instance: koney
-    app.kubernetes.io/version: "0.2.0-rc.0"
+    app.kubernetes.io/version: "0.2.0-rc.1"
   name: koney-metrics-auth-rolebinding
 roleRef:
   apiGroup: rbac.authorization.k8s.io
@@ -594,7 +594,7 @@ metadata:
   labels:
     app.kubernetes.io/name: koney
     app.kubernetes.io/instance: koney
-    app.kubernetes.io/version: "0.2.0-rc.0"
+    app.kubernetes.io/version: "0.2.0-rc.1"
   name: koney-leader-election-role
   namespace: koney-system
 rules:
@@ -637,7 +637,7 @@ metadata:
   labels:
     app.kubernetes.io/name: koney
     app.kubernetes.io/instance: koney
-    app.kubernetes.io/version: "0.2.0-rc.0"
+    app.kubernetes.io/version: "0.2.0-rc.1"
   name: koney-leader-election-rolebinding
   namespace: koney-system
 roleRef:
@@ -656,7 +656,7 @@ metadata:
   labels:
     app.kubernetes.io/name: koney
     app.kubernetes.io/instance: koney
-    app.kubernetes.io/version: "0.2.0-rc.0"
+    app.kubernetes.io/version: "0.2.0-rc.1"
     control-plane: controller-manager
   name: koney-alert-forwarder-webhook
   namespace: koney-system
@@ -676,7 +676,7 @@ metadata:
   labels:
     app.kubernetes.io/name: koney
     app.kubernetes.io/instance: koney
-    app.kubernetes.io/version: "0.2.0-rc.0"
+    app.kubernetes.io/version: "0.2.0-rc.1"
     control-plane: controller-manager
   name: koney-controller-manager-metrics-service
   namespace: koney-system
@@ -698,7 +698,7 @@ metadata:
   labels:
     app.kubernetes.io/name: koney
     app.kubernetes.io/instance: koney
-    app.kubernetes.io/version: "0.2.0-rc.0"
+    app.kubernetes.io/version: "0.2.0-rc.1"
     control-plane: controller-manager
   name: koney-controller-manager
   namespace: koney-system
@@ -716,7 +716,7 @@ spec:
       labels:
         app.kubernetes.io/name: koney
         app.kubernetes.io/instance: koney
-        app.kubernetes.io/version: "0.2.0-rc.0"
+        app.kubernetes.io/version: "0.2.0-rc.1"
         control-plane: controller-manager
     spec:
       serviceAccountName: koney-manager-serviceaccount
@@ -728,7 +728,7 @@ spec:
           type: RuntimeDefault
       containers:
       - name: manager
-        image: "ghcr.io/dynatrace-oss/koney-controller:0.2.0-rc.0"
+        image: "ghcr.io/dynatrace-oss/koney-controller:0.2.0-rc.1"
         imagePullPolicy: IfNotPresent
         command:
         - /manager
@@ -766,7 +766,7 @@ spec:
             drop:
             - ALL
       - name: alerts
-        image: "ghcr.io/dynatrace-oss/koney-alert-forwarder:0.2.0-rc.0"
+        image: "ghcr.io/dynatrace-oss/koney-alert-forwarder:0.2.0-rc.1"
         imagePullPolicy: IfNotPresent
         env:
         - name: KONEY_NAMESPACE
@@ -793,3 +793,112 @@ spec:
           capabilities:
             drop:
             - ALL
+---
+# Source: koney/templates/cleanup/cleanup.yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: koney-cleanup
+  namespace: koney-system
+  labels:
+    app.kubernetes.io/name: koney
+    app.kubernetes.io/instance: koney
+    app.kubernetes.io/part-of: koney
+  annotations:
+    helm.sh/hook: pre-delete
+    helm.sh/hook-delete-policy: hook-succeeded,before-hook-creation
+    helm.sh/hook-weight: "-5"
+---
+# Source: koney/templates/cleanup/cleanup.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: koney-cleanup
+  labels:
+    app.kubernetes.io/name: koney
+    app.kubernetes.io/instance: koney
+    app.kubernetes.io/part-of: koney
+  annotations:
+    helm.sh/hook: pre-delete
+    helm.sh/hook-delete-policy: hook-succeeded,before-hook-creation
+    helm.sh/hook-weight: "-5"
+rules:
+- apiGroups:
+  - research.dynatrace.com
+  resources:
+  - deceptionpolicies
+  - deceptionalertsinks
+  verbs:
+  - get
+  - list
+  - delete
+---
+# Source: koney/templates/cleanup/cleanup.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: koney-cleanup
+  labels:
+    app.kubernetes.io/name: koney
+    app.kubernetes.io/instance: koney
+    app.kubernetes.io/part-of: koney
+  annotations:
+    helm.sh/hook: pre-delete
+    helm.sh/hook-delete-policy: hook-succeeded,before-hook-creation
+    helm.sh/hook-weight: "-5"
+subjects:
+- kind: ServiceAccount
+  name: koney-cleanup
+  namespace: koney-system
+roleRef:
+  kind: ClusterRole
+  name: koney-cleanup
+  apiGroup: rbac.authorization.k8s.io
+---
+# Source: koney/templates/cleanup/cleanup.yaml
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: koney-cleanup
+  namespace: koney-system
+  labels:
+    app.kubernetes.io/name: koney
+    app.kubernetes.io/instance: koney
+    app.kubernetes.io/part-of: koney
+  annotations:
+    helm.sh/hook: pre-delete
+    helm.sh/hook-delete-policy: hook-succeeded,before-hook-creation
+    helm.sh/hook-weight: "0"
+spec:
+  template:
+    spec:
+      serviceAccountName: koney-cleanup
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+      - name: kubectl
+        image: cgr.dev/chainguard/kubectl:latest
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+        command:
+        - /usr/bin/kubectl
+        - delete
+        - deceptionpolicy,deceptionalertsink
+        - --all-namespaces
+        - --ignore-not-found
+        - --timeout=60s
+        - --wait
+        - --all
+        resources:
+          limits:
+            cpu: 100m
+            memory: 64Mi
+          requests:
+            cpu: 10m
+            memory: 32Mi
+      restartPolicy: Never
