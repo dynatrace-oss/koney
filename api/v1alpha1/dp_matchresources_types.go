@@ -41,6 +41,12 @@ type ResourceDescription struct {
 	Selector *metav1.LabelSelector `json:"selector,omitempty" yaml:"selector,omitempty"`
 
 	// ContainerSelector is a selector to filter the containers to inject the trap into.
+	// Valid values are:
+	//   - "" (empty string): selects all containers
+	//   - "glob:<pattern>": selects containers whose name matches the glob pattern (e.g. "glob:*" for all)
+	//   - "regex:<pattern>": selects containers whose name matches the regex pattern (e.g. "regex:.*" for all)
+	//   - "<name>": selects the container with the exact given name
+	// Note: a bare "*" is NOT a wildcard — it is treated as a literal container name. Use "glob:*" instead.
 	// +optional
 	// +kubebuilder:default=""
 	ContainerSelector string `json:"containerSelector,omitempty" yaml:"containerSelector,omitempty"`

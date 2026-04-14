@@ -261,6 +261,11 @@ func (r *DeceptionPolicyReconciler) filterValidTraps(ctx context.Context, decept
 	validTraps := make([]v1alpha1.Trap, 0)
 	for _, trap := range deceptionPolicy.Spec.Traps {
 		if err := trap.IsValid(); err == nil {
+			for _, resourceFilter := range trap.MatchResources.Any {
+				if resourceFilter.ContainerSelector == "*" {
+					log.Info("WARNING: containerSelector is set to \"*\", which is treated as a literal container name, not a wildcard, and will not match any container. Use \"glob:*\" or \"regex:.*\" to select all containers.")
+				}
+			}
 			validTraps = append(validTraps, trap)
 		} else {
 			log.Error(err, "Trap specification invalid", "trap", trap)
