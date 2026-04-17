@@ -129,7 +129,7 @@ jobs:
         persist-credentials: false
 
     - name: Install Helm
-      uses: azure/setup-helm@bf6a7d304bc2fdb57e0331155b7ebf2c504acf0a # v4
+      uses: azure/setup-helm@1a275c3b69536ee54be43f2070a358922e12c8d4 # v4.3.1
 
     - name: Package Helm chart
       run: VERSION=${GITHUB_REF_NAME#v} make helm-package
