@@ -130,7 +130,10 @@ func verifyAnnotationPresentInPod(namespace, name string) error {
 
 	// Check if the annotation changes annotation is present
 	if !strings.Contains(string(annotation), constants.AnnotationKeyChanges) {
-		return fmt.Errorf("annotation not present yet")
+		return fmt.Errorf(
+			"expected annotation %q on pod %s in namespace %s, but it was not present",
+			constants.AnnotationKeyChanges, name, namespace,
+		)
 	}
 
 	return nil
@@ -150,7 +153,10 @@ func verifyAnnotationPresentInDeployment(namespace, name string) error {
 
 	// Check if the changes annotation is present
 	if !strings.Contains(string(annotation), constants.AnnotationKeyChanges) {
-		return fmt.Errorf("annotation not present yet")
+		return fmt.Errorf(
+			"expected annotation %q on deployment %s in namespace %s, but it was not present",
+			constants.AnnotationKeyChanges, name, namespace,
+		)
 	}
 
 	return nil
@@ -166,16 +172,26 @@ func verifyAnnotationIsAccurate(
 	cmd := exec.Command("kubectl", "get", "-n", namespace, resourceKind, resourceName,
 		"-o", "jsonpath={.metadata.annotations."+constants.AnnotationKeyChanges+"}")
 	annotation, err := testutils.Run(cmd)
-	Expect(err).NotTo(HaveOccurred())
+	if err != nil {
+		return fmt.Errorf(
+			"failed to get annotation %q from %s %s in namespace %s: %w",
+			constants.AnnotationKeyChanges, resourceKind, resourceName, namespace, err,
+		)
+	}
 
 	var existingAnnotation []v1alpha1.ChangeAnnotation
 	if err := json.Unmarshal(annotation, &existingAnnotation); err != nil {
-		return err
+		return fmt.Errorf(
+			"failed to parse annotation %q on %s %s in namespace %s: %w",
+			constants.AnnotationKeyChanges, resourceKind, resourceName, namespace, err,
+		)
 	}
 
 	if len(existingAnnotation) != 1 {
-		return fmt.Errorf("expected 1 annotation change, but got %d",
-			len(existingAnnotation))
+		return fmt.Errorf(
+			"expected exactly 1 annotation change in %q on %s %s in namespace %s, but got %d",
+			constants.AnnotationKeyChanges, resourceKind, resourceName, namespace, len(existingAnnotation),
+		)
 	}
 	if existingAnnotation[0].DeceptionPolicyName != deceptionPolicyName {
 		return fmt.Errorf("expected DeceptionPolicyName to be %s, but got %s",
