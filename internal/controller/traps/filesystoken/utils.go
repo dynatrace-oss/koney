@@ -168,7 +168,6 @@ func generateTetragonTracingPolicy(deceptionPolicy *v1alpha1.DeceptionPolicy,
 						Index: 0,
 						Type:  "int", // The int return type is used to trace the return value of the function
 					},
-					ReturnArgAction: "Post", // The Post action is used to trace the return value of the function
 					Selectors: []ciliumiov1alpha1.KProbeSelector{
 						{
 							MatchArgs: []ciliumiov1alpha1.ArgSelector{
@@ -203,7 +202,6 @@ func generateTetragonTracingPolicy(deceptionPolicy *v1alpha1.DeceptionPolicy,
 						Index: 0,
 						Type:  "int",
 					},
-					ReturnArgAction: "Post",
 					Selectors: []ciliumiov1alpha1.KProbeSelector{
 						{
 							MatchArgs: []ciliumiov1alpha1.ArgSelector{
