@@ -16,6 +16,7 @@
 package e2e
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"os/exec"
@@ -513,7 +514,9 @@ var _ = Describe("Koney Operator with Kive", Ordered, func() {
 	When("deleting the controller-manager", func() {
 		It("should delete the controller-manager", func() {
 			By("deleting the controller-manager")
-			cmd := exec.Command("timeout", "30s", "make", "undeploy")
+			ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+			defer cancel()
+			cmd := exec.CommandContext(ctx, "make", "undeploy")
 			_, err := testutils.Run(cmd)
 			Expect(err).NotTo(HaveOccurred())
 		})
