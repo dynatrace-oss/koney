@@ -161,12 +161,16 @@ docker-push: ## Push docker image with the manager and alert forwarder.
 .PHONY: helm-package
 helm-package: manifests helm ## Generate a Helm chart from the installer YAML.
 	echo "Patching Chart.yaml ..."
-	sed -i 's/^version: .*/version: ${VERSION}/' dist/chart/Chart.yaml
-	sed -i 's/^appVersion: .*/appVersion: "${VERSION}"/' dist/chart/Chart.yaml
+	sed -i.bak \
+		-e 's/^version: .*/version: ${VERSION}/' \
+		-e 's/^appVersion: .*/appVersion: "${VERSION}"/' \
+		dist/chart/Chart.yaml && rm dist/chart/Chart.yaml.bak
 	echo "Patching values.yaml ..."
-	sed -i 's|^\([[:space:]]*\)repository: \(\S*\) # patch:manager|\1repository: ${IMG_CONTROLLER_NAME} # patch:manager|' dist/chart/values.yaml
-	sed -i 's|^\([[:space:]]*\)repository: \(\S*\) # patch:alert-forwarder|\1repository: ${IMG_ALERT_FORWARDER_NAME} # patch:alert-forwarder|' dist/chart/values.yaml
-	sed -i 's|^\([[:space:]]*\)tag: .*|\1tag: ${VERSION}|' dist/chart/values.yaml
+	sed -i.bak \
+		-e 's|^\([[:space:]]*\)repository: \([^[:space:]]*\) # patch:manager|\1repository: ${IMG_CONTROLLER_NAME} # patch:manager|' \
+		-e 's|^\([[:space:]]*\)repository: \([^[:space:]]*\) # patch:alert-forwarder|\1repository: ${IMG_ALERT_FORWARDER_NAME} # patch:alert-forwarder|' \
+		-e 's|^\([[:space:]]*\)tag: .*|\1tag: ${VERSION}|' \
+		dist/chart/values.yaml && rm dist/chart/values.yaml.bak
 	$(HELM) package --app-version ${VERSION} -u -d dist ./dist/chart
 	$(HELM) lint ./dist/chart
 
