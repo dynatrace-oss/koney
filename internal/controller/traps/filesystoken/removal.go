@@ -144,7 +144,7 @@ func (r *FilesystemHoneytokenReconciler) removeDecoyWithContainerExec(ctx contex
 		// Check if the file was removed
 		// ExecCMDInContainer does not run commands in a shell, so we need to use sh -c to do so
 		// The command checks if the file exists and prints "File exists" if it does, or "No such file" if it doesn't
-		cmd = []string{"sh", "-c", "[ ! -f " + trap.FilesystemHoneytoken.FilePath + " ] && echo 'No such file' || echo 'File exists'"}
+		cmd = fileExistenceCheckCommand(trap.FilesystemHoneytoken.FilePath)
 		output, err := r.executeCommandInContainer(ctx, pod, containerName, cmd)
 		if err != nil {
 			log.Error(err, "unable to check if the file was removed", "container", containerName, "stderr", output)
