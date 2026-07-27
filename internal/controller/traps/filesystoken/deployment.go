@@ -242,10 +242,10 @@ func (r *FilesystemHoneytokenReconciler) deployDecoyWithContainerExec(ctx contex
 		// To decode the octal content, we use the following command:
 		// oct_string="141142143"; i=1; while [ $i -lt ${#oct_string} ]; do $(which echo) -e "\0$(expr substr $oct_string $i 3)\c"; i=$(expr $i + 3); done > /path/to/file
 		// $(which echo) is used to avoid issues with the shell built-in echo command
-		cmd = []string{"sh", "-c", "oct_string=\"" + octalContent + "\"; i=1; while [ $i -lt ${#oct_string} ]; do $(which echo) -e \"\\0$(expr substr $oct_string $i 3)\\c " + echoFingerprint + "\"; i=$(expr $i + 3); done > \"" + trap.FilesystemHoneytoken.FilePath + "\""}
+		cmd = writeOctalContentCommand(octalContent, echoFingerprint, trap.FilesystemHoneytoken.FilePath)
 	} else {
 		// We don't use touch because if the file already includes content, touch would not make it empty
-		cmd = []string{"sh", "-c", "echo -e \"\\c " + echoFingerprint + "\" > \"" + trap.FilesystemHoneytoken.FilePath + "\""}
+		cmd = writeEmptyFileCommand(echoFingerprint, trap.FilesystemHoneytoken.FilePath)
 	}
 
 	// Use ExecCMDInContainer to execute the command in the container
@@ -258,7 +258,7 @@ func (r *FilesystemHoneytokenReconciler) deployDecoyWithContainerExec(ctx contex
 		return joinedErrors
 	} else {
 		// Check if the file was created with the expected content
-		cmd = []string{"sh", "-c", "cat " + catFingerprint + " \"" + trap.FilesystemHoneytoken.FilePath + "\""}
+		cmd = readFileContentCommand(catFingerprint, trap.FilesystemHoneytoken.FilePath)
 		output, err := r.executeCommandInContainer(ctx, pod, containerName, cmd)
 		if err != nil {
 			log.Error(err, "unable to read the content of the file", "container", containerName)
