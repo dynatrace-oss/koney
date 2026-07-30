@@ -149,3 +149,49 @@ var _ = Describe("DeployCaptor", func() {
 		})
 	})
 })
+
+var _ = Describe("Policy generation with a namespace-only trap", func() {
+	Context("With a trap that matches resources by namespace and has no label selector", func() {
+		namespaceOnlyTrap := v1alpha1.Trap{
+			FilesystemHoneytoken: v1alpha1.FilesystemHoneytoken{
+				FilePath:    "/path/to/file",
+				FileContent: "someverysecrettoken",
+			},
+			MatchResources: v1alpha1.MatchResources{
+				Any: []v1alpha1.ResourceFilter{
+					{
+						ResourceDescription: v1alpha1.ResourceDescription{
+							Namespaces: []string{"koney"},
+						},
+					},
+				},
+			},
+		}
+
+		It("should generate a Tetragon TracingPolicy without a PodSelector label", func() {
+			deceptionPolicy := v1alpha1.DeceptionPolicy{
+				Spec: v1alpha1.DeceptionPolicySpec{
+					Traps: []v1alpha1.Trap{namespaceOnlyTrap},
+				},
+			}
+			tracingPolicy := generateTetragonTracingPolicy(&deceptionPolicy, namespaceOnlyTrap, "test-tracing-policy")
+			Expect(tracingPolicy.Name).To(Equal("test-tracing-policy"))
+			Expect(tracingPolicy.Spec.PodSelector.MatchLabels).To(BeEmpty())
+		})
+
+		It("should generate a KivePolicy without a match label", func() {
+			deceptionPolicy := v1alpha1.DeceptionPolicy{
+				Spec: v1alpha1.DeceptionPolicySpec{
+					Traps: []v1alpha1.Trap{namespaceOnlyTrap},
+				},
+			}
+			kivePolicy := generateKivePolicy(&deceptionPolicy, namespaceOnlyTrap, "test-kive-policy")
+			Expect(kivePolicy.Name).To(Equal("test-kive-policy"))
+			Expect(kivePolicy.Spec.Traps[0].MatchAny).ToNot(BeEmpty())
+			for _, trapMatch := range kivePolicy.Spec.Traps[0].MatchAny {
+				Expect(trapMatch.Namespace).To(Equal("koney"))
+				Expect(trapMatch.MatchLabels).To(BeEmpty())
+			}
+		})
+	})
+})
