@@ -228,6 +228,9 @@ func generateTetragonTracingPolicy(deceptionPolicy *v1alpha1.DeceptionPolicy,
 
 	// Add the labels from the trap's MatchResources to the PodSelector
 	for _, resourceFilter := range trap.MatchResources.Any {
+		if resourceFilter.Selector == nil {
+			continue
+		}
 		for key, value := range resourceFilter.Selector.MatchLabels {
 			tracingPolicy.Spec.PodSelector.MatchLabels[key] = value
 		}
@@ -361,6 +364,9 @@ func generateKivePolicy(deceptionPolicy *v1alpha1.DeceptionPolicy,
 			}
 
 			for _, resourceFilter := range trap.MatchResources.Any {
+				if resourceFilter.Selector == nil {
+					continue
+				}
 				for key, value := range resourceFilter.Selector.MatchLabels {
 					kiveTrapMatch.MatchLabels[key] = value
 				}
@@ -379,6 +385,9 @@ func generateKivePolicy(deceptionPolicy *v1alpha1.DeceptionPolicy,
 				}
 
 				for _, resourceFilter := range trap.MatchResources.Any {
+					if resourceFilter.Selector == nil {
+						continue
+					}
 					for key, value := range resourceFilter.Selector.MatchLabels {
 						kiveTrapMatch.MatchLabels[key] = value
 					}
