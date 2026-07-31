@@ -102,7 +102,7 @@ lint-fix: golangci-lint ## Run golangci-lint linter and perform fixes.
 
 .PHONY: test
 test: generate fmt lint setup-envtest ## Run unit tests (no cluster required).
-	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) -p path)"  go test $(shell go list ./... | grep -v /test/) -coverprofile cover.out
+	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) --bin-dir $(LOCALBIN) -p path)"  go test $(shell go list ./... | grep -v /test/) -coverprofile cover.out
 
 .PHONY: test-e2e
 test-e2e: generate fmt lint ## Run end-to-end tests (requires an isolated environment).
