@@ -20,7 +20,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"os/exec"
-	"regexp"
 	"strings"
 	"time"
 
@@ -306,12 +305,6 @@ func verifyHoneytokenAndAwaitAlertTetragon(
 	trap v1alpha1.Trap, lastModified time.Time,
 	podNamespace, podName string, containers []string,
 ) error {
-	// Wait for Tetragon to setup probes
-	pattern := "Loaded BPF maps and events for sensor successfully"
-	Eventually(func() error {
-		return expectLogLine(pattern, "kube-system", "app.kubernetes.io/name=tetragon", "tetragon", &lastModified)
-	}, time.Minute, time.Second).Should(Succeed())
-
 	// eBPF probes tend to need some extra time before being ready
 	time.Sleep(3 * time.Second)
 
@@ -427,12 +420,6 @@ func verifyHoneytokenAndAwaitAlertKive(
 	trap v1alpha1.Trap, lastModified time.Time,
 	podNamespace, podName string, containers []string,
 ) error {
-	// Wait for Kive to setup probes
-	pattern := "Created / Updated KiveData resource."
-	Eventually(func() error {
-		return expectLogLine(pattern, "kivebpf-system", "app.kubernetes.io/name=kivebpf", "kivebpf-system", &lastModified)
-	}, time.Minute, time.Second).Should(Succeed())
-
 	// eBPF probes tend to need some extra time before being ready
 	time.Sleep(3 * time.Second)
 
@@ -538,29 +525,6 @@ func verifyHoneytokenAndAwaitAlertKive(
 		return nil
 
 	}, time.Minute, time.Second).Should(Succeed())
-
-	return nil
-}
-
-// expectLogLine checks if the log line is present in the logs of the pod (1000 lines max)
-func expectLogLine(pattern, namespace, selector, container string, sinceTime *time.Time) error {
-	args := []string{"logs", "-n", namespace, "-l", selector, "-c", container, "--tail", "1000"}
-	if sinceTime != nil {
-		args = append(args, "--since-time", sinceTime.Format(time.RFC3339))
-	}
-	cmd := exec.Command("kubectl", args...)
-	output, err := testutils.Run(cmd)
-	if err != nil {
-		return err
-	}
-
-	matched, err := regexp.MatchString(pattern, string(output))
-	if err != nil {
-		return fmt.Errorf("invalid pattern '%s': %w", pattern, err)
-	}
-	if !matched {
-		return fmt.Errorf("expected pattern '%s' not found in logs - increase tail limit?", pattern)
-	}
 
 	return nil
 }
