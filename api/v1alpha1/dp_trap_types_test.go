@@ -139,6 +139,21 @@ var _ = Describe("IsValid", func() {
 		})
 	})
 
+	Context("when checking a trap with an empty (non-nil) Namespaces slice and a nil Selector", func() {
+		It("should return error", func() {
+			for _, trap := range testTraps {
+				trap.MatchResources = MatchResources{
+					Any: []ResourceFilter{
+						{ResourceDescription: ResourceDescription{Namespaces: []string{}, Selector: nil}},
+					},
+				}
+				err := trap.IsValid()
+				Expect(err).Should(HaveOccurred())
+				Expect(err.Error()).Should(ContainSubstring("are empty"))
+			}
+		})
+	})
+
 	Context("when checking a trap with both Namespaces and Selector empty", func() {
 		It("should return error", func() {
 			for _, trap := range testTraps {
