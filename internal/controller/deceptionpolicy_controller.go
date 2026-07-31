@@ -319,36 +319,39 @@ func (r *DeceptionPolicyReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Named("deceptionpolicy").
 		Watches(&corev1.Pod{}, watchHandler).
 		Watches(&appsv1.Deployment{}, watchHandler).
-		WithEventFilter(predicate.Funcs{
-			GenericFunc: func(e event.GenericEvent) bool { return false },
-			CreateFunc:  func(e event.CreateEvent) bool { return true },
-			UpdateFunc: func(e event.UpdateEvent) bool {
-				switch e.ObjectNew.(type) {
-				case *corev1.Pod:
-				case *appsv1.Deployment:
-					// For pods and deployments, consider generation changes and label changes
-					// - Generation changes means spec changes, e.g., new container images that need new decoys
-					// - Label changes could affect what is matched by the deception policies
-					return predicate.Or(predicate.GenerationChangedPredicate{}, predicate.LabelChangedPredicate{}).Update(e)
-				case *v1alpha1.DeceptionPolicy:
-					// For deception policies, only consider generation changes
-					// (skips update on status, metadata, labels, etc.)
-					return predicate.GenerationChangedPredicate{}.Update(e)
-				}
-				return false
-			},
-			DeleteFunc: func(e event.DeleteEvent) bool {
-				switch e.Object.(type) {
-				case *corev1.Pod:
-				case *appsv1.Deployment:
-					// The controller must not change anything when pods or deployments are deleted,
-					// only the status conditions will be incorrect until the next periodic reconciliation
-					return false
-				case *v1alpha1.DeceptionPolicy:
-					return true
-				}
-				return false
-			},
-		}).
+		WithEventFilter(deceptionPolicyEventFilter()).
 		Complete(r)
+}
+
+// deceptionPolicyEventFilter decides which events reach the reconciler.
+func deceptionPolicyEventFilter() predicate.Funcs {
+	return predicate.Funcs{
+		GenericFunc: func(e event.GenericEvent) bool { return false },
+		CreateFunc:  func(e event.CreateEvent) bool { return true },
+		UpdateFunc: func(e event.UpdateEvent) bool {
+			switch e.ObjectNew.(type) {
+			case *corev1.Pod, *appsv1.Deployment:
+				// For pods and deployments, consider generation changes and label changes
+				// - Generation changes means spec changes, e.g., new container images that need new decoys
+				// - Label changes could affect what is matched by the deception policies
+				return predicate.Or(predicate.GenerationChangedPredicate{}, predicate.LabelChangedPredicate{}).Update(e)
+			case *v1alpha1.DeceptionPolicy:
+				// For deception policies, only consider generation changes
+				// (skips update on status, metadata, labels, etc.)
+				return predicate.GenerationChangedPredicate{}.Update(e)
+			}
+			return false
+		},
+		DeleteFunc: func(e event.DeleteEvent) bool {
+			switch e.Object.(type) {
+			case *corev1.Pod, *appsv1.Deployment:
+				// The controller must not change anything when pods or deployments are deleted,
+				// only the status conditions will be incorrect until the next periodic reconciliation
+				return false
+			case *v1alpha1.DeceptionPolicy:
+				return true
+			}
+			return false
+		},
+	}
 }
