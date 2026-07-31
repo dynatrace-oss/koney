@@ -434,7 +434,7 @@ var _ = Describe("GetDeployableObjectsWithContainers", func() {
 			Expect(err).ToNot(HaveOccurred())
 
 			Expect(matchResult.DeployableObjects).To(HaveLen(1))
-			obj := getObjectFromMap(podOk_Old_Run_CtrsReady_Ctr1RunAndReady.Name, matchResult.DeployableObjects)
+			obj := getObjectFromMap(client.ObjectKeyFromObject(&podOk_Old_Run_CtrsReady_Ctr1RunAndReady), matchResult.DeployableObjects)
 			Expect(obj).NotTo(BeNil())
 			Expect(obj.GetName()).To(Equal(podOk_Old_Run_CtrsReady_Ctr1RunAndReady.Name))
 			Expect(matchResult.DeployableObjects[obj]).To(HaveLen(1))
@@ -462,7 +462,7 @@ var _ = Describe("GetDeployableObjectsWithContainers", func() {
 			Expect(err).ToNot(HaveOccurred())
 
 			Expect(matchResult.DeployableObjects).To(HaveLen(1))
-			obj := getObjectFromMap(podOk_New_Run_CtrsReady_Ctr1RunAndReady.Name, matchResult.DeployableObjects)
+			obj := getObjectFromMap(client.ObjectKeyFromObject(&podOk_New_Run_CtrsReady_Ctr1RunAndReady), matchResult.DeployableObjects)
 			Expect(obj).NotTo(BeNil())
 			Expect(obj.GetName()).To(Equal(podOk_New_Run_CtrsReady_Ctr1RunAndReady.Name))
 			Expect(matchResult.DeployableObjects[obj]).To(HaveLen(1))
@@ -488,13 +488,13 @@ var _ = Describe("GetDeployableObjectsWithContainers", func() {
 
 			Expect(matchResult.DeployableObjects).To(HaveLen(2))
 
-			obj1 := getObjectFromMap(podOk_Old_Run_CtrsReady_Ctr1RunAndReady.Name, matchResult.DeployableObjects)
+			obj1 := getObjectFromMap(client.ObjectKeyFromObject(&podOk_Old_Run_CtrsReady_Ctr1RunAndReady), matchResult.DeployableObjects)
 			Expect(obj1).NotTo(BeNil())
 			Expect(obj1.GetName()).To(Equal(podOk_Old_Run_CtrsReady_Ctr1RunAndReady.Name))
 			Expect(matchResult.DeployableObjects[obj1]).To(HaveLen(1))
 			Expect(matchResult.DeployableObjects[obj1][0]).To(Equal(podOk_Old_Run_CtrsReady_Ctr1RunAndReady.Spec.Containers[0].Name))
 
-			obj2 := getObjectFromMap(podOk_New_Run_CtrsReady_Ctr1RunAndReady.Name, matchResult.DeployableObjects)
+			obj2 := getObjectFromMap(client.ObjectKeyFromObject(&podOk_New_Run_CtrsReady_Ctr1RunAndReady), matchResult.DeployableObjects)
 			Expect(obj2).NotTo(BeNil())
 			Expect(obj2.GetName()).To(Equal(podOk_New_Run_CtrsReady_Ctr1RunAndReady.Name))
 			Expect(matchResult.DeployableObjects[obj2]).To(HaveLen(1))
@@ -523,7 +523,7 @@ var _ = Describe("GetDeployableObjectsWithContainers", func() {
 			Expect(err).ToNot(HaveOccurred())
 
 			Expect(matchResult.DeployableObjects).To(HaveLen(1))
-			obj := getObjectFromMap(podOk_Old_Run_CtrsReady_Ctr1RunAndReady.Name, matchResult.DeployableObjects)
+			obj := getObjectFromMap(client.ObjectKeyFromObject(&podOk_Old_Run_CtrsReady_Ctr1RunAndReady), matchResult.DeployableObjects)
 			Expect(obj).NotTo(BeNil())
 			Expect(obj.GetName()).To(Equal(podOk_Old_Run_CtrsReady_Ctr1RunAndReady.Name))
 			Expect(matchResult.DeployableObjects[obj]).To(HaveLen(1))
@@ -553,13 +553,13 @@ var _ = Describe("GetDeployableObjectsWithContainers", func() {
 
 			Expect(matchResult.DeployableObjects).To(HaveLen(2))
 
-			obj1 := getObjectFromMap(podOk_Old_Run_CtrsReady_Ctr1RunAndReady.Name, matchResult.DeployableObjects)
+			obj1 := getObjectFromMap(client.ObjectKeyFromObject(&podOk_Old_Run_CtrsReady_Ctr1RunAndReady), matchResult.DeployableObjects)
 			Expect(obj1).NotTo(BeNil())
 			Expect(obj1.GetName()).To(Equal(podOk_Old_Run_CtrsReady_Ctr1RunAndReady.Name))
 			Expect(matchResult.DeployableObjects[obj1]).To(HaveLen(1))
 			Expect(matchResult.DeployableObjects[obj1][0]).To(Equal(podOk_Old_Run_CtrsReady_Ctr1RunAndReady.Spec.Containers[0].Name))
 
-			obj2 := getObjectFromMap(podOk_Old_Run_CtrsNotReady_Ctr1RunAndReady_Ctr2RunAndNotReady.Name, matchResult.DeployableObjects)
+			obj2 := getObjectFromMap(client.ObjectKeyFromObject(&podOk_Old_Run_CtrsNotReady_Ctr1RunAndReady_Ctr2RunAndNotReady), matchResult.DeployableObjects)
 			Expect(obj2).NotTo(BeNil())
 			Expect(obj2.GetName()).To(Equal(podOk_Old_Run_CtrsNotReady_Ctr1RunAndReady_Ctr2RunAndNotReady.Name))
 			Expect(matchResult.DeployableObjects[obj2]).To(HaveLen(1))
@@ -605,7 +605,7 @@ var _ = Describe("GetDeployableObjectsWithContainers", func() {
 			Expect(err).ToNot(HaveOccurred())
 
 			Expect(matchResult.DeployableObjects).To(HaveLen(1))
-			obj := getObjectFromMap(deplOk_Old_Available.Name, matchResult.DeployableObjects)
+			obj := getObjectFromMap(client.ObjectKeyFromObject(&deplOk_Old_Available), matchResult.DeployableObjects)
 			Expect(obj).NotTo(BeNil())
 			Expect(obj.GetName()).To(Equal(deplOk_Old_Available.Name))
 			Expect(matchResult.DeployableObjects[obj]).To(HaveLen(1))
@@ -632,7 +632,7 @@ var _ = Describe("GetDeployableObjectsWithContainers", func() {
 			Expect(err).ToNot(HaveOccurred())
 
 			Expect(matchResult.DeployableObjects).To(HaveLen(1))
-			obj := getObjectFromMap(deplOk_Old_Available.Name, matchResult.DeployableObjects)
+			obj := getObjectFromMap(client.ObjectKeyFromObject(&deplOk_Old_Available), matchResult.DeployableObjects)
 			Expect(obj).NotTo(BeNil())
 			Expect(obj.GetName()).To(Equal(deplOk_Old_Available.Name))
 			Expect(matchResult.DeployableObjects[obj]).To(HaveLen(1))
@@ -1268,5 +1268,66 @@ var _ = Describe("selectContainers", func() {
 			Expect(err).ToNot(HaveOccurred())
 			Expect(selection).To(ConsistOf("bar", "baz"))
 		})
+	})
+})
+
+var _ = Describe("Matching across namespaces", func() {
+	var ctx context.Context
+
+	const (
+		FirstNamespace  = "team-a"
+		SecondNamespace = "team-b"
+		LabelKey        = "koney/match"
+		LabelValue      = "yes"
+	)
+
+	makePod := func(name, namespace string, labels map[string]string) corev1.Pod {
+		return corev1.Pod{
+			ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: namespace, Labels: labels},
+			Spec:       corev1.PodSpec{Containers: []corev1.Container{{Name: "app"}}},
+		}
+	}
+
+	BeforeEach(func() {
+		ctx = context.Background()
+	})
+
+	It("should not select a pod through a label carried by a same-named pod elsewhere", func() {
+		unlabelled := makePod("web", FirstNamespace, nil)
+		labelledElsewhere := makePod("web", SecondNamespace, map[string]string{LabelKey: LabelValue})
+		fakeClient := fake.NewClientBuilder().
+			WithLists(&corev1.PodList{Items: []corev1.Pod{unlabelled, labelledElsewhere}}).Build()
+
+		match := v1alpha1.MatchResources{Any: []v1alpha1.ResourceFilter{{
+			ResourceDescription: v1alpha1.ResourceDescription{
+				Namespaces: []string{FirstNamespace},
+				Selector:   &metav1.LabelSelector{MatchLabels: map[string]string{LabelKey: LabelValue}},
+			},
+		}}}
+
+		matchingPods, err := getMatchingPodsWithContainers(fakeClient, ctx, match)
+		Expect(err).ToNot(HaveOccurred())
+		Expect(matchingPods).To(BeEmpty())
+	})
+
+	It("should select same-named pods in every requested namespace", func() {
+		first := makePod("api", FirstNamespace, map[string]string{LabelKey: LabelValue})
+		second := makePod("api", SecondNamespace, map[string]string{LabelKey: LabelValue})
+		fakeClient := fake.NewClientBuilder().
+			WithLists(&corev1.PodList{Items: []corev1.Pod{first, second}}).Build()
+
+		match := v1alpha1.MatchResources{Any: []v1alpha1.ResourceFilter{{
+			ResourceDescription: v1alpha1.ResourceDescription{
+				Namespaces: []string{FirstNamespace, SecondNamespace},
+			},
+		}}}
+
+		matchingPods, err := getMatchingPodsWithContainers(fakeClient, ctx, match)
+		Expect(err).ToNot(HaveOccurred())
+		Expect(utils.GetMapKeys(matchingPods)).To(HaveLen(2))
+		Expect(extractObjectKeys(utils.GetMapKeys(matchingPods))).To(ConsistOf(
+			client.ObjectKey{Namespace: FirstNamespace, Name: "api"},
+			client.ObjectKey{Namespace: SecondNamespace, Name: "api"},
+		))
 	})
 })
