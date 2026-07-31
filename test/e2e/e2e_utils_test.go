@@ -554,7 +554,11 @@ func expectLogLine(pattern, namespace, selector, container string, sinceTime *ti
 		return err
 	}
 
-	if _, err := regexp.MatchString(pattern, string(output)); err != nil {
+	matched, err := regexp.MatchString(pattern, string(output))
+	if err != nil {
+		return fmt.Errorf("invalid pattern '%s': %w", pattern, err)
+	}
+	if !matched {
 		return fmt.Errorf("expected pattern '%s' not found in logs - increase tail limit?", pattern)
 	}
 
