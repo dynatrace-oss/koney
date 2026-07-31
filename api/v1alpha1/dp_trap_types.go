@@ -94,7 +94,7 @@ func (trap *Trap) IsValid() error {
 			return errors.New("MatchResources.Any.Namespaces and MatchResources.Any.Selector are nil")
 		}
 
-		if len(value.Namespaces) == 0 && len(value.Selector.MatchLabels) == 0 {
+		if len(value.Namespaces) == 0 && (value.Selector == nil || len(value.Selector.MatchLabels) == 0) {
 			return errors.New("MatchResources.Any.Namespaces and MatchResources.Any.Selector are empty")
 		}
 
