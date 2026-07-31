@@ -20,8 +20,11 @@ import (
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	appsv1 "k8s.io/api/apps/v1"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
+	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -89,4 +92,37 @@ var _ = Describe("DeceptionPolicy Controller", func() {
 		})
 	})
 
+})
+
+var _ = Describe("deceptionPolicyEventFilter", func() {
+	const testNamespace = "koney"
+
+	Context("When a pod or deployment is updated", func() {
+		It("should pass a pod update that changes labels", func() {
+			oldPod := &corev1.Pod{ObjectMeta: metav1.ObjectMeta{Name: "pod", Namespace: testNamespace}}
+			newPod := oldPod.DeepCopy()
+			newPod.Labels = map[string]string{"demo.koney/honeytoken": "true"}
+
+			passed := deceptionPolicyEventFilter().Update(event.UpdateEvent{ObjectOld: oldPod, ObjectNew: newPod})
+			Expect(passed).To(BeTrue())
+		})
+
+		It("should pass a deployment update that changes labels", func() {
+			oldDeployment := &appsv1.Deployment{ObjectMeta: metav1.ObjectMeta{Name: "deployment", Namespace: testNamespace}}
+			newDeployment := oldDeployment.DeepCopy()
+			newDeployment.Labels = map[string]string{"demo.koney/honeytoken": "true"}
+
+			passed := deceptionPolicyEventFilter().Update(event.UpdateEvent{ObjectOld: oldDeployment, ObjectNew: newDeployment})
+			Expect(passed).To(BeTrue())
+		})
+
+		It("should drop a pod update that only changes the status", func() {
+			oldPod := &corev1.Pod{ObjectMeta: metav1.ObjectMeta{Name: "pod", Namespace: testNamespace}}
+			newPod := oldPod.DeepCopy()
+			newPod.Status.Phase = corev1.PodRunning
+
+			passed := deceptionPolicyEventFilter().Update(event.UpdateEvent{ObjectOld: oldPod, ObjectNew: newPod})
+			Expect(passed).To(BeFalse())
+		})
+	})
 })
