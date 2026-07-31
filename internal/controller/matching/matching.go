@@ -125,7 +125,7 @@ func getMatchingObjectsWithContainers(r client.Reader, ctx context.Context, matc
 				continue // If no containers match the containerSelector, skip the object
 			} else {
 				// If the object is already in the map, append the selected containers to the existing list (avoiding duplicates)
-				objectFromMap := getObjectFromMap(matchingObject.GetName(), matchingObjectsWithContainers)
+				objectFromMap := getObjectFromMap(client.ObjectKeyFromObject(matchingObject), matchingObjectsWithContainers)
 				if objectFromMap != nil {
 					containers := matchingObjectsWithContainers[objectFromMap]
 
@@ -165,7 +165,7 @@ func getMatchingObjectsByNamespaceAndLabels(r client.Reader, ctx context.Context
 			}
 
 			for _, object := range items {
-				if !utils.Contains(extractObjectNames(matchingByNamespace), object.GetName()) {
+				if !utils.Contains(extractObjectKeys(matchingByNamespace), client.ObjectKeyFromObject(object)) {
 					matchingByNamespace = append(matchingByNamespace, object)
 				}
 			}
@@ -179,7 +179,7 @@ func getMatchingObjectsByNamespaceAndLabels(r client.Reader, ctx context.Context
 			return nil, err
 		} else {
 			for _, object := range items {
-				if !utils.Contains(extractObjectNames(matchingByLabels), object.GetName()) {
+				if !utils.Contains(extractObjectKeys(matchingByLabels), client.ObjectKeyFromObject(object)) {
 					matchingByLabels = append(matchingByLabels, object)
 				}
 			}
@@ -189,7 +189,7 @@ func getMatchingObjectsByNamespaceAndLabels(r client.Reader, ctx context.Context
 	// If no namespaces are specified, add all the objects that match the labels
 	if len(resourceFilter.Namespaces) == 0 {
 		for _, object := range matchingByLabels {
-			if !utils.Contains(extractObjectNames(matchingObjects), object.GetName()) {
+			if !utils.Contains(extractObjectKeys(matchingObjects), client.ObjectKeyFromObject(object)) {
 				matchingObjects = append(matchingObjects, object)
 			}
 		}
@@ -198,7 +198,7 @@ func getMatchingObjectsByNamespaceAndLabels(r client.Reader, ctx context.Context
 	// If no labels are specified, add all the objects that match the namespaces
 	if resourceFilter.Selector == nil || len(resourceFilter.Selector.MatchLabels) == 0 {
 		for _, object := range matchingByNamespace {
-			if !utils.Contains(extractObjectNames(matchingObjects), object.GetName()) {
+			if !utils.Contains(extractObjectKeys(matchingObjects), client.ObjectKeyFromObject(object)) {
 				matchingObjects = append(matchingObjects, object)
 			}
 		}
@@ -207,8 +207,8 @@ func getMatchingObjectsByNamespaceAndLabels(r client.Reader, ctx context.Context
 	// If both namespaces and labels are specified, add the objects that match both (logical AND between namespaces and labels)
 	for _, objectByNamespace := range matchingByNamespace {
 		for _, objectByLabels := range matchingByLabels {
-			if objectByNamespace.GetName() == objectByLabels.GetName() {
-				if !utils.Contains(extractObjectNames(matchingObjects), objectByNamespace.GetName()) {
+			if client.ObjectKeyFromObject(objectByNamespace) == client.ObjectKeyFromObject(objectByLabels) {
+				if !utils.Contains(extractObjectKeys(matchingObjects), client.ObjectKeyFromObject(objectByNamespace)) {
 					matchingObjects = append(matchingObjects, objectByNamespace)
 				}
 			}

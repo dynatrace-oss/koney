@@ -45,10 +45,19 @@ func extractObjectNames(objects []client.Object) []string {
 	return names
 }
 
-// getObjectFromMap returns an object from a map of objects based on its name.
-func getObjectFromMap(objectName string, objectMap map[client.Object][]string) client.Object {
+// extractObjectKeys is a helper function that extracts the namespaced names of the objects from a list of objects.
+func extractObjectKeys(objects []client.Object) []client.ObjectKey {
+	keys := make([]client.ObjectKey, len(objects))
+	for i, podOrDeployment := range objects {
+		keys[i] = client.ObjectKeyFromObject(podOrDeployment)
+	}
+	return keys
+}
+
+// getObjectFromMap returns an object from a map of objects based on its namespaced name.
+func getObjectFromMap(objectKey client.ObjectKey, objectMap map[client.Object][]string) client.Object {
 	for object := range objectMap {
-		if object.GetName() == objectName {
+		if client.ObjectKeyFromObject(object) == objectKey {
 			return object
 		}
 	}
