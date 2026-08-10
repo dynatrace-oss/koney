@@ -43,7 +43,16 @@ func (r *FilesystemHoneytokenReconciler) RemoveDecoy(ctx context.Context, crdNam
 	for _, containerName := range trap.Containers {
 		switch trap.DeploymentStrategy {
 		case "containerExec":
-			pod := resource.(*corev1.Pod)
+			// The strategy is read from the annotation, so it may not match the type of the
+			// resource that carries it. Check the type instead of asserting it, as we do when
+			// we deploy the trap, otherwise a wrong annotation would panic the reconciliation.
+			pod, ok := resource.(*corev1.Pod)
+			if !ok {
+				log.Error(nil, "containerExec strategy on a resource that is not a pod", "resource", resource.GetName())
+				joinedErrors = errors.Join(joinedErrors, errors.New("containerExec strategy on a resource that is not a pod"))
+				continue
+			}
+
 			if err := r.removeDecoyWithContainerExec(ctx, trap, *pod, containerName); err != nil {
 				log.Error(err, "unable to remove FilesystemHoneytoken trap from container", "container", containerName)
 				joinedErrors = errors.Join(joinedErrors, err)
@@ -52,7 +61,13 @@ func (r *FilesystemHoneytokenReconciler) RemoveDecoy(ctx context.Context, crdNam
 			}
 
 		case "volumeMount":
-			deployment := resource.(*appsv1.Deployment)
+			deployment, ok := resource.(*appsv1.Deployment)
+			if !ok {
+				log.Error(nil, "volumeMount strategy on a resource that is not a deployment", "resource", resource.GetName())
+				joinedErrors = errors.Join(joinedErrors, errors.New("volumeMount strategy on a resource that is not a deployment"))
+				continue
+			}
+
 			if err := r.removeDecoyWithVolumeMount(ctx, trap, *deployment, containerName); err != nil {
 				log.Error(err, "unable to remove FilesystemHoneytoken trap from container", "container", containerName)
 				joinedErrors = errors.Join(joinedErrors, err)
