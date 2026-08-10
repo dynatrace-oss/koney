@@ -205,7 +205,9 @@ func (r *FilesystemHoneytokenReconciler) removeDecoyWithVolumeMount(ctx context.
 		if volume.Name != volumeName {
 			newVolumes = append(newVolumes, deployment.Spec.Template.Spec.Volumes[i])
 		} else {
-			secretName = volume.Secret.SecretName
+			if volume.Secret != nil {
+				secretName = volume.Secret.SecretName
+			}
 			log.Info("Removing volume from deployment", "volume", volumeName)
 		}
 	}
@@ -223,18 +225,53 @@ func (r *FilesystemHoneytokenReconciler) removeDecoyWithVolumeMount(ctx context.
 		log.Info("FilesystemHoneytoken trap removed from container", "container", containerName)
 	}
 
-	// Delete the secret, if it was created by the trap
-	if secretName != "" {
-		secret := corev1.Secret{}
-		err = r.Get(ctx, client.ObjectKey{Namespace: deployment.Namespace, Name: secretName}, &secret)
-		if err != nil {
-			log.Error(err, "unable to get secret", "secret", secretName)
-			joinedErrors = errors.Join(joinedErrors, err)
+	// Delete the secret, if it was created by the trap.
+	// The secret is named after the file path and content only, so the very same secret can be
+	// mounted by other deployments that match the trap. Kubernetes does not stop us from deleting
+	// a secret that is still in use, their pods would just fail to start on the next restart,
+	// so we have to check the remaining deployments ourselves. We also keep the secret when the
+	// update above failed, because then this deployment still mounts it.
+	if secretName != "" && err == nil {
+		stillMounted, mountErr := r.isSecretStillMounted(ctx, deployment.Namespace, secretName, deployment.Name)
+		if mountErr != nil {
+			log.Error(mountErr, "unable to check whether the secret is still in use", "secret", secretName)
+			joinedErrors = errors.Join(joinedErrors, mountErr)
+		} else if stillMounted {
+			log.Info("Keeping secret because it is still mounted by another deployment", "secret", secretName)
 		} else {
-			// This might fail if the secret is still being used by another pod, we ignore the error
-			_ = r.Delete(ctx, &secret)
+			secret := corev1.Secret{}
+			err = r.Get(ctx, client.ObjectKey{Namespace: deployment.Namespace, Name: secretName}, &secret)
+			if err != nil {
+				log.Error(err, "unable to get secret", "secret", secretName)
+				joinedErrors = errors.Join(joinedErrors, err)
+			} else {
+				_ = r.Delete(ctx, &secret)
+			}
 		}
 	}
 
 	return joinedErrors
+}
+
+// isSecretStillMounted reports whether any deployment in the namespace, other than the one we
+// just updated, still mounts the given secret.
+func (r *FilesystemHoneytokenReconciler) isSecretStillMounted(ctx context.Context, namespace string, secretName string, excludedDeployment string) (bool, error) {
+	deployments := &appsv1.DeploymentList{}
+	if err := r.List(ctx, deployments, client.InNamespace(namespace)); err != nil {
+		return false, err
+	}
+
+	for _, deployment := range deployments.Items {
+		if deployment.Name == excludedDeployment {
+			continue
+		}
+
+		for _, volume := range deployment.Spec.Template.Spec.Volumes {
+			if volume.Secret != nil && volume.Secret.SecretName == secretName {
+				return true, nil
+			}
+		}
+	}
+
+	return false, nil
 }
