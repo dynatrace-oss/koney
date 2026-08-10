@@ -24,6 +24,7 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	k8slog "sigs.k8s.io/controller-runtime/pkg/log"
 
 	"github.com/dynatrace-oss/koney/api/v1alpha1"
 	"github.com/dynatrace-oss/koney/internal/controller/constants"
@@ -278,8 +279,13 @@ func AreTheSameTrap(annotationTrap v1alpha1.TrapAnnotation, trap v1alpha1.Trap) 
 	return true
 }
 
-// GetAnnotatedResources returns a list of resources that have been annotated with a specific DeceptionPolicy
+// GetAnnotatedResources returns a list of resources that have been annotated with a specific DeceptionPolicy.
+// Resources whose annotation cannot be parsed are skipped, because we list all pods and deployments
+// in the cluster here, and anyone who can annotate a single resource would otherwise stop the
+// reconciliation of every DeceptionPolicy, including the clean-up that removes their finalizers.
 func GetAnnotatedResources(r client.Reader, ctx context.Context, crdName string) ([]client.Object, error) {
+	log := k8slog.FromContext(ctx)
+
 	var annotatedResources []client.Object
 
 	// Get all pods
@@ -291,7 +297,8 @@ func GetAnnotatedResources(r client.Reader, ctx context.Context, crdName string)
 	for _, pod := range pods.Items {
 		annotationChange, err := GetAnnotationChange(&pod, crdName)
 		if err != nil {
-			return nil, err
+			log.Error(err, "unable to read trap annotations, skipping resource", "pod", pod.Name, "namespace", pod.Namespace)
+			continue
 		}
 
 		if len(annotationChange.Traps) > 0 {
@@ -308,7 +315,8 @@ func GetAnnotatedResources(r client.Reader, ctx context.Context, crdName string)
 	for _, deployment := range deployments.Items {
 		annotationChange, err := GetAnnotationChange(&deployment, crdName)
 		if err != nil {
-			return nil, err
+			log.Error(err, "unable to read trap annotations, skipping resource", "deployment", deployment.Name, "namespace", deployment.Namespace)
+			continue
 		}
 
 		if len(annotationChange.Traps) > 0 {
