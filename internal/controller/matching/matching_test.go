@@ -1171,6 +1171,65 @@ var _ = Describe("getMatchingPodsWithContainers", func() {
 				koneyPodWithLabelC.Name, koneyPodWithLabelABC.Name,
 				otherPodWithLabelC.Name, otherPodWithoutLabels.Name))
 		})
+
+		It("should match a matchExpressions selector", func() {
+			match := v1alpha1.MatchResources{
+				Any: []v1alpha1.ResourceFilter{
+					{
+						ResourceDescription: v1alpha1.ResourceDescription{
+							Selector: &metav1.LabelSelector{
+								MatchExpressions: []metav1.LabelSelectorRequirement{
+									{
+										Key:      KoneyLabelAKey,
+										Operator: metav1.LabelSelectorOpExists,
+									},
+								},
+							},
+						},
+					},
+				},
+			}
+
+			matchingPodsWithContainers, err := getMatchingPodsWithContainers(client, ctx, match)
+			Expect(err).ToNot(HaveOccurred())
+
+			matchingPods := utils.GetMapKeys(matchingPodsWithContainers)
+
+			matchingPodNames := extractObjectNames(matchingPods)
+			Expect(matchingPodNames).To(HaveLen(3))
+			Expect(matchingPodNames).To(ConsistOf(
+				koneyPodWithLabelA.Name, koneyPodWithLabelAB.Name, koneyPodWithLabelABC.Name))
+		})
+
+		It("should match a matchExpressions selector and namespace (expect logical and)", func() {
+			match := v1alpha1.MatchResources{
+				Any: []v1alpha1.ResourceFilter{
+					{
+						ResourceDescription: v1alpha1.ResourceDescription{
+							Selector: &metav1.LabelSelector{
+								MatchExpressions: []metav1.LabelSelectorRequirement{
+									{
+										Key:      KoneyLabelAKey,
+										Operator: metav1.LabelSelectorOpExists,
+									},
+								},
+							},
+							Namespaces: []string{KoneyNamespace},
+						},
+					},
+				},
+			}
+
+			matchingPodsWithContainers, err := getMatchingPodsWithContainers(client, ctx, match)
+			Expect(err).ToNot(HaveOccurred())
+
+			matchingPods := utils.GetMapKeys(matchingPodsWithContainers)
+
+			matchingPodNames := extractObjectNames(matchingPods)
+			Expect(matchingPodNames).To(HaveLen(3))
+			Expect(matchingPodNames).To(ConsistOf(
+				koneyPodWithLabelA.Name, koneyPodWithLabelAB.Name, koneyPodWithLabelABC.Name))
+		})
 	})
 })
 

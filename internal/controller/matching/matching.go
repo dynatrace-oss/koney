@@ -156,6 +156,9 @@ func getMatchingObjectsByNamespaceAndLabels(r client.Reader, ctx context.Context
 	matchingByNamespace := []client.Object{} // The objects that match the namespaces for this ResourceFilter
 	matchingByLabels := []client.Object{}    // The objects that match the labels for this ResourceFilter
 
+	selectorIsEmpty := resourceFilter.Selector == nil ||
+		(len(resourceFilter.Selector.MatchLabels) == 0 && len(resourceFilter.Selector.MatchExpressions) == 0)
+
 	if len(resourceFilter.Namespaces) > 0 {
 		// Get the objects that match one of the namespaces
 		for _, namespace := range resourceFilter.Namespaces {
@@ -172,10 +175,15 @@ func getMatchingObjectsByNamespaceAndLabels(r client.Reader, ctx context.Context
 		}
 	}
 
-	if resourceFilter.Selector != nil && len(resourceFilter.Selector.MatchLabels) > 0 {
+	if !selectorIsEmpty {
 		// Get the objects that match the labels
+		selector, err := metav1.LabelSelectorAsSelector(resourceFilter.Selector)
+		if err != nil {
+			return nil, err
+		}
+
 		items := []client.Object{}
-		if err := listItemsAsObjects(r, ctx, &items, makeList(), client.MatchingLabels(resourceFilter.Selector.MatchLabels)); err != nil {
+		if err := listItemsAsObjects(r, ctx, &items, makeList(), client.MatchingLabelsSelector{Selector: selector}); err != nil {
 			return nil, err
 		} else {
 			for _, object := range items {
@@ -196,7 +204,7 @@ func getMatchingObjectsByNamespaceAndLabels(r client.Reader, ctx context.Context
 	}
 
 	// If no labels are specified, add all the objects that match the namespaces
-	if resourceFilter.Selector == nil || len(resourceFilter.Selector.MatchLabels) == 0 {
+	if selectorIsEmpty {
 		for _, object := range matchingByNamespace {
 			if !utils.Contains(extractObjectKeys(matchingObjects), client.ObjectKeyFromObject(object)) {
 				matchingObjects = append(matchingObjects, object)
