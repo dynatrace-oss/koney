@@ -20,9 +20,11 @@ import (
 	"encoding/json"
 
 	slimv1 "github.com/cilium/tetragon/pkg/k8s/slim/k8s/apis/meta/v1"
+	"github.com/go-logr/logr/funcr"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	k8slog "sigs.k8s.io/controller-runtime/pkg/log"
 
 	"github.com/dynatrace-oss/koney/api/v1alpha1"
 	"github.com/dynatrace-oss/koney/internal/controller/constants"
@@ -150,6 +152,80 @@ var _ = Describe("DeployCaptor", func() {
 	})
 })
 
+var _ = Describe("Policy generation with a trap that uses matchExpressions", func() {
+	expressionsTrap := v1alpha1.Trap{
+		FilesystemHoneytoken: v1alpha1.FilesystemHoneytoken{
+			FilePath:    "/path/to/file",
+			FileContent: "someverysecrettoken",
+		},
+		MatchResources: v1alpha1.MatchResources{
+			Any: []v1alpha1.ResourceFilter{
+				{
+					ResourceDescription: v1alpha1.ResourceDescription{
+						Namespaces: []string{"koney"},
+						Selector: &metav1.LabelSelector{
+							MatchExpressions: []metav1.LabelSelectorRequirement{
+								{
+									Key:      "app",
+									Operator: metav1.LabelSelectorOpIn,
+									Values:   []string{"backend"},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	deceptionPolicy := v1alpha1.DeceptionPolicy{
+		Spec: v1alpha1.DeceptionPolicySpec{
+			Traps: []v1alpha1.Trap{expressionsTrap},
+		},
+	}
+
+	It("should copy the expressions into the Tetragon PodSelector", func() {
+		tracingPolicy := generateTetragonTracingPolicy(&deceptionPolicy, expressionsTrap, "test-tracing-policy")
+		Expect(tracingPolicy.Spec.PodSelector.MatchExpressions).To(HaveLen(1))
+		Expect(tracingPolicy.Spec.PodSelector.MatchExpressions[0].Key).To(Equal("app"))
+		Expect(tracingPolicy.Spec.PodSelector.MatchExpressions[0].Operator).To(Equal(slimv1.LabelSelectorOpIn))
+		Expect(tracingPolicy.Spec.PodSelector.MatchExpressions[0].Values).To(ConsistOf("backend"))
+	})
+
+	It("should skip the resource filter in the Kive policy and log a warning", func() {
+		messages := []string{}
+		logger := funcr.New(func(prefix, args string) {
+			messages = append(messages, args)
+		}, funcr.Options{})
+		ctx := k8slog.IntoContext(context.Background(), logger)
+
+		kivePolicy := generateKivePolicy(ctx, &deceptionPolicy, expressionsTrap, "test-kive-policy")
+		Expect(kivePolicy.Spec.Traps[0].MatchAny).To(BeEmpty())
+		Expect(messages).To(ContainElement(ContainSubstring("matchExpressions")))
+	})
+
+	It("should keep resource filters that do not use expressions", func() {
+		mixedTrap := expressionsTrap
+		mixedTrap.MatchResources = v1alpha1.MatchResources{
+			Any: append([]v1alpha1.ResourceFilter{
+				{
+					ResourceDescription: v1alpha1.ResourceDescription{
+						Namespaces: []string{"other"},
+						Selector: &metav1.LabelSelector{
+							MatchLabels: map[string]string{"app": "frontend"},
+						},
+					},
+				},
+			}, expressionsTrap.MatchResources.Any...),
+		}
+
+		kivePolicy := generateKivePolicy(context.Background(), &deceptionPolicy, mixedTrap, "test-kive-policy")
+		Expect(kivePolicy.Spec.Traps[0].MatchAny).To(HaveLen(1))
+		Expect(kivePolicy.Spec.Traps[0].MatchAny[0].Namespace).To(Equal("other"))
+		Expect(kivePolicy.Spec.Traps[0].MatchAny[0].MatchLabels).To(Equal(map[string]string{"app": "frontend"}))
+	})
+})
+
 var _ = Describe("Policy generation with a namespace-only trap", func() {
 	Context("With a trap that matches resources by namespace and has no label selector", func() {
 		namespaceOnlyTrap := v1alpha1.Trap{
@@ -185,7 +261,7 @@ var _ = Describe("Policy generation with a namespace-only trap", func() {
 					Traps: []v1alpha1.Trap{namespaceOnlyTrap},
 				},
 			}
-			kivePolicy := generateKivePolicy(&deceptionPolicy, namespaceOnlyTrap, "test-kive-policy")
+			kivePolicy := generateKivePolicy(context.Background(), &deceptionPolicy, namespaceOnlyTrap, "test-kive-policy")
 			Expect(kivePolicy.Name).To(Equal("test-kive-policy"))
 			Expect(kivePolicy.Spec.Traps[0].MatchAny).ToNot(BeEmpty())
 			for _, trapMatch := range kivePolicy.Spec.Traps[0].MatchAny {

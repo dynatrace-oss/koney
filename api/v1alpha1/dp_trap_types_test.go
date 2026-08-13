@@ -174,6 +174,32 @@ var _ = Describe("IsValid", func() {
 		})
 	})
 
+	Context("when checking a trap with a selector that only has MatchExpressions", func() {
+		It("should return no error", func() {
+			for _, trap := range testTraps {
+				trap.MatchResources = MatchResources{
+					Any: []ResourceFilter{
+						{
+							ResourceDescription: ResourceDescription{
+								Selector: &metav1.LabelSelector{
+									MatchExpressions: []metav1.LabelSelectorRequirement{
+										{
+											Key:      "deceptionpolicies.research.dynatrace.com/label",
+											Operator: metav1.LabelSelectorOpExists,
+										},
+									},
+								},
+								Namespaces: []string{},
+							},
+						},
+					},
+				}
+				err := trap.IsValid()
+				Expect(err).ShouldNot(HaveOccurred())
+			}
+		})
+	})
+
 	Context("when checking a filesystem honeytoken trap with a non-absolute file path", func() {
 		It("should return error", func() {
 			for _, trap := range testTraps {

@@ -432,7 +432,7 @@ func (r *FilesystemHoneytokenReconciler) deployCaptorWithKive(ctx context.Contex
 		return err
 	}
 
-	tracingPolicy := generateKivePolicy(deceptionPolicy, trap, tracingPolicyName)
+	tracingPolicy := generateKivePolicy(ctx, deceptionPolicy, trap, tracingPolicyName)
 	if err != nil {
 		log.Error(err, "unable to generate Kive tracing policy")
 		return err

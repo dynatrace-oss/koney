@@ -26,6 +26,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/util/retry"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	k8slog "sigs.k8s.io/controller-runtime/pkg/log"
 
 	"github.com/dynatrace-oss/koney/api/v1alpha1"
 	"github.com/dynatrace-oss/koney/internal/controller/constants"
@@ -226,13 +227,23 @@ func generateTetragonTracingPolicy(deceptionPolicy *v1alpha1.DeceptionPolicy,
 		},
 	}
 
-	// Add the labels from the trap's MatchResources to the PodSelector
+	// Add the labels and expressions from the trap's MatchResources to the PodSelector
 	for _, resourceFilter := range trap.MatchResources.Any {
 		if resourceFilter.Selector == nil {
 			continue
 		}
 		for key, value := range resourceFilter.Selector.MatchLabels {
 			tracingPolicy.Spec.PodSelector.MatchLabels[key] = value
+		}
+		for _, requirement := range resourceFilter.Selector.MatchExpressions {
+			tracingPolicy.Spec.PodSelector.MatchExpressions = append(
+				tracingPolicy.Spec.PodSelector.MatchExpressions,
+				slimv1.LabelSelectorRequirement{
+					Key:      requirement.Key,
+					Operator: slimv1.LabelSelectorOperator(requirement.Operator),
+					Values:   requirement.Values,
+				},
+			)
 		}
 	}
 
@@ -315,8 +326,9 @@ func buildKiveWebhookUrl() string {
 }
 
 // generateKivePolicy generates a Kive tracing policy for a filesystem honeytoken trap.
-func generateKivePolicy(deceptionPolicy *v1alpha1.DeceptionPolicy,
+func generateKivePolicy(ctx context.Context, deceptionPolicy *v1alpha1.DeceptionPolicy,
 	trap v1alpha1.Trap, tracingPolicyName string) *kivev1.KivePolicy {
+	log := k8slog.FromContext(ctx)
 
 	tracingPolicy := &kivev1.KivePolicy{
 		TypeMeta: metav1.TypeMeta{
@@ -352,6 +364,14 @@ func generateKivePolicy(deceptionPolicy *v1alpha1.DeceptionPolicy,
 		MatchAny: []kivev1.KiveTrapMatch{},
 	}
 	for _, resource := range trap.MatchResources.Any {
+
+		// Kive can only match on plain labels. Generating a match for a selector that also
+		// carries expressions would silently widen the scope of the trap, so we skip it.
+		if resource.Selector != nil && len(resource.Selector.MatchExpressions) > 0 {
+			log.Info("skipping resource filter in Kive policy, because Kive does not support selector.matchExpressions",
+				"policy", deceptionPolicy.Name, "filePath", trap.FilesystemHoneytoken.FilePath)
+			continue
+		}
 
 		kiveTrapMatches := []kivev1.KiveTrapMatch{}
 
