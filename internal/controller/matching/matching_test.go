@@ -1202,6 +1202,22 @@ var _ = Describe("getMatchingPodsWithContainers", func() {
 		})
 
 		It("should match a matchExpressions selector and namespace (expect logical and)", func() {
+			// A pod with the same label in another namespace must not be matched
+			otherPodWithLabelA := corev1.Pod{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "other-pod-with-label-a",
+					Namespace: OtherNamespace,
+					Labels: map[string]string{
+						KoneyLabelAKey: KoneyLabelAValue,
+					},
+				},
+				Status: koneyPodWithLabelA.Status,
+				Spec:   corev1.PodSpec{Containers: []corev1.Container{{Name: "foo"}}},
+			}
+			podsWithOtherLabelA := podList.DeepCopy()
+			podsWithOtherLabelA.Items = append(podsWithOtherLabelA.Items, otherPodWithLabelA)
+			client = fake.NewClientBuilder().WithLists(podsWithOtherLabelA).Build()
+
 			match := v1alpha1.MatchResources{
 				Any: []v1alpha1.ResourceFilter{
 					{
