@@ -204,10 +204,10 @@ var _ = Describe("Policy generation with a trap that uses matchExpressions", fun
 		Expect(messages).To(ContainElement(ContainSubstring("matchExpressions")))
 	})
 
-	It("should keep resource filters that do not use expressions", func() {
+	It("should keep resource filters that do not use expressions, without taking over their labels", func() {
 		mixedTrap := expressionsTrap
 		mixedTrap.MatchResources = v1alpha1.MatchResources{
-			Any: append([]v1alpha1.ResourceFilter{
+			Any: []v1alpha1.ResourceFilter{
 				{
 					ResourceDescription: v1alpha1.ResourceDescription{
 						Namespaces: []string{"other"},
@@ -216,7 +216,22 @@ var _ = Describe("Policy generation with a trap that uses matchExpressions", fun
 						},
 					},
 				},
-			}, expressionsTrap.MatchResources.Any...),
+				{
+					ResourceDescription: v1alpha1.ResourceDescription{
+						Namespaces: []string{"koney"},
+						Selector: &metav1.LabelSelector{
+							MatchLabels: map[string]string{"app": "backend", "tier": "db"},
+							MatchExpressions: []metav1.LabelSelectorRequirement{
+								{
+									Key:      "env",
+									Operator: metav1.LabelSelectorOpIn,
+									Values:   []string{"prod"},
+								},
+							},
+						},
+					},
+				},
+			},
 		}
 
 		kivePolicy := generateKivePolicy(context.Background(), &deceptionPolicy, mixedTrap, "test-kive-policy")
@@ -224,6 +239,49 @@ var _ = Describe("Policy generation with a trap that uses matchExpressions", fun
 		Expect(kivePolicy.Spec.Traps[0].MatchAny[0].Namespace).To(Equal("other"))
 		Expect(kivePolicy.Spec.Traps[0].MatchAny[0].MatchLabels).To(Equal(map[string]string{"app": "frontend"}))
 	})
+
+})
+
+var _ = Describe("Policy generation with multiple resource filters", func() {
+	deceptionPolicy := v1alpha1.DeceptionPolicy{}
+
+	trapWithTwoFilters := v1alpha1.Trap{
+		FilesystemHoneytoken: v1alpha1.FilesystemHoneytoken{
+			FilePath:    "/path/to/file",
+			FileContent: "someverysecrettoken",
+		},
+		MatchResources: v1alpha1.MatchResources{
+			Any: []v1alpha1.ResourceFilter{
+				{
+					ResourceDescription: v1alpha1.ResourceDescription{
+						Namespaces: []string{"ns-a"},
+						Selector: &metav1.LabelSelector{
+							MatchLabels: map[string]string{"app": "frontend"},
+						},
+					},
+				},
+				{
+					ResourceDescription: v1alpha1.ResourceDescription{
+						Namespaces: []string{"ns-b"},
+						Selector: &metav1.LabelSelector{
+							MatchLabels: map[string]string{"app": "backend", "tier": "db"},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	It("should not mix the labels of different resource filters in the Kive policy", func() {
+		kivePolicy := generateKivePolicy(context.Background(), &deceptionPolicy, trapWithTwoFilters, "test-kive-policy")
+
+		Expect(kivePolicy.Spec.Traps[0].MatchAny).To(HaveLen(2))
+		Expect(kivePolicy.Spec.Traps[0].MatchAny[0].Namespace).To(Equal("ns-a"))
+		Expect(kivePolicy.Spec.Traps[0].MatchAny[0].MatchLabels).To(Equal(map[string]string{"app": "frontend"}))
+		Expect(kivePolicy.Spec.Traps[0].MatchAny[1].Namespace).To(Equal("ns-b"))
+		Expect(kivePolicy.Spec.Traps[0].MatchAny[1].MatchLabels).To(Equal(map[string]string{"app": "backend", "tier": "db"}))
+	})
+
 })
 
 var _ = Describe("Policy generation with a namespace-only trap", func() {

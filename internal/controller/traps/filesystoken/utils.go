@@ -367,7 +367,7 @@ func generateKivePolicy(ctx context.Context, deceptionPolicy *v1alpha1.Deception
 
 		// Kive can only match on plain labels. Generating a match for a selector that also
 		// carries expressions would silently widen the scope of the trap, so we skip it.
-		if resource.Selector != nil && len(resource.Selector.MatchExpressions) > 0 {
+		if resourceFilterUsesMatchExpressions(resource) {
 			log.Info("skipping resource filter in Kive policy, because Kive does not support selector.matchExpressions",
 				"policy", deceptionPolicy.Name, "filePath", trap.FilesystemHoneytoken.FilePath)
 			continue
@@ -380,16 +380,7 @@ func generateKivePolicy(ctx context.Context, deceptionPolicy *v1alpha1.Deception
 		if len(resource.Namespaces) == 0 {
 			kiveTrapMatch := kivev1.KiveTrapMatch{
 				ContainerName: resource.ContainerSelector,
-				MatchLabels:   map[string]string{},
-			}
-
-			for _, resourceFilter := range trap.MatchResources.Any {
-				if resourceFilter.Selector == nil {
-					continue
-				}
-				for key, value := range resourceFilter.Selector.MatchLabels {
-					kiveTrapMatch.MatchLabels[key] = value
-				}
+				MatchLabels:   selectorMatchLabels(resource),
 			}
 
 			kiveTrapMatches = append(kiveTrapMatches, kiveTrapMatch)
@@ -401,16 +392,7 @@ func generateKivePolicy(ctx context.Context, deceptionPolicy *v1alpha1.Deception
 				kiveTrapMatch := kivev1.KiveTrapMatch{
 					Namespace:     namespace,
 					ContainerName: resource.ContainerSelector,
-					MatchLabels:   map[string]string{},
-				}
-
-				for _, resourceFilter := range trap.MatchResources.Any {
-					if resourceFilter.Selector == nil {
-						continue
-					}
-					for key, value := range resourceFilter.Selector.MatchLabels {
-						kiveTrapMatch.MatchLabels[key] = value
-					}
+					MatchLabels:   selectorMatchLabels(resource),
 				}
 
 				kiveTrapMatches = append(kiveTrapMatches, kiveTrapMatch)
@@ -424,4 +406,22 @@ func generateKivePolicy(ctx context.Context, deceptionPolicy *v1alpha1.Deception
 	tracingPolicy.Spec.Traps = kiveTraps
 
 	return tracingPolicy
+}
+
+// selectorMatchLabels returns a copy of the match labels of a resource filter,
+// or an empty map if the resource filter has no selector.
+func selectorMatchLabels(resource v1alpha1.ResourceFilter) map[string]string {
+	matchLabels := map[string]string{}
+	if resource.Selector == nil {
+		return matchLabels
+	}
+	for key, value := range resource.Selector.MatchLabels {
+		matchLabels[key] = value
+	}
+	return matchLabels
+}
+
+// resourceFilterUsesMatchExpressions returns true if a resource filter uses selector.matchExpressions.
+func resourceFilterUsesMatchExpressions(resource v1alpha1.ResourceFilter) bool {
+	return resource.Selector != nil && len(resource.Selector.MatchExpressions) > 0
 }
