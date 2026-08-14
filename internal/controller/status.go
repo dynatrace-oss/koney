@@ -46,14 +46,16 @@ const (
 
 	TrapDeployedMessage_NoObjects = "No objects matching selection criteria"
 
-	CaptorsDeployedReason_Pending         = "CaptorDeploymentPending"
-	CaptorsDeployedReason_Success         = "CaptorDeploymentSucceeded"
-	CaptorsDeployedReason_PartialSuccess  = "CaptorDeploymentSucceededPartially"
-	CaptorsDeployedReason_GenericError    = "CaptorDeploymentError"
-	CaptorsDeployedReason_NoObjects       = "NoObjectsMatched"
-	CaptorsDeployedReason_MissingTetragon = "TetragonNotInstalled"
+	CaptorsDeployedReason_Pending              = "CaptorDeploymentPending"
+	CaptorsDeployedReason_Success              = "CaptorDeploymentSucceeded"
+	CaptorsDeployedReason_PartialSuccess       = "CaptorDeploymentSucceededPartially"
+	CaptorsDeployedReason_GenericError         = "CaptorDeploymentError"
+	CaptorsDeployedReason_NoObjects            = "NoObjectsMatched"
+	CaptorsDeployedReason_MissingTetragon      = "TetragonNotInstalled"
+	CaptorsDeployedReason_UnsupportedSelectors = "UnsupportedSelectors"
 
-	CaptorsDeployedMessage_MissingTetragon = "Cannot deploy captors without Tetragon"
+	CaptorsDeployedMessage_MissingTetragon      = "Cannot deploy captors without Tetragon"
+	CaptorsDeployedMessage_UnsupportedSelectors = "Captors do not watch all selected resources, because Kive cannot evaluate selector.matchExpressions"
 )
 
 // TrapDeploymentStatusEnum defines the possible conditions for a trap deployment.

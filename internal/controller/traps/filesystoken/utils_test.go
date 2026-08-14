@@ -29,6 +29,7 @@ import (
 	"github.com/dynatrace-oss/koney/api/v1alpha1"
 	"github.com/dynatrace-oss/koney/internal/controller/constants"
 	"github.com/dynatrace-oss/koney/internal/controller/matching"
+	trapsapi "github.com/dynatrace-oss/koney/internal/controller/traps/api"
 )
 
 var (
@@ -87,7 +88,7 @@ var _ = Describe("generateTetragonTracingPolicy", func() {
 						Traps: []v1alpha1.Trap{trap},
 					},
 				}
-				tracingPolicy := generateTetragonTracingPolicy(&deceptionPolicy, trap, "test-tracing-policy")
+				tracingPolicy := generateTetragonTracingPolicy(context.Background(), &deceptionPolicy, trap, "test-tracing-policy")
 				Expect(tracingPolicy.Name).To(Equal("test-tracing-policy"))
 
 				// Check the label selector
@@ -185,7 +186,7 @@ var _ = Describe("Policy generation with a trap that uses matchExpressions", fun
 	}
 
 	It("should copy the expressions into the Tetragon PodSelector", func() {
-		tracingPolicy := generateTetragonTracingPolicy(&deceptionPolicy, expressionsTrap, "test-tracing-policy")
+		tracingPolicy := generateTetragonTracingPolicy(context.Background(), &deceptionPolicy, expressionsTrap, "test-tracing-policy")
 		Expect(tracingPolicy.Spec.PodSelector.MatchExpressions).To(HaveLen(1))
 		Expect(tracingPolicy.Spec.PodSelector.MatchExpressions[0].Key).To(Equal("app"))
 		Expect(tracingPolicy.Spec.PodSelector.MatchExpressions[0].Operator).To(Equal(slimv1.LabelSelectorOpIn))
@@ -240,6 +241,13 @@ var _ = Describe("Policy generation with a trap that uses matchExpressions", fun
 		Expect(kivePolicy.Spec.Traps[0].MatchAny[0].MatchLabels).To(Equal(map[string]string{"app": "frontend"}))
 	})
 
+	It("should warn that the captor does not watch all selected resources", func() {
+		Expect(trapUsesMatchExpressions(expressionsTrap)).To(BeTrue())
+
+		result := trapsapi.CaptorDeploymentResult{Trap: &expressionsTrap, UnsupportedSelectors: true}
+		Expect(result.ImpliesSuccess()).To(BeFalse())
+		Expect(result.ImpliesFailure()).To(BeTrue())
+	})
 })
 
 var _ = Describe("Policy generation with multiple resource filters", func() {
@@ -282,6 +290,43 @@ var _ = Describe("Policy generation with multiple resource filters", func() {
 		Expect(kivePolicy.Spec.Traps[0].MatchAny[1].MatchLabels).To(Equal(map[string]string{"app": "backend", "tier": "db"}))
 	})
 
+	It("should warn that the merged Tetragon podSelector matches fewer pods than the trap selects", func() {
+		trapWithTwoExpressions := trapWithTwoFilters
+		trapWithTwoExpressions.MatchResources = v1alpha1.MatchResources{
+			Any: []v1alpha1.ResourceFilter{
+				{
+					ResourceDescription: v1alpha1.ResourceDescription{
+						Selector: &metav1.LabelSelector{
+							MatchExpressions: []metav1.LabelSelectorRequirement{
+								{Key: "env", Operator: metav1.LabelSelectorOpIn, Values: []string{"prod"}},
+							},
+						},
+					},
+				},
+				{
+					ResourceDescription: v1alpha1.ResourceDescription{
+						Selector: &metav1.LabelSelector{
+							MatchExpressions: []metav1.LabelSelectorRequirement{
+								{Key: "env", Operator: metav1.LabelSelectorOpIn, Values: []string{"dev"}},
+							},
+						},
+					},
+				},
+			},
+		}
+
+		messages := []string{}
+		logger := funcr.New(func(prefix, args string) {
+			messages = append(messages, args)
+		}, funcr.Options{})
+		ctx := k8slog.IntoContext(context.Background(), logger)
+
+		tracingPolicy := generateTetragonTracingPolicy(ctx, &deceptionPolicy, trapWithTwoExpressions, "test-tracing-policy")
+
+		// Both expressions end up in the single podSelector, where they are combined with a logical AND
+		Expect(tracingPolicy.Spec.PodSelector.MatchExpressions).To(HaveLen(2))
+		Expect(messages).To(ContainElement(ContainSubstring("logical AND")))
+	})
 })
 
 var _ = Describe("Policy generation with a namespace-only trap", func() {
@@ -308,7 +353,7 @@ var _ = Describe("Policy generation with a namespace-only trap", func() {
 					Traps: []v1alpha1.Trap{namespaceOnlyTrap},
 				},
 			}
-			tracingPolicy := generateTetragonTracingPolicy(&deceptionPolicy, namespaceOnlyTrap, "test-tracing-policy")
+			tracingPolicy := generateTetragonTracingPolicy(context.Background(), &deceptionPolicy, namespaceOnlyTrap, "test-tracing-policy")
 			Expect(tracingPolicy.Name).To(Equal("test-tracing-policy"))
 			Expect(tracingPolicy.Spec.PodSelector.MatchLabels).To(BeEmpty())
 		})

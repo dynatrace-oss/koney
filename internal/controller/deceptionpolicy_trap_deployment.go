@@ -141,6 +141,10 @@ func (r *DeceptionPolicyReconciler) reconcileCaptors(ctx context.Context, decept
 			reconcileResult.OverrideStatusConditionReason = CaptorsDeployedReason_MissingTetragon
 			reconcileResult.OverrideStatusConditionMessage = CaptorsDeployedMessage_MissingTetragon
 		}
+		if result.UnsupportedSelectors {
+			reconcileResult.OverrideStatusConditionReason = CaptorsDeployedReason_UnsupportedSelectors
+			reconcileResult.OverrideStatusConditionMessage = CaptorsDeployedMessage_UnsupportedSelectors
+		}
 		if result.ImpliesRetry() {
 			log.Info("Encountered resources that are not yet ready for captors - will retry soon", "trap", result.GetTrap())
 			reconcileResult.ShouldRequeue = true

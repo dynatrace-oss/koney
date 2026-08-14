@@ -108,8 +108,9 @@ func generateVolumeName(filePath string) string {
 }
 
 // generateTetragonTracingPolicy generates a Tetragon tracing policy for a filesystem honeytoken trap.
-func generateTetragonTracingPolicy(deceptionPolicy *v1alpha1.DeceptionPolicy,
+func generateTetragonTracingPolicy(ctx context.Context, deceptionPolicy *v1alpha1.DeceptionPolicy,
 	trap v1alpha1.Trap, tracingPolicyName string) *ciliumiov1alpha1.TracingPolicy {
+	log := k8slog.FromContext(ctx)
 	/*
 		The `security_file_permission` function is a common execution point for the execution of
 		system calls related to filesystem access, such as read, write, etc.
@@ -227,7 +228,15 @@ func generateTetragonTracingPolicy(deceptionPolicy *v1alpha1.DeceptionPolicy,
 		},
 	}
 
-	// Add the labels and expressions from the trap's MatchResources to the PodSelector
+	// Add the labels and expressions from the trap's MatchResources to the PodSelector.
+	// A TracingPolicy has a single PodSelector, but resource filters are matched with a
+	// logical OR, so filters that carry selectors cannot be translated without losing precision.
+	if countResourceFiltersWithSelector(trap) > 1 {
+		log.Info("WARNING: multiple resource filters have a selector, but a Tetragon tracing policy has only one podSelector, "+
+			"so all selectors are merged and combined with a logical AND, which matches fewer pods than the trap selects",
+			"policy", deceptionPolicy.Name, "filePath", trap.FilesystemHoneytoken.FilePath)
+	}
+
 	for _, resourceFilter := range trap.MatchResources.Any {
 		if resourceFilter.Selector == nil {
 			continue
@@ -368,7 +377,7 @@ func generateKivePolicy(ctx context.Context, deceptionPolicy *v1alpha1.Deception
 		// Kive can only match on plain labels. Generating a match for a selector that also
 		// carries expressions would silently widen the scope of the trap, so we skip it.
 		if resourceFilterUsesMatchExpressions(resource) {
-			log.Info("skipping resource filter in Kive policy, because Kive does not support selector.matchExpressions",
+			log.Error(nil, "Kive does not support selector.matchExpressions - skipping resource filter, no captor will watch the matched resources",
 				"policy", deceptionPolicy.Name, "filePath", trap.FilesystemHoneytoken.FilePath)
 			continue
 		}
@@ -424,4 +433,28 @@ func selectorMatchLabels(resource v1alpha1.ResourceFilter) map[string]string {
 // resourceFilterUsesMatchExpressions returns true if a resource filter uses selector.matchExpressions.
 func resourceFilterUsesMatchExpressions(resource v1alpha1.ResourceFilter) bool {
 	return resource.Selector != nil && len(resource.Selector.MatchExpressions) > 0
+}
+
+// trapUsesMatchExpressions returns true if any resource filter of a trap uses selector.matchExpressions.
+func trapUsesMatchExpressions(trap v1alpha1.Trap) bool {
+	for _, resource := range trap.MatchResources.Any {
+		if resourceFilterUsesMatchExpressions(resource) {
+			return true
+		}
+	}
+	return false
+}
+
+// countResourceFiltersWithSelector returns the number of resource filters of a trap that have a non-empty selector.
+func countResourceFiltersWithSelector(trap v1alpha1.Trap) int {
+	count := 0
+	for _, resource := range trap.MatchResources.Any {
+		if resource.Selector == nil {
+			continue
+		}
+		if len(resource.Selector.MatchLabels) > 0 || len(resource.Selector.MatchExpressions) > 0 {
+			count++
+		}
+	}
+	return count
 }

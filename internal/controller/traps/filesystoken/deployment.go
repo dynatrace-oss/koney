@@ -200,6 +200,11 @@ func (r *FilesystemHoneytokenReconciler) DeployCaptor(ctx context.Context, decep
 			}
 			return trapsapi.CaptorDeploymentResult{Trap: &trap, Errors: err, MissingTetragon: missingKive}
 		}
+		if trapUsesMatchExpressions(trap) {
+			// The policy was applied, but it does not watch the resources that were selected
+			// with matchExpressions, so the trap is only partially covered by captors.
+			return trapsapi.CaptorDeploymentResult{Trap: &trap, UnsupportedSelectors: true}
+		}
 	case "none":
 		log.Info("Captor deployment strategy is 'none' - skipping captor deployment")
 		return trapsapi.CaptorDeploymentResult{Trap: &trap}
@@ -408,7 +413,7 @@ func (r *FilesystemHoneytokenReconciler) deployCaptorWithTetragon(ctx context.Co
 			return err
 		}
 
-		tracingPolicy := generateTetragonTracingPolicy(deceptionPolicy, trap, tracingPolicyName)
+		tracingPolicy := generateTetragonTracingPolicy(ctx, deceptionPolicy, trap, tracingPolicyName)
 
 		if err := r.Create(ctx, tracingPolicy); err != nil {
 			log.Error(err, "unable to create Tetragon tracing policy")
