@@ -241,12 +241,16 @@ var _ = Describe("Policy generation with a trap that uses matchExpressions", fun
 		Expect(kivePolicy.Spec.Traps[0].MatchAny[0].MatchLabels).To(Equal(map[string]string{"app": "frontend"}))
 	})
 
-	It("should warn that the captor does not watch all selected resources", func() {
+	It("should report an error next to the UnsupportedSelectors flag", func() {
 		Expect(trapUsesMatchExpressions(expressionsTrap)).To(BeTrue())
 
-		result := trapsapi.CaptorDeploymentResult{Trap: &expressionsTrap, UnsupportedSelectors: true}
+		result := trapsapi.CaptorDeploymentResult{Trap: &expressionsTrap, Errors: ErrKiveUnsupportedSelectors, UnsupportedSelectors: true}
 		Expect(result.ImpliesSuccess()).To(BeFalse())
 		Expect(result.ImpliesFailure()).To(BeTrue())
+
+		flagOnly := trapsapi.CaptorDeploymentResult{Trap: &expressionsTrap, UnsupportedSelectors: true}
+		Expect(flagOnly.ImpliesSuccess()).To(BeTrue())
+		Expect(flagOnly.ImpliesFailure()).To(BeFalse())
 	})
 })
 
@@ -290,7 +294,7 @@ var _ = Describe("Policy generation with multiple resource filters", func() {
 		Expect(kivePolicy.Spec.Traps[0].MatchAny[1].MatchLabels).To(Equal(map[string]string{"app": "backend", "tier": "db"}))
 	})
 
-	It("should warn that the merged Tetragon podSelector matches fewer pods than the trap selects", func() {
+	It("should leave the Tetragon podSelector empty and warn that it may watch more pods than the trap selects", func() {
 		trapWithTwoExpressions := trapWithTwoFilters
 		trapWithTwoExpressions.MatchResources = v1alpha1.MatchResources{
 			Any: []v1alpha1.ResourceFilter{
@@ -323,9 +327,44 @@ var _ = Describe("Policy generation with multiple resource filters", func() {
 
 		tracingPolicy := generateTetragonTracingPolicy(ctx, &deceptionPolicy, trapWithTwoExpressions, "test-tracing-policy")
 
-		// Both expressions end up in the single podSelector, where they are combined with a logical AND
-		Expect(tracingPolicy.Spec.PodSelector.MatchExpressions).To(HaveLen(2))
-		Expect(messages).To(ContainElement(ContainSubstring("logical AND")))
+		Expect(tracingPolicy.Spec.PodSelector.MatchExpressions).To(BeEmpty())
+		Expect(tracingPolicy.Spec.PodSelector.MatchLabels).To(BeEmpty())
+		Expect(messages).To(ContainElement(ContainSubstring("more pods")))
+	})
+
+	It("should leave the Tetragon podSelector empty when two filters carry labels", func() {
+		tracingPolicy := generateTetragonTracingPolicy(context.Background(), &deceptionPolicy, trapWithTwoFilters, "test-tracing-policy")
+		Expect(tracingPolicy.Spec.PodSelector.MatchLabels).To(BeEmpty())
+		Expect(tracingPolicy.Spec.PodSelector.MatchExpressions).To(BeEmpty())
+	})
+
+	It("should leave the podSelector empty when a labeled filter is mixed with a namespace-only filter", func() {
+		mixedTrap := trapWithTwoFilters
+		mixedTrap.MatchResources = v1alpha1.MatchResources{
+			Any: []v1alpha1.ResourceFilter{
+				{
+					ResourceDescription: v1alpha1.ResourceDescription{
+						Selector: &metav1.LabelSelector{MatchLabels: map[string]string{"app": "backend"}},
+					},
+				},
+				{
+					ResourceDescription: v1alpha1.ResourceDescription{
+						Namespaces: []string{"ns-a"},
+					},
+				},
+			},
+		}
+
+		messages := []string{}
+		logger := funcr.New(func(prefix, args string) {
+			messages = append(messages, args)
+		}, funcr.Options{})
+		ctx := k8slog.IntoContext(context.Background(), logger)
+
+		tracingPolicy := generateTetragonTracingPolicy(ctx, &deceptionPolicy, mixedTrap, "test-tracing-policy")
+		Expect(tracingPolicy.Spec.PodSelector.MatchLabels).To(BeEmpty())
+		Expect(tracingPolicy.Spec.PodSelector.MatchExpressions).To(BeEmpty())
+		Expect(messages).To(ContainElement(ContainSubstring("more pods")))
 	})
 })
 

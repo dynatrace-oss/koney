@@ -72,8 +72,8 @@ type CaptorDeploymentResult struct {
 	Errors error
 	// MissingTetragon is set if we saw indications that Tetragon is not available in the cluster.
 	MissingTetragon bool
-	// UnsupportedSelectors is set if the captor cannot watch all resources that the trap selects,
-	// because the deployment strategy cannot express the selectors of the trap.
+	// UnsupportedSelectors is set alongside Errors when the captor cannot watch all resources
+	// that the trap selects, so the status can show a specific reason.
 	UnsupportedSelectors bool
 }
 
@@ -86,11 +86,11 @@ func (result CaptorDeploymentResult) GetErrors() error {
 }
 
 func (result CaptorDeploymentResult) ImpliesSuccess() bool {
-	return result.Errors == nil && !result.UnsupportedSelectors
+	return result.Errors == nil
 }
 
 func (result CaptorDeploymentResult) ImpliesFailure() bool {
-	return result.Errors != nil || result.MissingTetragon || result.UnsupportedSelectors
+	return result.Errors != nil || result.MissingTetragon
 }
 
 func (result CaptorDeploymentResult) ImpliesRetry() bool {

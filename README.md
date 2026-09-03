@@ -153,7 +153,7 @@ The `any` field is a list and holds one or more `resources` objects, which conta
 - `namespaces`: a list of namespaces. It does NOT support wildcards. The trap is only deployed in pods that belong to any of the namespaces in the list.
 - `selector`: a label selector. It does NOT support wildcards. The trap is only deployed in pods with labels that match the selector. If you specify multiple labels or expressions, all of them have to match for traps to be deployed. `selector` has two fields:
   - `matchLabels`: a map of key-value pairs.
-  - `matchExpressions`: a list of label selector requirements evaluated as a logical AND operation. **(not implemented yet)**
+  - `matchExpressions`: a list of label selector requirements evaluated as a logical AND operation. Decoys are deployed to the matching pods and deployments, and captors deployed with the `tetragon` strategy watch them. Not supported with the `kive` captor deployment strategy: Kive captors do not watch the pods selected by a resource filter that uses `matchExpressions`, and the `DeceptionPolicy` reports this in its status with the `UnsupportedSelectors` reason
 
 - `containerSelector`: selects the container(s) in the matched pods or deployments where the trap is deployed.
   - if this field is prepended by `regex:`, the rest of the string will represent a regular expression matched with go [regexp](https://golang.org/s/re2syntax) library. The pattern is searched inside the container name (i.e., a partial match also counts), so a pattern like `regex:app` matches any container whose name contains `app`. Use `^` and `$` anchors to enforce exact boundaries (e.g., `regex:^app$` matches only a container named exactly `app`).

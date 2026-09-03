@@ -179,6 +179,10 @@ func (r *FilesystemHoneytokenReconciler) DeployDecoy(ctx context.Context, decept
 		Errors:                      joinedErrors}
 }
 
+// ErrKiveUnsupportedSelectors is returned when a trap selects resources with selector.matchExpressions,
+// which Kive cannot evaluate, so its captors do not watch all selected resources.
+var ErrKiveUnsupportedSelectors = errors.New("selector.matchExpressions is not supported with Kive")
+
 // DeployCaptor deploys a captor for a filesystem honeytoken trap.
 func (r *FilesystemHoneytokenReconciler) DeployCaptor(ctx context.Context, deceptionPolicy *v1alpha1.DeceptionPolicy, trap v1alpha1.Trap) trapsapi.CaptorDeploymentResult {
 	log := k8slog.FromContext(ctx)
@@ -201,9 +205,8 @@ func (r *FilesystemHoneytokenReconciler) DeployCaptor(ctx context.Context, decep
 			return trapsapi.CaptorDeploymentResult{Trap: &trap, Errors: err, MissingTetragon: missingKive}
 		}
 		if trapUsesMatchExpressions(trap) {
-			// The policy was applied, but it does not watch the resources that were selected
-			// with matchExpressions, so the trap is only partially covered by captors.
-			return trapsapi.CaptorDeploymentResult{Trap: &trap, UnsupportedSelectors: true}
+			log.Error(ErrKiveUnsupportedSelectors, "captors do not watch all selected resources")
+			return trapsapi.CaptorDeploymentResult{Trap: &trap, Errors: ErrKiveUnsupportedSelectors, UnsupportedSelectors: true}
 		}
 	case "none":
 		log.Info("Captor deployment strategy is 'none' - skipping captor deployment")

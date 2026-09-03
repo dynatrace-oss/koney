@@ -228,23 +228,14 @@ func generateTetragonTracingPolicy(ctx context.Context, deceptionPolicy *v1alpha
 		},
 	}
 
-	// Add the labels and expressions from the trap's MatchResources to the PodSelector.
-	// A TracingPolicy has a single PodSelector, but resource filters are matched with a
-	// logical OR, so filters that carry selectors cannot be translated without losing precision.
-	if countResourceFiltersWithSelector(trap) > 1 {
-		log.Info("WARNING: multiple resource filters have a selector, but a Tetragon tracing policy has only one podSelector, "+
-			"so all selectors are merged and combined with a logical AND, which matches fewer pods than the trap selects",
-			"policy", deceptionPolicy.Name, "filePath", trap.FilesystemHoneytoken.FilePath)
-	}
-
-	for _, resourceFilter := range trap.MatchResources.Any {
-		if resourceFilter.Selector == nil {
-			continue
-		}
-		for key, value := range resourceFilter.Selector.MatchLabels {
+	// Resource filters are OR'd, but a TracingPolicy has a single PodSelector. With more than
+	// one filter we leave it empty and watch a superset instead of missing pods.
+	filters := trap.MatchResources.Any
+	if len(filters) == 1 && filters[0].Selector != nil {
+		for key, value := range filters[0].Selector.MatchLabels {
 			tracingPolicy.Spec.PodSelector.MatchLabels[key] = value
 		}
-		for _, requirement := range resourceFilter.Selector.MatchExpressions {
+		for _, requirement := range filters[0].Selector.MatchExpressions {
 			tracingPolicy.Spec.PodSelector.MatchExpressions = append(
 				tracingPolicy.Spec.PodSelector.MatchExpressions,
 				slimv1.LabelSelectorRequirement{
@@ -254,6 +245,10 @@ func generateTetragonTracingPolicy(ctx context.Context, deceptionPolicy *v1alpha
 				},
 			)
 		}
+	} else if countResourceFiltersWithSelector(trap) > 0 {
+		log.Info("WARNING: the trap has multiple resource filters, but a Tetragon tracing policy has only one podSelector, "+
+			"so the podSelector is left empty and the captor may watch more pods than the trap selects",
+			"policy", deceptionPolicy.Name, "filePath", trap.FilesystemHoneytoken.FilePath)
 	}
 
 	// Determine how to populate the ContainerSelector:
@@ -417,8 +412,6 @@ func generateKivePolicy(ctx context.Context, deceptionPolicy *v1alpha1.Deception
 	return tracingPolicy
 }
 
-// selectorMatchLabels returns a copy of the match labels of a resource filter,
-// or an empty map if the resource filter has no selector.
 func selectorMatchLabels(resource v1alpha1.ResourceFilter) map[string]string {
 	matchLabels := map[string]string{}
 	if resource.Selector == nil {
@@ -430,12 +423,10 @@ func selectorMatchLabels(resource v1alpha1.ResourceFilter) map[string]string {
 	return matchLabels
 }
 
-// resourceFilterUsesMatchExpressions returns true if a resource filter uses selector.matchExpressions.
 func resourceFilterUsesMatchExpressions(resource v1alpha1.ResourceFilter) bool {
 	return resource.Selector != nil && len(resource.Selector.MatchExpressions) > 0
 }
 
-// trapUsesMatchExpressions returns true if any resource filter of a trap uses selector.matchExpressions.
 func trapUsesMatchExpressions(trap v1alpha1.Trap) bool {
 	for _, resource := range trap.MatchResources.Any {
 		if resourceFilterUsesMatchExpressions(resource) {
@@ -445,7 +436,6 @@ func trapUsesMatchExpressions(trap v1alpha1.Trap) bool {
 	return false
 }
 
-// countResourceFiltersWithSelector returns the number of resource filters of a trap that have a non-empty selector.
 func countResourceFiltersWithSelector(trap v1alpha1.Trap) int {
 	count := 0
 	for _, resource := range trap.MatchResources.Any {

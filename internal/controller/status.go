@@ -55,7 +55,7 @@ const (
 	CaptorsDeployedReason_UnsupportedSelectors = "UnsupportedSelectors"
 
 	CaptorsDeployedMessage_MissingTetragon      = "Cannot deploy captors without Tetragon"
-	CaptorsDeployedMessage_UnsupportedSelectors = "Captors do not watch all selected resources, because Kive cannot evaluate selector.matchExpressions"
+	CaptorsDeployedMessage_UnsupportedSelectors = "selector.matchExpressions is not supported with Kive"
 )
 
 // TrapDeploymentStatusEnum defines the possible conditions for a trap deployment.
