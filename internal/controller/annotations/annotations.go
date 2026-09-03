@@ -280,9 +280,7 @@ func AreTheSameTrap(annotationTrap v1alpha1.TrapAnnotation, trap v1alpha1.Trap) 
 }
 
 // GetAnnotatedResources returns a list of resources that have been annotated with a specific DeceptionPolicy.
-// Resources whose annotation cannot be parsed are skipped, because we list all pods and deployments
-// in the cluster here, and anyone who can annotate a single resource would otherwise stop the
-// reconciliation of every DeceptionPolicy, including the clean-up that removes their finalizers.
+// Resources whose annotation cannot be parsed are skipped.
 func GetAnnotatedResources(r client.Reader, ctx context.Context, crdName string) ([]client.Object, error) {
 	log := k8slog.FromContext(ctx)
 
