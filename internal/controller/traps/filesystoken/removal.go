@@ -43,9 +43,6 @@ func (r *FilesystemHoneytokenReconciler) RemoveDecoy(ctx context.Context, crdNam
 	for _, containerName := range trap.Containers {
 		switch trap.DeploymentStrategy {
 		case "containerExec":
-			// The strategy is read from the annotation, so it may not match the type of the
-			// resource that carries it. Check the type instead of asserting it, as we do when
-			// we deploy the trap, otherwise a wrong annotation would panic the reconciliation.
 			pod, ok := resource.(*corev1.Pod)
 			if !ok {
 				log.Error(nil, "containerExec strategy on a resource that is not a pod", "resource", resource.GetName())
