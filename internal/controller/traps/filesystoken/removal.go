@@ -225,12 +225,8 @@ func (r *FilesystemHoneytokenReconciler) removeDecoyWithVolumeMount(ctx context.
 		log.Info("FilesystemHoneytoken trap removed from container", "container", containerName)
 	}
 
-	// Delete the secret, if it was created by the trap.
-	// The secret is named after the file path and content only, so the very same secret can be
-	// mounted by other deployments that match the trap. Kubernetes does not stop us from deleting
-	// a secret that is still in use, their pods would just fail to start on the next restart,
-	// so we have to check the remaining deployments ourselves. We also keep the secret when the
-	// update above failed, because then this deployment still mounts it.
+	// Before deleting the secret, we should check for other mounters because the secret
+	// could be shared and in-use by other deployments with matching trap content.
 	if secretName != "" && err == nil {
 		stillMounted, mountErr := r.isSecretStillMounted(ctx, deployment.Namespace, secretName, deployment.Name)
 		if mountErr != nil {
