@@ -35,6 +35,14 @@ kubectl apply -f https://raw.githubusercontent.com/dynatrace-oss/koney/refs/tags
 kubectl wait --for=condition=ready pod -n koney-system -l control-plane=controller-manager
 ```
 
+The Helm chart generates a token that the alert forwarder uses to authenticate the callers of its webhooks.
+The plain manifests cannot carry a generated token, so create it yourself to reject alerts from unknown callers.
+
+```sh
+kubectl create secret generic koney-alert-forwarder-token -n koney-system --from-literal=token="$(head -c 32 /dev/urandom | base64)"
+kubectl rollout restart deployment koney-controller-manager -n koney-system
+```
+
 ### Configure a honeytoken and test it
 
 Deploy a sample deception policy.

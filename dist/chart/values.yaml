@@ -43,6 +43,15 @@ alertForwarder:
     tag: 0.2.2
     pullPolicy: IfNotPresent
 
+  # Shared secret that the alert forwarder uses to authenticate the callers of its webhooks.
+  # Koney appends the token to the webhook URLs that it hands out to Tetragon and Kive.
+  webhookToken:
+
+    # -- Store the token in a Secret (the token of a previous release is reused on upgrades)
+    create: true
+    # -- Use this token instead of generating a random one
+    value: ""
+
 # Helper RBAC roles for managing custom resources
 # These provide convenient admin/editor/viewer roles for each CRD type
 # Useful for giving users different levels of access to your custom resources

@@ -413,3 +413,46 @@ var _ = Describe("Policy generation with a namespace-only trap", func() {
 		})
 	})
 })
+
+var _ = Describe("Webhook URLs", func() {
+	baseUrl := "http://koney-alert-forwarder-webhook.koney-system.svc:8000/handlers/"
+
+	Context("Without a webhook token", func() {
+		It("should build the webhook URLs without a token", func() {
+			GinkgoT().Setenv("KONEY_ALERT_WEBHOOK_TOKEN", "")
+
+			Expect(buildTetragonWebhookUrl()).To(Equal(baseUrl + "tetragon"))
+			Expect(buildKiveWebhookUrl()).To(Equal(baseUrl + "kive"))
+		})
+	})
+
+	Context("With a webhook token", func() {
+		It("should append the token to the webhook URLs", func() {
+			GinkgoT().Setenv("KONEY_ALERT_WEBHOOK_TOKEN", "s3cret/token")
+
+			Expect(buildTetragonWebhookUrl()).To(Equal(baseUrl + "tetragon?token=s3cret%2Ftoken"))
+			Expect(buildKiveWebhookUrl()).To(Equal(baseUrl + "kive?token=s3cret%2Ftoken"))
+		})
+
+		It("should hand out the token to Tetragon and Kive", func() {
+			GinkgoT().Setenv("KONEY_ALERT_WEBHOOK_TOKEN", "s3cret")
+
+			deceptionPolicy := v1alpha1.DeceptionPolicy{
+				Spec: v1alpha1.DeceptionPolicySpec{Traps: []v1alpha1.Trap{helpersTraps[0]}},
+			}
+
+			tracingPolicy := generateTetragonTracingPolicy(&deceptionPolicy, helpersTraps[0], "test-tracing-policy")
+			Expect(tracingPolicy.Spec.KProbes).ToNot(BeEmpty())
+			for _, kprobe := range tracingPolicy.Spec.KProbes {
+				for _, selector := range kprobe.Selectors {
+					for _, action := range selector.MatchActions {
+						Expect(action.ArgUrl).To(HaveSuffix("?token=s3cret"))
+					}
+				}
+			}
+
+			kivePolicy := generateKivePolicy(&deceptionPolicy, helpersTraps[0], "test-kive-policy")
+			Expect(kivePolicy.Spec.Traps[0].Callback).To(HaveSuffix("?token=s3cret"))
+		})
+	})
+})

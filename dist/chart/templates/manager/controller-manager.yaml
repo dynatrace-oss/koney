@@ -49,6 +49,12 @@ spec:
         env:
         - name: KONEY_NAMESPACE
           value: {{ include "chart.namespaceName" . | quote }}
+        - name: KONEY_ALERT_WEBHOOK_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: koney-alert-forwarder-token
+              key: token
+              optional: true
         {{- range .Values.manager.env }}
         - name: {{ .name }}
           value: {{ .value | quote }}
@@ -85,6 +91,12 @@ spec:
         env:
         - name: KONEY_NAMESPACE
           value: {{ include "chart.namespaceName" . | quote }}
+        - name: KONEY_ALERT_WEBHOOK_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: koney-alert-forwarder-token
+              key: token
+              optional: true
         ports:
         - containerPort: 8000
           protocol: TCP

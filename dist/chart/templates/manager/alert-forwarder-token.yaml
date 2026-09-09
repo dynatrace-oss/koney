@@ -1,0 +1,28 @@
+{{- if .Values.alertForwarder.webhookToken.create }}
+{{- $secretName := "koney-alert-forwarder-token" }}
+{{- $token := .Values.alertForwarder.webhookToken.value }}
+{{- if not $token }}
+{{- /* Reuse the token of a previous release, so that upgrades do not invalidate the URLs of existing traps. */}}
+{{- $existing := lookup "v1" "Secret" (include "chart.namespaceName" .) $secretName }}
+{{- $existingToken := "" }}
+{{- if $existing }}
+{{- $existingToken = get $existing.data "token" }}
+{{- end }}
+{{- if $existingToken }}
+{{- $token = b64dec $existingToken }}
+{{- else }}
+{{- $token = randAlphaNum 32 }}
+{{- end }}
+{{- end }}
+apiVersion: v1
+kind: Secret
+metadata:
+  labels:
+    {{- include "chart.labels" . | nindent 4 }}
+    control-plane: controller-manager
+  name: {{ $secretName }}
+  namespace: {{ include "chart.namespaceName" . }}
+type: Opaque
+data:
+  token: {{ $token | b64enc | quote }}
+{{- end }}
