@@ -107,6 +107,13 @@ Run all unit tests.
 make test
 ```
 
+Run the unit tests of the alert forwarder, which need a local Python with `alert-forwarder/requirements-dev.txt` installed.
+
+```sh
+pip install -r alert-forwarder/requirements-dev.txt
+make test-forwarder
+```
+
 Run all end-to-end tests in a real cluster. Make sure to set the correct context to your playground cluster.
 
 ℹ️ **Note**: Tetragon and Kive must be installed in the cluster to run all the end-to-end tests.

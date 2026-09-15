@@ -16,6 +16,7 @@
 package main
 
 import (
+	"context"
 	"crypto/tls"
 	"flag"
 	"os"
@@ -40,6 +41,7 @@ import (
 
 	researchdynatracecomv1alpha1 "github.com/dynatrace-oss/koney/api/v1alpha1"
 	"github.com/dynatrace-oss/koney/internal/controller"
+	"github.com/dynatrace-oss/koney/internal/webhooktoken"
 	// +kubebuilder:scaffold:imports
 )
 
@@ -64,6 +66,7 @@ func main() {
 	var probeAddr string
 	var secureMetrics bool
 	var enableHTTP2 bool
+	var initWebhookTokenAndExit bool
 	var tlsOpts []func(*tls.Config)
 	flag.StringVar(&metricsAddr, "metrics-bind-address", "0", "The address the metrics endpoint binds to. "+
 		"Use :8443 for HTTPS or :8080 for HTTP, or leave as 0 to disable the metrics service.")
@@ -82,6 +85,9 @@ func main() {
 	flag.StringVar(&metricsCertKey, "metrics-cert-key", "tls.key", "The name of the metrics server key file.")
 	flag.BoolVar(&enableHTTP2, "enable-http2", false,
 		"If set, HTTP/2 will be enabled for the metrics and webhook servers")
+	flag.BoolVar(&initWebhookTokenAndExit, "init-webhook-token-and-exit", false,
+		"If set, create the secret with the token of the alert forwarder webhooks, then exit. "+
+			"An existing token is kept. This is meant to run in an init container.")
 	opts := zap.Options{
 		Development: true,
 	}
@@ -89,6 +95,14 @@ func main() {
 	flag.Parse()
 
 	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&opts)))
+
+	if initWebhookTokenAndExit {
+		if err := webhooktoken.InitWebhookToken(context.Background()); err != nil {
+			setupLog.Error(err, "unable to initialize the token of the alert forwarder webhooks")
+			os.Exit(1)
+		}
+		return
+	}
 
 	// if the enable-http2 flag is false (the default), http/2 should be disabled
 	// due to its vulnerabilities. More specifically, disabling http/2 will
