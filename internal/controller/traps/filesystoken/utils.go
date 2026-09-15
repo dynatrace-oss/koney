@@ -135,6 +135,10 @@ func generateTetragonTracingPolicy(ctx context.Context, deceptionPolicy *v1alpha
 		- https://raw.githubusercontent.com/cilium/tetragon/main/examples/tracingpolicy/filename_monitoring.yaml
 	*/
 	tracingPolicy := &ciliumiov1alpha1.TracingPolicy{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "TracingPolicy",
+			APIVersion: "cilium.io/v1alpha1",
+		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name: tracingPolicyName,
 			Labels: map[string]string{

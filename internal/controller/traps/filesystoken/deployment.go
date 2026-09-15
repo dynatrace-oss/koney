@@ -23,7 +23,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	ciliumiov1alpha1 "github.com/cilium/tetragon/pkg/k8s/apis/cilium.io/v1alpha1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/meta"
@@ -402,29 +401,14 @@ func (r *FilesystemHoneytokenReconciler) deployCaptorWithTetragon(ctx context.Co
 		return err
 	}
 
-	// Get the Tetragon tracing policy if it already exists
-	// If the tracing policy already exists, we don't need to do anything
-	// since the name is unique for each unique trap
-	existingTracingPolicy := &ciliumiov1alpha1.TracingPolicy{}
-	err = r.Get(ctx, client.ObjectKey{Name: tracingPolicyName}, existingTracingPolicy)
+	tracingPolicy := generateTetragonTracingPolicy(ctx, deceptionPolicy, trap, tracingPolicyName)
 
-	// If the policy does not exist, err is not nil and is a NotFound error
-	if err != nil {
-		// If the policy does not exist, we create it
-		if client.IgnoreNotFound(err) != nil {
-			log.Error(err, "unable to get Tetragon tracing policy")
-			return err
-		}
-
-		tracingPolicy := generateTetragonTracingPolicy(ctx, deceptionPolicy, trap, tracingPolicyName)
-
-		if err := r.Create(ctx, tracingPolicy); err != nil {
-			log.Error(err, "unable to create Tetragon tracing policy")
-			return err
-		}
-
-		log.Info("Tetragon tracing policy created", "policy", tracingPolicy)
+	if err := r.Patch(ctx, tracingPolicy, client.Apply, client.ForceOwnership, client.FieldOwner(constants.FieldOwnerKoneyController)); err != nil {
+		log.Error(err, "unable to apply Tetragon tracing policy", "policy", tracingPolicyName)
+		return err
 	}
+
+	log.Info("Tetragon tracing policy applied", "policy", tracingPolicyName)
 
 	return nil
 }
@@ -441,17 +425,13 @@ func (r *FilesystemHoneytokenReconciler) deployCaptorWithKive(ctx context.Contex
 	}
 
 	tracingPolicy := generateKivePolicy(ctx, deceptionPolicy, trap, tracingPolicyName)
-	if err != nil {
-		log.Error(err, "unable to generate Kive tracing policy")
-		return err
-	}
 
 	if err := r.Patch(ctx, tracingPolicy, client.Apply, client.ForceOwnership, client.FieldOwner(constants.FieldOwnerKoneyController)); err != nil {
-		log.Error(err, "unable to create Kive tracing policy")
+		log.Error(err, "unable to apply Kive tracing policy", "policy", tracingPolicyName)
 		return err
 	}
 
-	log.Info("Kive tracing policy created", "policy", tracingPolicy)
+	log.Info("Kive tracing policy applied", "policy", tracingPolicyName)
 
 	return nil
 }
