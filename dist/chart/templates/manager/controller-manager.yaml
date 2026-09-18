@@ -29,6 +29,29 @@ spec:
         {{- else }}
         {}
         {{- end }}
+      initContainers:
+      - name: webhook-token-setup
+        image: "{{ .Values.manager.image.repository }}:{{ .Values.manager.image.tag }}"
+        imagePullPolicy: {{ .Values.manager.image.pullPolicy }}
+        command:
+        - /manager
+        args:
+        - --init-webhook-token-and-exit
+        env:
+        - name: KONEY_NAMESPACE
+          value: {{ include "chart.namespaceName" . | quote }}
+        resources:
+          {{- if .Values.manager.resources }}
+          {{- toYaml .Values.manager.resources | nindent 10 }}
+          {{- else }}
+          {}
+          {{- end }}
+        securityContext:
+          {{- if .Values.manager.containerSecurityContext }}
+          {{- toYaml .Values.manager.containerSecurityContext | nindent 10 }}
+          {{- else }}
+          {}
+          {{- end }}
       containers:
       - name: manager
         image: "{{ .Values.manager.image.repository }}:{{ .Values.manager.image.tag }}"
@@ -49,6 +72,11 @@ spec:
         env:
         - name: KONEY_NAMESPACE
           value: {{ include "chart.namespaceName" . | quote }}
+        - name: KONEY_ALERT_WEBHOOK_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: koney-alert-forwarder-token
+              key: token
         {{- range .Values.manager.env }}
         - name: {{ .name }}
           value: {{ .value | quote }}
@@ -85,6 +113,11 @@ spec:
         env:
         - name: KONEY_NAMESPACE
           value: {{ include "chart.namespaceName" . | quote }}
+        - name: KONEY_ALERT_WEBHOOK_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: koney-alert-forwarder-token
+              key: token
         ports:
         - containerPort: 8000
           protocol: TCP

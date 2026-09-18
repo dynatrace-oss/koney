@@ -732,6 +732,29 @@ spec:
         runAsNonRoot: true
         seccompProfile:
           type: RuntimeDefault
+      initContainers:
+      - name: webhook-token-setup
+        image: "registry.lab.dynatrace.org/research/koney-controller:0.2.2"
+        imagePullPolicy: IfNotPresent
+        command:
+        - /manager
+        args:
+        - --init-webhook-token-and-exit
+        env:
+        - name: KONEY_NAMESPACE
+          value: "koney-system"
+        resources:
+          limits:
+            cpu: 500m
+            memory: 256Mi
+          requests:
+            cpu: 10m
+            memory: 128Mi
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
       containers:
       - name: manager
         image: "registry.lab.dynatrace.org/research/koney-controller:0.2.2"
@@ -745,6 +768,11 @@ spec:
         env:
         - name: KONEY_NAMESPACE
           value: "koney-system"
+        - name: KONEY_ALERT_WEBHOOK_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: koney-alert-forwarder-token
+              key: token
         ports: []
         volumeMounts: []
         livenessProbe:
@@ -777,6 +805,11 @@ spec:
         env:
         - name: KONEY_NAMESPACE
           value: "koney-system"
+        - name: KONEY_ALERT_WEBHOOK_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: koney-alert-forwarder-token
+              key: token
         ports:
         - containerPort: 8000
           protocol: TCP

@@ -18,6 +18,7 @@ package filesystoken
 import (
 	"context"
 	"encoding/json"
+	"net/url"
 
 	kivev1 "github.com/San7o/kivebpf/api/v1"
 	ciliumiov1alpha1 "github.com/cilium/tetragon/pkg/k8s/apis/cilium.io/v1alpha1"
@@ -134,6 +135,10 @@ func generateTetragonTracingPolicy(ctx context.Context, deceptionPolicy *v1alpha
 		- https://raw.githubusercontent.com/cilium/tetragon/main/examples/tracingpolicy/filename_monitoring.yaml
 	*/
 	tracingPolicy := &ciliumiov1alpha1.TracingPolicy{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "TracingPolicy",
+			APIVersion: "cilium.io/v1alpha1",
+		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name: tracingPolicyName,
 			Labels: map[string]string{
@@ -322,11 +327,22 @@ func generateTetragonTracingPolicy(ctx context.Context, deceptionPolicy *v1alpha
 }
 
 func buildTetragonWebhookUrl() string {
-	return "http://koney-alert-forwarder-webhook." + utils.GetKoneyNamespace() + ".svc:8000/handlers/tetragon"
+	return buildWebhookUrl("tetragon")
 }
 
 func buildKiveWebhookUrl() string {
-	return "http://koney-alert-forwarder-webhook." + utils.GetKoneyNamespace() + ".svc:8000/handlers/kive"
+	return buildWebhookUrl("kive")
+}
+
+// buildWebhookUrl builds the URL of an alert forwarder webhook handler.
+// The shared secret that the alert forwarder uses to authenticate the caller
+// is appended as a query parameter, unless no secret is configured.
+func buildWebhookUrl(handler string) string {
+	webhookUrl := "http://koney-alert-forwarder-webhook." + utils.GetKoneyNamespace() + ".svc:8000/handlers/" + handler
+	if token := utils.GetAlertWebhookToken(); token != "" {
+		webhookUrl += "?token=" + url.QueryEscape(token)
+	}
+	return webhookUrl
 }
 
 // generateKivePolicy generates a Kive tracing policy for a filesystem honeytoken trap.

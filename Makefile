@@ -47,6 +47,9 @@ endif
 # CONTAINER_TOOL defines the container tool to be used for building images.
 CONTAINER_TOOL ?= docker
 
+# PYTHON defines the Python interpreter to be used for the alert forwarder.
+PYTHON ?= python3
+
 # SHELL and flags to use for all recipes
 SHELL = /usr/bin/env bash -o pipefail
 .SHELLFLAGS = -ec
@@ -103,6 +106,10 @@ lint-fix: golangci-lint ## Run golangci-lint linter and perform fixes.
 .PHONY: test
 test: generate fmt lint setup-envtest ## Run unit tests (no cluster required).
 	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) -p path)"  go test $(shell go list ./... | grep -v /test/) -coverprofile cover.out
+
+.PHONY: test-forwarder
+test-forwarder: ## Run unit tests of the alert forwarder (requires Python).
+	cd alert-forwarder && $(PYTHON) -m pytest
 
 .PHONY: test-e2e
 test-e2e: generate fmt lint ## Run end-to-end tests (requires an isolated environment).
