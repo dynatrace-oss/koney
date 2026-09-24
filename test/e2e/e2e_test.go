@@ -48,6 +48,8 @@ const (
 	nameOfExtraTestPod = "koney-extra-test-pod"
 	yamlOfExtraTestPod = manifestsDir + "/pods/test_pod_extra.yaml"
 
+	nameOfWebhookTokenSecret = "koney-alert-forwarder-token"
+
 	nameOfDeceptionPolicy              = "koney-test-deceptionpolicy"
 	yamlOfOneFilesystokenContainerExec = manifestsDir + "/deceptionpolicies/test_trap_filesystoken_container_exec.yaml"
 	yamlOfTwoFilesystokenContainerExec = manifestsDir + "/deceptionpolicies/test_trap_two_filesystokens.yaml"
@@ -165,6 +167,13 @@ var _ = Describe("Koney Operator", Ordered, func() {
 				return nil
 			}
 			Eventually(verifyControllerUp, time.Minute, time.Second).Should(Succeed())
+
+			By("validating that the init container created the webhook token secret")
+			cmd = exec.Command("kubectl", "get", "secret", nameOfWebhookTokenSecret,
+				"-n", managerNamespace, "-o", "jsonpath={.data.token}")
+			token, err := testutils.Run(cmd)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(string(token)).NotTo(BeEmpty())
 		})
 	})
 
@@ -514,6 +523,48 @@ var _ = Describe("Koney Operator", Ordered, func() {
 			Eventually(func() error {
 				return verifyStatusConditions(testNamespace, testCrdName, nameOfDeceptionPolicy, false, true)
 			}, time.Minute, time.Second).Should(Succeed())
+		})
+	})
+
+	When("rotating the webhook token", func() {
+		It("should refresh the webhook URL in the Tetragon TracingPolicy", func() {
+			// The name of a TracingPolicy is a hash of the trap spec, so it does not change when
+			// only the token changes. This guards the server-side apply that refreshes the URL:
+			// without it, the policy keeps a stale token and its alerts are silently rejected.
+			tracingPolicyUrl := func() (string, error) {
+				cmd := exec.Command("kubectl", "get", "tracingpolicies",
+					"-l", constants.LabelKeyDeceptionPolicyRef+"="+nameOfDeceptionPolicy,
+					"-o", "jsonpath={.items[0].spec.kprobes[0].selectors[0].matchActions[0].argUrl}")
+				out, err := testutils.Run(cmd)
+				return string(out), err
+			}
+
+			By("reading the webhook URL that the TracingPolicy carries")
+			urlBefore, err := tracingPolicyUrl()
+			Expect(err).NotTo(HaveOccurred())
+			Expect(urlBefore).To(ContainSubstring("token="))
+
+			By("deleting the webhook token secret")
+			cmd := exec.Command("kubectl", "delete", "secret", nameOfWebhookTokenSecret,
+				"-n", managerNamespace)
+			_, err = testutils.Run(cmd)
+			Expect(err).NotTo(HaveOccurred())
+
+			By("restarting the controller-manager, so that the init container mints a new token")
+			cmd = exec.Command("kubectl", "delete", "pod",
+				"-l", "control-plane=controller-manager", "-n", managerNamespace)
+			_, err = testutils.Run(cmd)
+			Expect(err).NotTo(HaveOccurred())
+
+			// best effort, the old pod may still be terminating while we wait,
+			// and the assertion below waits for the restart anyway
+			cmd = exec.Command("kubectl", "wait", "--for=condition=Ready", "pod",
+				"-l", "control-plane=controller-manager", "-n", managerNamespace, "--timeout=2m")
+			_, _ = testutils.Run(cmd)
+
+			By("validating that the TracingPolicy carries the new token")
+			Eventually(tracingPolicyUrl, 2*time.Minute, time.Second).
+				Should(And(ContainSubstring("token="), Not(Equal(urlBefore))))
 		})
 	})
 
