@@ -35,12 +35,6 @@ kubectl apply -f https://raw.githubusercontent.com/dynatrace-oss/koney/refs/tags
 kubectl wait --for=condition=ready pod -n koney-system -l control-plane=controller-manager
 ```
 
-Both installation options set up the webhook token the same way. An init container creates a Secret that
-holds the token which the alert forwarder uses to authenticate the callers of its webhooks. If an earlier
-installation already created that Secret, its token is kept, so that the URLs of existing traps stay
-valid. The Secret is not managed by Helm, so `helm uninstall` leaves it behind. Delete it with
-`kubectl delete secret koney-alert-forwarder-token -n koney-system` to start over with a fresh token.
-
 ### Configure a honeytoken and test it
 
 Deploy a sample deception policy.
@@ -94,6 +88,15 @@ helm uninstall koney -n koney-system
 
 ```sh
 kubectl delete -f https://raw.githubusercontent.com/dynatrace-oss/koney/refs/tags/v0.2.2/dist/install.yaml
+```
+
+### Optional clean-up steps
+
+Koney also installs a secret used to authenticate callers of its webhooks. Helm will not remove that.
+If you would like to manually delete it, run:
+
+```sh
+kubectl delete secret koney-alert-forwarder-token -n koney-system
 ```
 
 ## 📃 Usage
