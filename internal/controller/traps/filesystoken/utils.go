@@ -334,15 +334,11 @@ func buildKiveWebhookUrl() string {
 	return buildWebhookUrl("kive")
 }
 
-// buildWebhookUrl builds the URL of an alert forwarder webhook handler.
-// The shared secret that the alert forwarder uses to authenticate the caller
-// is appended as a query parameter, unless no secret is configured.
+// buildWebhookUrl builds the URL of an alert webhook handler. The token that authenticates
+// the caller is appended as a query parameter, because that is all that the captors can carry.
 func buildWebhookUrl(handler string) string {
-	webhookUrl := "http://koney-alert-forwarder-webhook." + utils.GetKoneyNamespace() + ".svc:8000/handlers/" + handler
-	if token := utils.GetAlertWebhookToken(); token != "" {
-		webhookUrl += "?token=" + url.QueryEscape(token)
-	}
-	return webhookUrl
+	return "http://koney-alert-forwarder-webhook." + utils.GetKoneyNamespace() + ".svc:8000/handlers/" + handler +
+		"?token=" + url.QueryEscape(utils.GetAlertWebhookToken())
 }
 
 // generateKivePolicy generates a Kive tracing policy for a filesystem honeytoken trap.

@@ -81,7 +81,10 @@ spec:
         - name: {{ .name }}
           value: {{ .value | quote }}
         {{- end }}
-        ports: []
+        ports:
+        - containerPort: 8000
+          protocol: TCP
+          name: http
         volumeMounts: []
         livenessProbe:
           httpGet:
@@ -95,39 +98,6 @@ spec:
             port: 8081
           initialDelaySeconds: 5
           periodSeconds: 10
-        resources:
-          {{- if .Values.manager.resources }}
-          {{- toYaml .Values.manager.resources | nindent 10 }}
-          {{- else }}
-          {}
-          {{- end }}
-        securityContext:
-          {{- if .Values.manager.containerSecurityContext }}
-          {{- toYaml .Values.manager.containerSecurityContext | nindent 10 }}
-          {{- else }}
-          {}
-          {{- end }}
-      - name: alerts
-        image: "{{ .Values.alertForwarder.image.repository }}:{{ .Values.alertForwarder.image.tag }}"
-        imagePullPolicy: {{ .Values.alertForwarder.image.pullPolicy }}
-        env:
-        - name: KONEY_NAMESPACE
-          value: {{ include "chart.namespaceName" . | quote }}
-        - name: KONEY_ALERT_WEBHOOK_TOKEN
-          valueFrom:
-            secretKeyRef:
-              name: koney-alert-forwarder-token
-              key: token
-        ports:
-        - containerPort: 8000
-          protocol: TCP
-          name: http
-        livenessProbe:
-          httpGet:
-            path: /healthz
-            port: 8000
-          initialDelaySeconds: 15
-          periodSeconds: 60
         resources:
           {{- if .Values.manager.resources }}
           {{- toYaml .Values.manager.resources | nindent 10 }}
