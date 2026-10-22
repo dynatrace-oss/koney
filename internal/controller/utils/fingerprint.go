@@ -15,10 +15,38 @@
 
 package utils
 
-import "fmt"
+import (
+	"crypto/sha256"
+	"encoding/binary"
+	"fmt"
+	"sync"
+)
 
-// TODO: Randomize on startup and sync with alerting system
-const KoneyFingerprint = 1337
+// fingerprintHighBit keeps every fingerprint at 32 bits, so that it never encodes as a short `cat -u`.
+const fingerprintHighBit = 1 << 31
+
+var (
+	fingerprint     int
+	fingerprintOnce sync.Once
+)
+
+// Fingerprint returns the fingerprint of this Koney installation. Koney marks the commands
+// that it runs itself with it, so that it does not alert on its own trap deployments.
+// It is derived from the webhook token, so that it is unpredictable for an attacker
+// but stays the same across restarts.
+func Fingerprint() int {
+	fingerprintOnce.Do(func() {
+		fingerprint = fingerprintOf(GetAlertWebhookToken())
+	})
+
+	return fingerprint
+}
+
+func fingerprintOf(token string) int {
+	digest := sha256.Sum256([]byte("koney-fingerprint:" + token))
+
+	return int(binary.BigEndian.Uint32(digest[:4]) | fingerprintHighBit)
+}
 
 // EncodeFingerprintInEcho encodes a fingerprint in a call to `echo`, to be
 // used, e.g. in a call such as `echo -e "foobar\c KONEY_FINGERPRINT_123"` after
