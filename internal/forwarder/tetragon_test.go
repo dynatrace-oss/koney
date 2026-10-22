@@ -137,12 +137,12 @@ var _ = Describe("Tetragon events", func() {
 
 	It("should skip the alerts that Koney triggers itself", func() {
 		fingerprinted := KoneyAlert{Process: &ProcessMetadata{
-			Arguments: "-e foo\\c " + utils.EncodeFingerprintInEcho(utils.KoneyFingerprint),
+			Arguments: "-e foo\\c " + utils.EncodeFingerprintInEcho(utils.Fingerprint()),
 		}}
 		Expect(isOwnAlert(fingerprinted)).To(BeTrue())
 
 		catted := KoneyAlert{Process: &ProcessMetadata{
-			Arguments: utils.EncodeFingerprintInCat(utils.KoneyFingerprint) + " /run/secrets/koney/token",
+			Arguments: utils.EncodeFingerprintInCat(utils.Fingerprint()) + " /run/secrets/koney/token",
 		}}
 		Expect(isOwnAlert(catted)).To(BeTrue())
 

@@ -238,8 +238,8 @@ func (r *FilesystemHoneytokenReconciler) deployDecoyWithContainerExec(ctx contex
 	}
 
 	// mark the commands with a fingerprint so that we won't alert on them later
-	echoFingerprint := utils.EncodeFingerprintInEcho(utils.KoneyFingerprint)
-	catFingerprint := utils.EncodeFingerprintInCat(utils.KoneyFingerprint)
+	echoFingerprint := utils.EncodeFingerprintInEcho(utils.Fingerprint())
+	catFingerprint := utils.EncodeFingerprintInCat(utils.Fingerprint())
 
 	if trap.FilesystemHoneytoken.FileContent != "" {
 		// To avoid issues with special characters (e.g., command injection vulnerabilities),

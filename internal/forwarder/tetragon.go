@@ -245,7 +245,7 @@ func isOwnAlert(alert KoneyAlert) bool {
 		return false // cannot decide, assume it is not our own
 	}
 
-	fingerprint := utils.KoneyFingerprint
+	fingerprint := utils.Fingerprint()
 	arguments := alert.Process.Arguments
 
 	return strings.Contains(arguments, utils.EncodeFingerprintInEcho(fingerprint)) ||
