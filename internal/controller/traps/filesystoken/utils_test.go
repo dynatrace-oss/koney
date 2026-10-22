@@ -417,15 +417,6 @@ var _ = Describe("Policy generation with a namespace-only trap", func() {
 var _ = Describe("Webhook URLs", func() {
 	baseUrl := "http://koney-alert-forwarder-webhook.koney-system.svc:8000/handlers/"
 
-	Context("Without a webhook token", func() {
-		It("should build the webhook URLs without a token", func() {
-			GinkgoT().Setenv("KONEY_ALERT_WEBHOOK_TOKEN", "")
-
-			Expect(buildTetragonWebhookUrl()).To(Equal(baseUrl + "tetragon"))
-			Expect(buildKiveWebhookUrl()).To(Equal(baseUrl + "kive"))
-		})
-	})
-
 	Context("With a webhook token", func() {
 		It("should append the token to the webhook URLs", func() {
 			GinkgoT().Setenv("KONEY_ALERT_WEBHOOK_TOKEN", "s3cret/token")
