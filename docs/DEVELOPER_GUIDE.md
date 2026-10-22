@@ -15,9 +15,9 @@ Other dependencies such as `operator-sdk` and `helm` are automatically downloade
 
 ## ⚓ Deploy the Operator to the Cluster
 
-Build and push the images with the following command.
-The images are pushed to the registry specified in the `IMAGE_TAG_BASE` variable with the `VERSION` tag.
-Currently, we build and push two images, `your.local.registry/koney-controller:demo` and `your.local.registry/research/koney-alert-forwarder:demo`.
+Build and push the image with the following command.
+The image is pushed to the registry specified in the `IMAGE_TAG_BASE` variable with the `VERSION` tag,
+so it ends up as `your.local.registry/koney-controller:demo`.
 
 ```sh
 make docker-build docker-push IMAGE_TAG_BASE="your.local.registry/koney" VERSION="demo"
@@ -105,13 +105,6 @@ Run all unit tests.
 
 ```sh
 make test
-```
-
-Run the unit tests of the alert forwarder, which need a local Python with `alert-forwarder/requirements-dev.txt` installed.
-
-```sh
-pip install -r alert-forwarder/requirements-dev.txt
-make test-forwarder
 ```
 
 Run all end-to-end tests in a real cluster. Make sure to set the correct context to your playground cluster.
