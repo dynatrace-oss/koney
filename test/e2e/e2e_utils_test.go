@@ -585,7 +585,7 @@ func verifyHoneytokenContent(trap v1alpha1.Trap, podNamespace, podName string, c
 // findKoneyAlerts returns log entries parsed as Koney alerts, if they contain the specified string
 func findKoneyAlerts(needle, managerNamespace string, sinceTime *time.Time) ([]KoneyAlert, error) {
 	args := []string{"logs", "-n", managerNamespace, "--tail", "1000",
-		"-l", "control-plane=controller-manager", "-c", "alerts"}
+		"-l", "control-plane=controller-manager", "-c", "manager"}
 	if sinceTime != nil {
 		args = append(args, "--since-time", sinceTime.Format(time.RFC3339))
 	}
@@ -600,13 +600,17 @@ func findKoneyAlerts(needle, managerNamespace string, sinceTime *time.Time) ([]K
 	lines := bytes.Split(output, []byte("\n"))
 
 	for _, line := range lines {
-		if bytes.Contains(line, needleBytes) {
-			var alert KoneyAlert
-			if err := json.Unmarshal(line, &alert); err != nil {
-				return nil, err
-			}
-			alerts = append(alerts, alert)
+		if !bytes.Contains(line, needleBytes) {
+			continue
 		}
+
+		// the manager container also writes its own log lines, which are not alerts
+		var alert KoneyAlert
+		if err := json.Unmarshal(line, &alert); err != nil || alert.TrapType == "" {
+			continue
+		}
+
+		alerts = append(alerts, alert)
 	}
 
 	return alerts, nil

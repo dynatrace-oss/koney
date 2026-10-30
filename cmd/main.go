@@ -18,6 +18,7 @@ package main
 import (
 	"context"
 	"crypto/tls"
+	"errors"
 	"flag"
 	"os"
 	"path/filepath"
@@ -30,17 +31,21 @@ import (
 	ciliumiov1alpha1 "github.com/cilium/tetragon/pkg/k8s/apis/cilium.io/v1alpha1"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
+	"k8s.io/client-go/kubernetes"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/certwatcher"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
+	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/metrics/filters"
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 
 	researchdynatracecomv1alpha1 "github.com/dynatrace-oss/koney/api/v1alpha1"
 	"github.com/dynatrace-oss/koney/internal/controller"
+	"github.com/dynatrace-oss/koney/internal/controller/utils"
+	"github.com/dynatrace-oss/koney/internal/forwarder"
 	"github.com/dynatrace-oss/koney/internal/webhooktoken"
 	// +kubebuilder:scaffold:imports
 )
@@ -229,6 +234,27 @@ func main() {
 	}
 	// +kubebuilder:scaffold:builder
 
+	webhookToken := utils.GetAlertWebhookToken()
+	if webhookToken == "" {
+		setupLog.Error(errors.New("no webhook token configured"),
+			"unable to serve the alert webhooks", "environment variable", utils.AlertWebhookTokenEnv)
+		os.Exit(1)
+	}
+
+	alertForwarder := forwarder.New(forwarder.Options{
+		Client:    mgr.GetClient(),
+		Clientset: kubernetes.NewForConfigOrDie(mgr.GetConfig()),
+		Namespace: utils.GetKoneyNamespace(),
+		Token:     webhookToken,
+	})
+
+	for _, runnable := range []manager.Runnable{alertForwarder.Webhooks(), alertForwarder.EventPuller()} {
+		if err := mgr.Add(runnable); err != nil {
+			setupLog.Error(err, "unable to add the alert forwarder to manager")
+			os.Exit(1)
+		}
+	}
+
 	if metricsCertWatcher != nil {
 		setupLog.Info("Adding metrics certificate watcher to manager")
 		if err := mgr.Add(metricsCertWatcher); err != nil {
@@ -250,6 +276,10 @@ func main() {
 		os.Exit(1)
 	}
 	if err := mgr.AddReadyzCheck("readyz", healthz.Ping); err != nil {
+		setupLog.Error(err, "unable to set up ready check")
+		os.Exit(1)
+	}
+	if err := mgr.AddReadyzCheck("alert-webhooks", alertForwarder.Ready); err != nil {
 		setupLog.Error(err, "unable to set up ready check")
 		os.Exit(1)
 	}

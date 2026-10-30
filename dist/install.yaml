@@ -358,45 +358,6 @@ spec:
     subresources:
       status: {}
 ---
-# Source: koney/templates/rbac/alert-forwarder/alert-forwarder-role.yaml
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRole
-metadata:
-  labels:
-    app.kubernetes.io/name: koney
-    app.kubernetes.io/instance: koney
-    app.kubernetes.io/version: "0.2.2"
-  name: koney-alert-forwarder-role
-rules:
-- apiGroups:
-  - ""
-  resources:
-  - pods
-  verbs:
-  - get
-  - list
-- apiGroups:
-  - ""
-  resources:
-  - pods/log
-  verbs:
-  - get
-- apiGroups:
-  - ""
-  resources:
-  - namespaces
-  verbs:
-  - get
-  - list
-- apiGroups:
-  - research.dynatrace.com
-  resources:
-  - deceptionalertsinks
-  verbs:
-  - get
-  - list
-  - watch
----
 # Source: koney/templates/rbac/manager/manager-role.yaml
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
@@ -429,6 +390,27 @@ rules:
   - pods/exec
   verbs:
   - create
+- apiGroups:
+  - ""
+  resources:
+  - pods/log
+  verbs:
+  - get
+- apiGroups:
+  - ""
+  resources:
+  - namespaces
+  verbs:
+  - get
+  - list
+- apiGroups:
+  - research.dynatrace.com
+  resources:
+  - deceptionalertsinks
+  verbs:
+  - get
+  - list
+  - watch
 - apiGroups:
   - ""
   resources:
@@ -538,24 +520,6 @@ rules:
   - /metrics
   verbs:
   - get
----
-# Source: koney/templates/rbac/alert-forwarder/alert-forwarder-rolebinding.yaml
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRoleBinding
-metadata:
-  labels:
-    app.kubernetes.io/name: koney
-    app.kubernetes.io/instance: koney
-    app.kubernetes.io/version: "0.2.2"
-  name: koney-alert-forwarder-rolebinding
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: ClusterRole
-  name: koney-alert-forwarder-role
-subjects:
-- kind: ServiceAccount
-  name: koney-manager-serviceaccount
-  namespace: koney-system
 ---
 # Source: koney/templates/rbac/manager/manager-rolebinding.yaml
 apiVersion: rbac.authorization.k8s.io/v1
@@ -773,7 +737,10 @@ spec:
             secretKeyRef:
               name: koney-alert-forwarder-token
               key: token
-        ports: []
+        ports:
+        - containerPort: 8000
+          protocol: TCP
+          name: http
         volumeMounts: []
         livenessProbe:
           httpGet:
@@ -787,39 +754,6 @@ spec:
             port: 8081
           initialDelaySeconds: 5
           periodSeconds: 10
-        resources:
-          limits:
-            cpu: 500m
-            memory: 256Mi
-          requests:
-            cpu: 10m
-            memory: 128Mi
-        securityContext:
-          allowPrivilegeEscalation: false
-          capabilities:
-            drop:
-            - ALL
-      - name: alerts
-        image: "registry.lab.dynatrace.org/research/koney-alert-forwarder:0.2.2"
-        imagePullPolicy: IfNotPresent
-        env:
-        - name: KONEY_NAMESPACE
-          value: "koney-system"
-        - name: KONEY_ALERT_WEBHOOK_TOKEN
-          valueFrom:
-            secretKeyRef:
-              name: koney-alert-forwarder-token
-              key: token
-        ports:
-        - containerPort: 8000
-          protocol: TCP
-          name: http
-        livenessProbe:
-          httpGet:
-            path: /healthz
-            port: 8000
-          initialDelaySeconds: 15
-          periodSeconds: 60
         resources:
           limits:
             cpu: 500m
