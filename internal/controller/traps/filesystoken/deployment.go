@@ -401,7 +401,11 @@ func (r *FilesystemHoneytokenReconciler) deployCaptorWithTetragon(ctx context.Co
 		return err
 	}
 
-	tracingPolicy := generateTetragonTracingPolicy(ctx, deceptionPolicy, trap, tracingPolicyName)
+	tracingPolicy, err := toTetragonApplyObject(generateTetragonTracingPolicy(ctx, deceptionPolicy, trap, tracingPolicyName))
+	if err != nil {
+		log.Error(err, "unable to convert Tetragon tracing policy", "policy", tracingPolicyName)
+		return err
+	}
 
 	if err := r.Patch(ctx, tracingPolicy, client.Apply, client.ForceOwnership, client.FieldOwner(constants.FieldOwnerKoneyController)); err != nil {
 		log.Error(err, "unable to apply Tetragon tracing policy", "policy", tracingPolicyName)
