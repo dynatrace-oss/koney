@@ -50,14 +50,14 @@ type kiveAlert struct {
 	} `json:"process"`
 }
 
-// kiveRequiredFields are the fields that every alert of Kive must carry.
-var kiveRequiredFields = [][]string{
-	{"timestamp"},
-	{"custom-metadata", constants.MetadataKeyDeceptionPolicyName},
-	{"metadata", "path"},
-	{"pod", "name"}, {"pod", "namespace"}, {"pod", "container", "id"}, {"pod", "container", "name"},
-	{"node", "name"},
-	{"process", "uid"}, {"process", "pid"}, {"process", "cwd"}, {"process", "binary"}, {"process", "arguments"},
+// kiveRequiredFields are the fields that every alert of Kive must carry, as dot-separated paths.
+var kiveRequiredFields = []string{
+	"timestamp",
+	"custom-metadata." + constants.MetadataKeyDeceptionPolicyName,
+	"metadata.path",
+	"pod.name", "pod.namespace", "pod.container.id", "pod.container.name",
+	"node.name",
+	"process.uid", "process.pid", "process.cwd", "process.binary", "process.arguments",
 }
 
 // mapKiveAlert maps an alert of Kive to a Koney alert.
@@ -101,11 +101,11 @@ func mapKiveAlert(body []byte) (KoneyAlert, error) {
 	}, nil
 }
 
-func missingFields(raw map[string]any, fields [][]string) []string {
+func missingFields(raw map[string]any, fields []string) []string {
 	var missing []string
 	for _, path := range fields {
 		var node any = raw
-		for _, key := range path {
+		for _, key := range strings.Split(path, ".") {
 			object, ok := node.(map[string]any)
 			if !ok {
 				node = nil
@@ -114,7 +114,7 @@ func missingFields(raw map[string]any, fields [][]string) []string {
 			node = object[key]
 		}
 		if node == nil {
-			missing = append(missing, strings.Join(path, "."))
+			missing = append(missing, path)
 		}
 	}
 
