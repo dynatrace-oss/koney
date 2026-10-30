@@ -9,8 +9,12 @@ permissions:
 
 jobs:
   test-e2e:
-    name: Run end-to-end tests
+    name: Run end-to-end tests (Tetragon ${{ matrix.tetragon }})
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        tetragon: ["1.6.1", "1.7.1", "1.8.0"]
     steps:
     - name: Checkout repository
       uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
@@ -44,8 +48,7 @@ jobs:
       run: |
         helm repo add cilium https://helm.cilium.io
         helm repo update
-        # TODO: unpin once Koney works with Tetragon v1.8, whose alerts never reach the manager log
-        helm install tetragon cilium/tetragon -n kube-system --version 1.7.1 --set dnsPolicy=ClusterFirstWithHostNet
+        helm install tetragon cilium/tetragon -n kube-system --version ${{ matrix.tetragon }} --set dnsPolicy=ClusterFirstWithHostNet
         kubectl rollout status -n kube-system ds/tetragon -w --timeout=5m
 
     - name: Install Kive
