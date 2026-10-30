@@ -1,12 +1,13 @@
 module github.com/dynatrace-oss/koney
 
-go 1.26.0
+go 1.27.0
 
-toolchain go1.26.2
+toolchain go1.27.3
 
 require (
 	github.com/San7o/kivebpf v1.0.0-pre2
 	github.com/cilium/tetragon/pkg/k8s v0.0.0-20260413164430-43a0219e13b2
+	github.com/go-logr/logr v1.4.4
 	github.com/onsi/ginkgo/v2 v2.28.1
 	github.com/onsi/gomega v1.39.1
 	k8s.io/api v0.35.3
@@ -15,8 +16,6 @@ require (
 	k8s.io/client-go v0.35.3
 	sigs.k8s.io/controller-runtime v0.21.0 // pinned: v0.22+ changed ctrl.NewWebhookManagedBy to require a generic type arg, incompatible with github.com/San7o/kivebpf@v1.0.0-pre2
 )
-
-require github.com/go-logr/logr v1.4.4
 
 require (
 	cel.dev/expr v0.25.2 // indirect
