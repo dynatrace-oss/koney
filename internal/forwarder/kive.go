@@ -94,9 +94,9 @@ func mapKiveAlert(body []byte) (KoneyAlert, error) {
 		Process: &ProcessMetadata{
 			UID:       &alert.Process.UID,
 			PID:       &alert.Process.PID,
-			Cwd:       alert.Process.Cwd,
-			Binary:    alert.Process.Binary,
-			Arguments: alert.Process.Arguments,
+			Cwd:       &alert.Process.Cwd,
+			Binary:    &alert.Process.Binary,
+			Arguments: &alert.Process.Arguments,
 		},
 	}, nil
 }

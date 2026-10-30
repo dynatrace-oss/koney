@@ -83,9 +83,9 @@ type tetragonKprobe struct {
 type tetragonProcess struct {
 	UID       *int         `json:"uid"`
 	PID       *int         `json:"pid"`
-	Cwd       string       `json:"cwd"`
-	Binary    string       `json:"binary"`
-	Arguments string       `json:"arguments"`
+	Cwd       *string      `json:"cwd"`
+	Binary    *string      `json:"binary"`
+	Arguments *string      `json:"arguments"`
 	Pod       *tetragonPod `json:"pod"`
 }
 
@@ -241,12 +241,12 @@ func (f *Forwarder) mapTetragonEvent(ctx context.Context, event tetragonEvent) K
 // isOwnAlert reports whether an alert was triggered by Koney itself,
 // which is the case when the process arguments carry the fingerprint of this controller.
 func isOwnAlert(alert KoneyAlert) bool {
-	if alert.Process == nil || alert.Process.Arguments == "" {
+	if alert.Process == nil || alert.Process.Arguments == nil || *alert.Process.Arguments == "" {
 		return false // cannot decide, assume it is not our own
 	}
 
 	fingerprint := utils.KoneyFingerprint
-	arguments := alert.Process.Arguments
+	arguments := *alert.Process.Arguments
 
 	return strings.Contains(arguments, utils.EncodeFingerprintInEcho(fingerprint)) ||
 		strings.Contains(arguments, utils.EncodeFingerprintInCat(fingerprint))

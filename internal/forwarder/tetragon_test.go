@@ -17,6 +17,7 @@ package forwarder
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
@@ -111,21 +112,29 @@ var _ = Describe("Tetragon events", func() {
 		Expect(alert.Pod.Name).To(Equal("victim"))
 		Expect(alert.Pod.Container.ID).To(Equal("abc"))
 		Expect(alert.Node.Name).To(Equal("node-1"))
-		Expect(alert.Process.Binary).To(Equal("/usr/bin/cat"))
+		Expect(alert.Process.Binary).To(HaveValue(Equal("/usr/bin/cat")))
 		Expect(alert.DeceptionPolicyName).To(HaveValue(Equal("sample-policy")))
 	})
 
 	It("should keep the fields that Tetragon omits as unknown", func() {
-		logs := strings.Replace(tetragonLogLine("koney-tracing-policy-unknown", "2025-08-12T10:11:12Z", "x"), `"uid":0,`, "", 1)
+		logs := tetragonLogLine("koney-tracing-policy-unknown", "2025-08-12T10:11:12Z", "x")
+		logs = strings.Replace(logs, `"uid":0,`, "", 1)
+		logs = strings.Replace(logs, `"arguments":"x",`, "", 1) // Tetragon omits the arguments of a process without any
 
 		events := map[string][]tetragonEvent{}
 		forwarder.collectEvents(context.Background(), "tetragon-pod", logs, events)
 		alert := forwarder.mapTetragonEvent(context.Background(), events["koney-tracing-policy-unknown"][0])
 
 		Expect(alert.Process.UID).To(BeNil())
+		Expect(alert.Process.Arguments).To(BeNil())
 		Expect(alert.Process.PID).To(HaveValue(Equal(42)))
 		Expect(alert.DeceptionPolicyName).To(BeNil())
 		Expect(MapToDynatraceEvent(alert, "LOW", "")["process.uid"]).To(BeNil())
+		Expect(MapToDynatraceEvent(alert, "LOW", "")["process.executable.arguments"]).To(BeNil())
+
+		encoded, err := json.Marshal(alert)
+		Expect(err).NotTo(HaveOccurred())
+		Expect(string(encoded)).To(ContainSubstring(`"arguments":null`))
 	})
 
 	It("should read the container selectors of a tracing policy", func() {
@@ -137,16 +146,16 @@ var _ = Describe("Tetragon events", func() {
 
 	It("should skip the alerts that Koney triggers itself", func() {
 		fingerprinted := KoneyAlert{Process: &ProcessMetadata{
-			Arguments: "-e foo\\c " + utils.EncodeFingerprintInEcho(utils.KoneyFingerprint),
+			Arguments: ptr("-e foo\\c " + utils.EncodeFingerprintInEcho(utils.KoneyFingerprint)),
 		}}
 		Expect(isOwnAlert(fingerprinted)).To(BeTrue())
 
 		catted := KoneyAlert{Process: &ProcessMetadata{
-			Arguments: utils.EncodeFingerprintInCat(utils.KoneyFingerprint) + " /run/secrets/koney/token",
+			Arguments: ptr(utils.EncodeFingerprintInCat(utils.KoneyFingerprint) + " /run/secrets/koney/token"),
 		}}
 		Expect(isOwnAlert(catted)).To(BeTrue())
 
-		Expect(isOwnAlert(KoneyAlert{Process: &ProcessMetadata{Arguments: "/run/secrets/koney/token"}})).To(BeFalse())
+		Expect(isOwnAlert(KoneyAlert{Process: &ProcessMetadata{Arguments: ptr("/run/secrets/koney/token")}})).To(BeFalse())
 		Expect(isOwnAlert(KoneyAlert{})).To(BeFalse())
 	})
 

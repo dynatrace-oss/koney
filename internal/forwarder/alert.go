@@ -50,11 +50,11 @@ type NodeMetadata struct {
 
 // ProcessMetadata describes the process that triggered an alert.
 type ProcessMetadata struct {
-	UID       *int   `json:"uid"`
-	PID       *int   `json:"pid"`
-	Cwd       string `json:"cwd"`
-	Binary    string `json:"binary"`
-	Arguments string `json:"arguments"`
+	UID       *int    `json:"uid"`
+	PID       *int    `json:"pid"`
+	Cwd       *string `json:"cwd"`
+	Binary    *string `json:"binary"`
+	Arguments *string `json:"arguments"`
 }
 
 // KoneyAlert is the alert that Koney writes to its log and sends to the alert sinks.
@@ -124,9 +124,14 @@ func MapToDynatraceEvent(alert KoneyAlert, severity string, clusterUID string) m
 		process = *alert.Process
 	}
 
-	binaryName, binaryPath := "", ""
-	if process.Binary != "" {
-		binaryName, binaryPath = filepath.Base(process.Binary), filepath.Dir(process.Binary)
+	var binaryName, binaryPath any // null when the binary is unknown
+	if process.Binary != nil && *process.Binary != "" {
+		binaryName, binaryPath = filepath.Base(*process.Binary), filepath.Dir(*process.Binary)
+	}
+
+	var clusterUIDValue any // null when the uid could not be resolved
+	if clusterUID != "" {
+		clusterUIDValue = clusterUID
 	}
 
 	return map[string]any{
@@ -157,7 +162,7 @@ func MapToDynatraceEvent(alert KoneyAlert, severity string, clusterUID string) m
 		"product.name":   "Koney",
 		"product.vendor": "Dynatrace Research",
 
-		"k8s.cluster.uid":    clusterUID,
+		"k8s.cluster.uid":    clusterUIDValue,
 		"k8s.namespace.name": pod.Namespace,
 		"k8s.node.name":      node.Name,
 		"k8s.pod.name":       pod.Name,
@@ -166,10 +171,10 @@ func MapToDynatraceEvent(alert KoneyAlert, severity string, clusterUID string) m
 
 		"process.executable.name":      binaryName,
 		"process.executable.path":      binaryPath,
-		"process.executable.arguments": process.Arguments,
+		"process.executable.arguments": valueOrNil(process.Arguments),
 		"process.pid":                  valueOrNil(process.PID),
 		"process.uid":                  valueOrNil(process.UID),
-		"process.cwd":                  process.Cwd,
+		"process.cwd":                  valueOrNil(process.Cwd),
 
 		"object.type": "KUBERNETES_CONTAINER",
 		"object.id":   pod.Container.ID,

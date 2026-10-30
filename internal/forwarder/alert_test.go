@@ -31,7 +31,7 @@ var sampleAlert = KoneyAlert{
 		Container: ContainerMetadata{ID: "abc", Name: "app"},
 	},
 	Node:    &NodeMetadata{Name: "node-1"},
-	Process: &ProcessMetadata{UID: ptr(0), PID: ptr(42), Cwd: "/", Binary: "/usr/bin/cat", Arguments: "/run/secrets/koney/token"},
+	Process: &ProcessMetadata{UID: ptr(0), PID: ptr(42), Cwd: ptr("/"), Binary: ptr("/usr/bin/cat"), Arguments: ptr("/run/secrets/koney/token")},
 }
 
 var _ = Describe("Koney alerts", func() {
@@ -80,8 +80,11 @@ var _ = Describe("Koney alerts", func() {
 
 		Expect(event["k8s.pod.name"]).To(BeEmpty())
 		Expect(event["k8s.node.name"]).To(BeEmpty())
-		Expect(event["process.executable.name"]).To(BeEmpty())
-		Expect(event["process.executable.path"]).To(BeEmpty())
+		Expect(event["process.executable.name"]).To(BeNil())
+		Expect(event["process.executable.path"]).To(BeNil())
+		Expect(event["process.executable.arguments"]).To(BeNil())
+		Expect(event["process.cwd"]).To(BeNil())
+		Expect(event["k8s.cluster.uid"]).To(BeNil())
 		Expect(event["dt.security.risk.score"]).To(Equal(3.9))
 	})
 })
