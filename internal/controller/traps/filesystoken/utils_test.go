@@ -24,6 +24,7 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	k8slog "sigs.k8s.io/controller-runtime/pkg/log"
 
 	"github.com/dynatrace-oss/koney/api/v1alpha1"
@@ -124,6 +125,40 @@ var _ = Describe("generateTetragonTracingPolicy", func() {
 		})
 	})
 
+})
+
+var _ = Describe("toTetragonApplyObject", func() {
+	It("should drop argFd and argName, which Tetragon v1.8 removed from its CRD, and keep the other action fields", func() {
+		tracingPolicy := generateTetragonTracingPolicy(context.Background(), &v1alpha1.DeceptionPolicy{}, helpersTraps[0], "test-tracing-policy")
+
+		obj, err := toTetragonApplyObject(tracingPolicy)
+		Expect(err).NotTo(HaveOccurred())
+		Expect(obj.GetName()).To(Equal("test-tracing-policy"))
+		Expect(obj.GetKind()).To(Equal("TracingPolicy"))
+		Expect(obj.GetLabels()).To(Equal(tracingPolicy.Labels))
+		Expect(obj.GetOwnerReferences()).To(HaveLen(len(tracingPolicy.OwnerReferences)))
+		// the client deep-copies objects, which panics on the uint64 values that ToUnstructured would produce
+		Expect(func() { obj.DeepCopy() }).NotTo(Panic())
+
+		kprobes, found, err := unstructured.NestedSlice(obj.Object, "spec", "kprobes")
+		Expect(err).NotTo(HaveOccurred())
+		Expect(found).To(BeTrue())
+		Expect(kprobes).To(HaveLen(len(tracingPolicy.Spec.KProbes)))
+		for _, kprobe := range kprobes {
+			selectors := kprobe.(map[string]any)["selectors"].([]any)
+			Expect(selectors).NotTo(BeEmpty())
+			for _, selector := range selectors {
+				actions := selector.(map[string]any)["matchActions"].([]any)
+				Expect(actions).NotTo(BeEmpty())
+				for _, action := range actions {
+					Expect(action).NotTo(HaveKey("argFd"))
+					Expect(action).NotTo(HaveKey("argName"))
+					Expect(action).To(HaveKeyWithValue("action", "GetUrl"))
+					Expect(action).To(HaveKeyWithValue("argUrl", buildTetragonWebhookUrl()))
+				}
+			}
+		}
+	})
 })
 
 var _ = Describe("DeployCaptor", func() {

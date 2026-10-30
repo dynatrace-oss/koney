@@ -25,6 +25,7 @@ import (
 	slimv1 "github.com/cilium/tetragon/pkg/k8s/slim/k8s/apis/meta/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/client-go/util/retry"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	k8slog "sigs.k8s.io/controller-runtime/pkg/log"
@@ -106,6 +107,39 @@ func generateSecretName(trap v1alpha1.Trap) string {
 // generateVolumeName generates the name of a volume based on the filePath.
 func generateVolumeName(filePath string) string {
 	return "koney-volume-" + utils.Hash(filePath)
+}
+
+// toTetragonApplyObject converts a tracing policy into the object that we server-side apply.
+// The vendored Tetragon types always serialize matchActions[].argFd and .argName (no omitempty), but
+// Tetragon v1.8 removed both fields from its CRD together with the deprecated FD actions (cilium/tetragon#5090).
+// Server-side apply rejects fields that are not in the schema, regardless of field validation.
+// Koney never sets these fields, so we drop them. This works with both Tetragon v1.7 and v1.8.
+func toTetragonApplyObject(tracingPolicy *ciliumiov1alpha1.TracingPolicy) (*unstructured.Unstructured, error) {
+	// A JSON round trip (instead of runtime.DefaultUnstructuredConverter) yields int64 numbers, which can be deep-copied
+	data, err := json.Marshal(tracingPolicy)
+	if err != nil {
+		return nil, err
+	}
+	obj := &unstructured.Unstructured{}
+	if err := obj.UnmarshalJSON(data); err != nil {
+		return nil, err
+	}
+
+	// ponytail: only kprobes, because that is all generateTetragonTracingPolicy emits; extend if other hooks get matchActions
+	spec, _ := obj.Object["spec"].(map[string]any)
+	kprobes, _ := spec["kprobes"].([]any)
+	for _, kprobe := range kprobes {
+		selectors, _ := kprobe.(map[string]any)["selectors"].([]any)
+		for _, selector := range selectors {
+			actions, _ := selector.(map[string]any)["matchActions"].([]any)
+			for _, action := range actions {
+				delete(action.(map[string]any), "argFd")
+				delete(action.(map[string]any), "argName")
+			}
+		}
+	}
+
+	return obj, nil
 }
 
 // generateTetragonTracingPolicy generates a Tetragon tracing policy for a filesystem honeytoken trap.
