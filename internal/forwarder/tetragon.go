@@ -37,9 +37,6 @@ const (
 	// tetragonNamespace is the namespace where Tetragon is assumed to be running.
 	tetragonNamespace = "kube-system"
 
-	// tetragonPodLabelSelector finds the Tetragon pods.
-	tetragonPodLabelSelector = "app.kubernetes.io/name=tetragon"
-
 	// tetragonPodContainerName is the container that writes the Tetragon events.
 	tetragonPodContainerName = "export-stdout"
 
@@ -60,6 +57,9 @@ const (
 	fileAccessFunction     = "security_file_permission"
 	fileAccessMmapFunction = "security_mmap_file"
 )
+
+// tetragonPodLabels find the Tetragon pods.
+var tetragonPodLabels = client.MatchingLabels{"app.kubernetes.io/name": "tetragon"}
 
 // subSecondPattern matches the sub-second part of a Tetragon event timestamp. Events are
 // often duplicated because kprobes can trigger multiple times, so events that are identical
@@ -110,13 +110,7 @@ func (f *Forwarder) readTetragonEvents(ctx context.Context) map[string][]tetrago
 	log := k8slog.FromContext(ctx)
 
 	podList := &corev1.PodList{}
-	selector, err := labelSelector(tetragonPodLabelSelector)
-	if err != nil {
-		log.Error(err, "Unable to build the Tetragon pod selector")
-		return nil
-	}
-
-	if err := f.Client.List(ctx, podList, client.InNamespace(tetragonNamespace), selector); err != nil {
+	if err := f.Client.List(ctx, podList, client.InNamespace(tetragonNamespace), tetragonPodLabels); err != nil {
 		log.Error(err, "Unable to list the Tetragon pods")
 		return nil
 	}

@@ -31,7 +31,6 @@ import (
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/client-go/kubernetes"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	k8slog "sigs.k8s.io/controller-runtime/pkg/log"
@@ -42,10 +41,10 @@ const (
 	// defaultAddress is the address where the alert webhooks are served.
 	defaultAddress = ":8000"
 
-	// maxRequestSize is the largest alert body that is read from a caller.
+	// maxRequestSize is the largest alert body that is read from a caller (1 MiB).
 	maxRequestSize = 1 << 20
 
-	// maxLogLineSize is the largest Tetragon log line that is read.
+	// maxLogLineSize is the largest Tetragon log line that is read (1 MiB).
 	maxLogLineSize = 1 << 20
 
 	// eventCacheSize is the number of recent Tetragon events that are remembered to skip duplicates.
@@ -367,15 +366,6 @@ func (f *Forwarder) clusterUID(ctx context.Context) (string, error) {
 	f.cachedClusterUID = string(namespace.UID)
 
 	return f.cachedClusterUID, nil
-}
-
-func labelSelector(selector string) (client.MatchingLabelsSelector, error) {
-	parsed, err := labels.Parse(selector)
-	if err != nil {
-		return client.MatchingLabelsSelector{}, err
-	}
-
-	return client.MatchingLabelsSelector{Selector: parsed}, nil
 }
 
 // schemePattern matches the prefix of a container id, such as "docker://".
