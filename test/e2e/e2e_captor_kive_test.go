@@ -481,6 +481,16 @@ var _ = Describe("Koney Operator with Kive", Ordered, func() {
 		})
 	})
 
+	When("deleting the DeceptionPolicy CR with mutateExisting=false", func() {
+		It("should delete the DeceptionPolicy CR", func() {
+			// kubectl waits until the finalizer has run, so that the controller can still clean up,
+			// and the policy does not outlive the controller-manager and leak into later test suites
+			cmd := exec.Command("kubectl", "delete", testCrdName, nameOfDeceptionPolicy, "--timeout=1m")
+			_, err := testutils.Run(cmd)
+			Expect(err).NotTo(HaveOccurred())
+		})
+	})
+
 	When("deleting the test pods", func() {
 		It("should delete the test pods", func() {
 			By("deleting the test pod")
