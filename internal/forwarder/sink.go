@@ -53,6 +53,7 @@ type alertSink struct {
 type dynatraceSink struct {
 	apiURL   string
 	apiToken string
+	// TODO (#27): specify severity in the policy, not in the sink!
 	severity string
 }
 

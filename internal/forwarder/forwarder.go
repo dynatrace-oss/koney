@@ -51,13 +51,26 @@ type Options struct {
 type Forwarder struct {
 	Options
 
-	triggers         chan struct{}
-	events           *eventCache
-	ready            atomic.Bool
+	// triggers is written by the Tetragon webhook and read by the event puller.
+	triggers chan struct{}
+
+	// events is only used by the event puller.
+	events *eventCache
+
+	// ready is set by the webhook server and read by the readiness check.
+	ready atomic.Bool
+
+	// cachedClusterUID is only accessed while holding clusterMutex.
 	cachedClusterUID string
-	clusterMutex     sync.Mutex
-	lastReadAt       time.Time
-	httpClient       *http.Client
+
+	// clusterMutex is needed because Kive alerts are forwarded concurrently.
+	clusterMutex sync.Mutex
+
+	// lastReadAt is only touched by the event puller.
+	lastReadAt time.Time
+
+	// httpClient is shared by the Kive handlers and the event puller.
+	httpClient *http.Client
 }
 
 // New builds the alert forwarder. Add both of its runnables to the manager.
