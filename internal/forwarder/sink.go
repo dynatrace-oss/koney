@@ -26,6 +26,7 @@ import (
 
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	k8slog "sigs.k8s.io/controller-runtime/pkg/log"
 
@@ -38,6 +39,9 @@ const (
 
 	// dynatraceIngestPath is the path of the Dynatrace API that takes security events.
 	dynatraceIngestPath = "/platform/ingest/v1/security.events"
+
+	// clusterUIDNamespace is the namespace whose uid identifies the cluster.
+	clusterUIDNamespace = "kube-system"
 )
 
 // alertSink is a resolved DeceptionAlertSink, with the credentials of its secret already read.
@@ -159,4 +163,22 @@ func (f *Forwarder) forwardAlert(ctx context.Context, alert KoneyAlert, sinks []
 			log.Error(err, "Unable to send an alert to a sink", "sink", sink.name)
 		}
 	}
+}
+
+// clusterUID returns the uid of the kube-system namespace, which identifies the cluster.
+func (f *Forwarder) clusterUID(ctx context.Context) (string, error) {
+	f.clusterMutex.Lock()
+	defer f.clusterMutex.Unlock()
+
+	if f.cachedClusterUID != "" {
+		return f.cachedClusterUID, nil
+	}
+
+	namespace, err := f.Clientset.CoreV1().Namespaces().Get(ctx, clusterUIDNamespace, metav1.GetOptions{})
+	if err != nil {
+		return "", err
+	}
+	f.cachedClusterUID = string(namespace.UID)
+
+	return f.cachedClusterUID, nil
 }

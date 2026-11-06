@@ -19,8 +19,11 @@ import (
 	"bufio"
 	"context"
 	"encoding/json"
+	"hash/fnv"
+	"io"
 	"regexp"
 	"strings"
+	"sync"
 	"time"
 
 	ciliumiov1alpha1 "github.com/cilium/tetragon/pkg/k8s/apis/cilium.io/v1alpha1"
@@ -56,6 +59,12 @@ const (
 	// fileAccessFunction and fileAccessMmapFunction are the kprobes that a filesystem honeytoken trap hooks.
 	fileAccessFunction     = "security_file_permission"
 	fileAccessMmapFunction = "security_mmap_file"
+
+	// maxLogLineSize is the largest Tetragon log line that is read (1 MiB).
+	maxLogLineSize = 1 << 20
+
+	// eventCacheSize is the number of recent Tetragon events that are remembered to skip duplicates.
+	eventCacheSize = 10000
 )
 
 // tetragonPodLabels find the Tetragon pods.
@@ -104,6 +113,47 @@ type tetragonKprobeArg struct {
 	} `json:"file_arg"`
 }
 
+// loadNewAlerts pulls the Tetragon events of all Koney tracing policies and forwards them.
+func (f *Forwarder) loadNewAlerts(ctx context.Context) {
+	log := k8slog.FromContext(ctx)
+
+	eventsPerPolicy := f.readTetragonEvents(ctx)
+	if len(eventsPerPolicy) == 0 {
+		return
+	}
+
+	sinks := f.readAlertSinks(ctx)
+
+	for policyName, events := range eventsPerPolicy {
+		log.V(1).Info("Transforming alerts", "policy", policyName, "events", len(events))
+
+		// the selectors are only needed when Tetragon could not evaluate them itself
+		containerSelectors := f.resolveContainerSelectors(ctx, policyName)
+
+		for _, event := range events {
+			alert := f.mapTetragonEvent(ctx, event)
+
+			if isOwnAlert(alert) {
+				log.V(1).Info("Skipping an alert that Koney triggered itself")
+				continue
+			}
+
+			if containerSelectors != nil {
+				containerName := ""
+				if alert.Pod != nil {
+					containerName = alert.Pod.Container.Name
+				}
+				if !containerMatchesSelectors(containerName, containerSelectors) {
+					log.V(1).Info("Skipping an alert of a container that the trap does not select", "container", containerName)
+					continue
+				}
+			}
+
+			f.forwardAlert(ctx, alert, sinks)
+		}
+	}
+}
+
 // readTetragonEvents reads the recent Tetragon events of all Tetragon pods,
 // and returns the events of Koney tracing policies, grouped by the policy name.
 func (f *Forwarder) readTetragonEvents(ctx context.Context) map[string][]tetragonEvent {
@@ -146,6 +196,23 @@ func (f *Forwarder) logWindow() int64 {
 	f.lastReadAt = now
 
 	return window
+}
+
+func (f *Forwarder) readPodLog(ctx context.Context, podName string, sinceSeconds int64) (string, error) {
+	options := &corev1.PodLogOptions{Container: tetragonPodContainerName, SinceSeconds: &sinceSeconds}
+
+	stream, err := f.Clientset.CoreV1().Pods(tetragonNamespace).GetLogs(podName, options).Stream(ctx)
+	if err != nil {
+		return "", err
+	}
+	defer func() { _ = stream.Close() }()
+
+	logs, err := io.ReadAll(stream)
+	if err != nil {
+		return "", err
+	}
+
+	return string(logs), nil
 }
 
 func (f *Forwarder) collectEvents(ctx context.Context, podName, logs string, eventsPerPolicy map[string][]tetragonEvent) {
@@ -318,4 +385,40 @@ func fileAccessPath(kprobe *tetragonKprobe) (string, bool) {
 	}
 
 	return kprobe.Args[0].FileArg.Path, true
+}
+
+// eventCache remembers the Tetragon events that were already forwarded, by their hash.
+type eventCache struct {
+	mutex   sync.Mutex
+	size    int
+	seenSet map[uint64]struct{}
+	order   []uint64
+}
+
+func newEventCache(size int) *eventCache {
+	return &eventCache{size: size, seenSet: make(map[uint64]struct{}, size)}
+}
+
+// seen reports whether an event was already forwarded, and remembers it if it was not.
+func (cache *eventCache) seen(event string) bool {
+	hash := fnv.New64a()
+	_, _ = hash.Write([]byte(event))
+	key := hash.Sum64()
+
+	cache.mutex.Lock()
+	defer cache.mutex.Unlock()
+
+	if _, ok := cache.seenSet[key]; ok {
+		return true
+	}
+
+	if len(cache.order) >= cache.size {
+		delete(cache.seenSet, cache.order[0])
+		cache.order = cache.order[1:]
+	}
+
+	cache.seenSet[key] = struct{}{}
+	cache.order = append(cache.order, key)
+
+	return false
 }

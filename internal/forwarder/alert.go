@@ -21,6 +21,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"path/filepath"
+	"regexp"
 	"strings"
 )
 
@@ -187,4 +188,11 @@ func valueOrNil[T any](value *T) any {
 	}
 
 	return *value
+}
+
+// schemePattern matches the prefix of a container id, such as "docker://".
+var schemePattern = regexp.MustCompile(`^\w+://`)
+
+func normalizeContainerID(containerID string) string {
+	return strings.TrimSpace(schemePattern.ReplaceAllString(containerID, ""))
 }
