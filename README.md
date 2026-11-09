@@ -61,7 +61,7 @@ kubectl exec -it <POD_NAME> -- cat /run/secrets/koney/service_token
 Wait a few seconds, and observe the alert that is generated when the honeytoken is accessed.
 
 ```sh
-kubectl logs -n koney-system -l control-plane=controller-manager -c alerts -f --since 1h
+kubectl logs -n koney-system -l control-plane=controller-manager -c manager -f --since 1h
 ```
 
 ## 🧹 Uninstalling Koney
@@ -345,7 +345,7 @@ Looking for inspiration on what traps to deploy? Here are some starting points:
 
 ## 🚨 Alerts
 
-Koney automatically collects alerts from the Tetragon operator and logs them in the `alerts` container. Each line contains a JSON object with the following fields:
+Koney automatically collects alerts from the Tetragon operator and writes them to the log of the `manager` container, where each alert is one JSON line among the log lines of the controller. Each alert contains the following fields:
 
 - `timestamp`: the timestamp when the trap was accessed.
 - `deception_policy_name`: the associated deception policy that created that trap.
@@ -388,7 +388,7 @@ Koney automatically collects alerts from the Tetragon operator and logs them in 
 To see alerts from the last hour, use the following command:
 
 ```sh
-kubectl logs -n koney-system -l control-plane=controller-manager -c alerts -f --since 1h | jq
+kubectl logs -n koney-system -l control-plane=controller-manager -c manager -f --since 1h | grep '"trap_type"' | jq
 ```
 
 ℹ️ **Note**: The `jq` command is used to format the JSON output and can also be omitted.

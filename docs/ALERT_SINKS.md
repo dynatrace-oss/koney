@@ -1,6 +1,6 @@
 # 🔔 Alert Sinks
 
-When hackers access traps, Koney logs an event in the `alerts` container. You can also configure Koney to send these alerts to external systems. For this, you simply add an `DeceptionAlertSink` resource to your cluster. Forwarding is supported for all trap types.
+When hackers access traps, Koney logs an event in the `manager` container. You can also configure Koney to send these alerts to external systems. For this, you simply add an `DeceptionAlertSink` resource to your cluster. Forwarding is supported for all trap types.
 
 ℹ️ **Note**: All `DeceptionAlertSink` resources and referenced `Secret` resources must be in the `koney-system` namespace. Resources in other namespaces will be ignored.
 

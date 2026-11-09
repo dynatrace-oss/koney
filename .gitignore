@@ -30,9 +30,6 @@ go.work
 .vscode/**
 !.vscode/launch.json
 
-# pre-commit hooks
-.ruff_cache
-
 # env files
 .env
 .env.*

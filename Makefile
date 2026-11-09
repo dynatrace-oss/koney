@@ -13,15 +13,12 @@ endif
 VERSION ?= 0.2.2
 
 # IMAGE_TAG_BASE defines the "basename" of the full name of container images.
-# Currently, two images are built: the 'controller' and the 'alert-forwarder', i.e., resulting in
-# $(IMAGE_TAG_BASE)-controller:$(VERSION) and $(IMAGE_TAG_BASE)-alert-forwarder:$(VERSION).
+# One image is built: the 'controller', i.e., resulting in $(IMAGE_TAG_BASE)-controller:$(VERSION).
 IMAGE_TAG_BASE ?= localhost:5001/koney
 
 IMG_CONTROLLER_NAME ?= $(IMAGE_TAG_BASE)-controller
-IMG_ALERT_FORWARDER_NAME ?=$(IMAGE_TAG_BASE)-alert-forwarder
 
 IMG_CONTROLLER ?= $(IMG_CONTROLLER_NAME):$(VERSION)
-IMG_ALERT_FORWARDER ?=$(IMG_ALERT_FORWARDER_NAME):$(VERSION)
 
 # HELM_REGISTRY defines the OCI-compatible registry to push Helm charts to.
 # The reference must not contain the basename or tag.
@@ -46,9 +43,6 @@ endif
 
 # CONTAINER_TOOL defines the container tool to be used for building images.
 CONTAINER_TOOL ?= docker
-
-# PYTHON defines the Python interpreter to be used for the alert forwarder.
-PYTHON ?= python3
 
 # SHELL and flags to use for all recipes
 SHELL = /usr/bin/env bash -o pipefail
@@ -107,10 +101,6 @@ lint-fix: golangci-lint ## Run golangci-lint linter and perform fixes.
 test: generate fmt lint setup-envtest ## Run unit tests (no cluster required).
 	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) -p path)"  go test $(shell go list ./... | grep -v /test/) -coverprofile cover.out
 
-.PHONY: test-forwarder
-test-forwarder: ## Run unit tests of the alert forwarder (requires Python).
-	cd alert-forwarder && $(PYTHON) -m pytest
-
 .PHONY: test-e2e
 test-e2e: generate fmt lint ## Run end-to-end tests (requires an isolated environment).
 	KIND_CLUSTER=$(KIND_CLUSTER) go test ./test/e2e/ -v -ginkgo.v
@@ -143,28 +133,24 @@ build: generate fmt lint ## Build manager binary.
 
 .PHONY: run
 run: generate fmt lint ## Run a controller from your host.
-	go run ./cmd/main.go
+	KONEY_ALERT_WEBHOOK_TOKEN=$${KONEY_ALERT_WEBHOOK_TOKEN:-local-development-token} go run ./cmd/main.go
 
 .PHONY: docker-build
-docker-build: ## Build docker image with the manager and alert forwarder.
+docker-build: ## Build docker image with the manager.
 	$(CONTAINER_TOOL) build --tag ${IMG_CONTROLLER} .
-	$(CONTAINER_TOOL) build --tag ${IMG_ALERT_FORWARDER} ./alert-forwarder
 
 PLATFORMS ?= linux/arm64,linux/amd64,linux/s390x,linux/ppc64le
 .PHONY: docker-buildx
-docker-buildx: ## Build and push docker image for the manager and alert forwarder for cross-platform support.
+docker-buildx: ## Build and push docker image for the manager for cross-platform support.
 	- $(CONTAINER_TOOL) buildx create --name project-v3-builder
 	$(CONTAINER_TOOL) buildx use project-v3-builder
 	- $(CONTAINER_TOOL) buildx build --push --platform=$(PLATFORMS) --tag ${IMG_CONTROLLER} .
-	- $(CONTAINER_TOOL) buildx build --push --platform=$(PLATFORMS) --tag ${IMG_ALERT_FORWARDER} ./alert-forwarder
 	- $(CONTAINER_TOOL) buildx rm project-v3-builder
 
 .PHONY: docker-push
-docker-push: ## Push docker image with the manager and alert forwarder.
+docker-push: ## Push docker image with the manager.
 	$(CONTAINER_TOOL) push ${IMG_CONTROLLER}
-	$(CONTAINER_TOOL) push ${IMG_ALERT_FORWARDER}
 
-# TODO (#18): Once we integrate the alert-forwarder into the controller image (#18), simplify the sed substitutions here.
 .PHONY: helm-package
 helm-package: manifests helm ## Generate a Helm chart from the installer YAML.
 	echo "Patching Chart.yaml ..."
@@ -175,7 +161,6 @@ helm-package: manifests helm ## Generate a Helm chart from the installer YAML.
 	echo "Patching values.yaml ..."
 	sed -i.bak \
 		-e 's|^\([[:space:]]*\)repository: \([^[:space:]]*\) # patch:manager|\1repository: ${IMG_CONTROLLER_NAME} # patch:manager|' \
-		-e 's|^\([[:space:]]*\)repository: \([^[:space:]]*\) # patch:alert-forwarder|\1repository: ${IMG_ALERT_FORWARDER_NAME} # patch:alert-forwarder|' \
 		-e 's|^\([[:space:]]*\)tag: .*|\1tag: ${VERSION}|' \
 		dist/chart/values.yaml && rm dist/chart/values.yaml.bak
 	$(HELM) package --app-version ${VERSION} -u -d dist ./dist/chart
@@ -186,8 +171,6 @@ helm-render: helm-package helm ## Generate a consolidated YAML rendered from the
 	$(HELM) template --namespace $(DEFAULT_NAMESPACE) \
 		--set manager.image.repository=${IMG_CONTROLLER_NAME} \
 		--set manager.image.tag=${VERSION} \
-		--set alertForwarder.image.repository=${IMG_ALERT_FORWARDER_NAME} \
-		--set alertForwarder.image.tag=${VERSION} \
 		--set template.helmLabels=false \
 		--set template.createNamespace=true \
 		koney ./dist/chart > dist/install.yaml
@@ -207,8 +190,6 @@ deploy: manifests helm ## Deploy Koney to the currently configured cluster.
 	$(HELM) template --namespace $(DEFAULT_NAMESPACE) \
 		--set manager.image.repository=${IMG_CONTROLLER_NAME} \
 		--set manager.image.tag=${VERSION} \
-		--set alertForwarder.image.repository=${IMG_ALERT_FORWARDER_NAME} \
-		--set alertForwarder.image.tag=${VERSION} \
 		--set template.helmLabels=false \
 		--set template.createNamespace=true \
 		koney ./dist/chart | $(KUBECTL) apply -f -

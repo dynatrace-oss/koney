@@ -24,10 +24,6 @@ repos:
     name: add license headers (go)
     files: (?<!zz_generated.deepcopy)\.go$
     args: [ --allow-past-years, --license-filepath, LICENSE_HEADER.txt, --comment-style, "//" ]
-  - id: insert-license
-    name: add license headers (python)
-    files: (?<!__init__)\.py$
-    args: [ --allow-past-years, --license-filepath, LICENSE_HEADER.txt, --comment-style, "#" ]
 
 # go files
 - repo: local
@@ -53,15 +49,3 @@ repos:
     entry: make test
     language: system
     pass_filenames: false
-
-# python files
-- repo: https://github.com/astral-sh/ruff-pre-commit
-  rev: v0.9.2
-  hooks:
-  - id: ruff
-    args: [ --select, I, --fix ]
-    name: lint with ruff
-    types: [ python ]
-  - id: ruff-format
-    name: format with ruff
-    types: [ python ]

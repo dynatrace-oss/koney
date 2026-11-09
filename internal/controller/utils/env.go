@@ -22,10 +22,13 @@ func GetKoneyNamespace() string {
 	return GetEnv("KONEY_NAMESPACE", "koney-system")
 }
 
-// GetAlertWebhookToken retrieves the shared secret that authenticates
-// callers of the alert forwarder webhooks. It is empty if no secret is configured.
+// AlertWebhookTokenEnv is the environment variable that holds the token
+// which authenticates the callers of the alert webhooks.
+const AlertWebhookTokenEnv = "KONEY_ALERT_WEBHOOK_TOKEN"
+
+// GetAlertWebhookToken retrieves the token that authenticates the callers of the alert webhooks.
 func GetAlertWebhookToken() string {
-	return GetEnv("KONEY_ALERT_WEBHOOK_TOKEN", "")
+	return GetEnv(AlertWebhookTokenEnv, "")
 }
 
 // GetEnv retrieves the value of the environment variable named by the key.
