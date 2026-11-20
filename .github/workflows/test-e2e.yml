@@ -14,6 +14,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        # Tetragon < v1.6 is not supported (see README), it cannot load its BPF programs on Linux 7.0 runners
         tetragon: ["1.6.1", "1.7.1", "1.8.0"]
     steps:
     - name: Checkout repository
@@ -61,3 +62,11 @@ jobs:
       run: |
         go mod tidy
         make test-e2e
+
+    - name: Dump Tetragon diagnostics
+      if: failure()
+      run: |
+        kubectl get tracingpolicies -o yaml || true
+        kubectl logs -n kube-system -l app.kubernetes.io/name=tetragon -c tetragon --tail=-1 | grep -iE "koney|level=(warn|error)" | tail -100 || true
+        echo "Koney events in export-stdout: $(kubectl logs -n kube-system -l app.kubernetes.io/name=tetragon -c export-stdout --tail=-1 | grep -c koney-tracing-policy || true)"
+        kubectl logs -n kube-system -l app.kubernetes.io/name=tetragon -c export-stdout --tail=-1 | grep koney-tracing-policy | head -3 || true
