@@ -18,8 +18,10 @@ package controller
 import (
 	"context"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"regexp"
+	"strings"
 	"testing"
 
 	. "github.com/onsi/ginkgo/v2"
@@ -76,6 +78,7 @@ var _ = BeforeSuite(func() {
 		CRDs: []*apiextensionsv1.CustomResourceDefinition{
 			loadCRD(filepath.Join("..", "..", "dist", "chart", "templates", "crd", "research.dynatrace.com_deceptionpolicies.yaml")),
 			loadCRD(filepath.Join("..", "..", "dist", "chart", "templates", "crd", "research.dynatrace.com_deceptionalertsinks.yaml")),
+			loadCRD(filepath.Join(goModuleDir("github.com/cilium/tetragon/pkg/k8s"), "apis", "cilium.io", "client", "crds", "v1alpha1", "cilium.io_tracingpolicies.yaml")),
 		},
 	}
 
@@ -122,6 +125,13 @@ func getFirstFoundEnvTestBinaryDir() string {
 		}
 	}
 	return ""
+}
+
+// goModuleDir returns where the go command keeps the source of a module that Koney depends on.
+func goModuleDir(module string) string {
+	out, err := exec.Command("go", "list", "-m", "-f", "{{.Dir}}", module).Output()
+	Expect(err).NotTo(HaveOccurred())
+	return strings.TrimSpace(string(out))
 }
 
 func loadCRD(path string) *apiextensionsv1.CustomResourceDefinition {
