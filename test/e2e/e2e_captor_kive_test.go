@@ -147,7 +147,6 @@ var _ = Describe("Koney Operator with Kive", Ordered, func() {
 
 			// We deploy a DeceptionPolicy CR that creates a honeytoken in the test pod
 			By("creating a Koney DeceptionPolicy CR")
-			lastModificationTime = time.Now().UTC()
 			cmd = exec.Command("kubectl", "apply", "-n", testNamespace,
 				"-f", filepath.Join(projectDir, yamlOfOneFilesystokenContainerExecKive))
 			_, err = testutils.Run(cmd)
@@ -184,7 +183,7 @@ var _ = Describe("Koney Operator with Kive", Ordered, func() {
 
 			By("validating that the honeytoken is created in the test pod and has the expected content")
 			for _, trap := range deceptionPolicy.Spec.Traps {
-				err := verifyHoneytokenAndAwaitAlertKive(trap, lastModificationTime,
+				err := verifyHoneytokenAndAwaitAlertKive(trap,
 					testNamespace, testPodName, containersPolicyShouldMatch)
 				Expect(err).ShouldNot(HaveOccurred())
 			}
@@ -199,7 +198,6 @@ var _ = Describe("Koney Operator with Kive", Ordered, func() {
 	When("updating the DeceptionPolicy CR", func() {
 		It("should update the honeytoken in the test pod", func() {
 			By("updating the DeceptionPolicy CR")
-			lastModificationTime = time.Now().UTC()
 			cmd := exec.Command("kubectl", "apply", "-n", testNamespace,
 				"-f", filepath.Join(projectDir, yamlOfTwoFilesystokenContainerExecKive))
 			_, err := testutils.Run(cmd)
@@ -234,7 +232,7 @@ var _ = Describe("Koney Operator with Kive", Ordered, func() {
 
 			By("validating that the honeytoken is updated in the test pod and has the expected content")
 			for _, trap := range deceptionPolicy.Spec.Traps {
-				err := verifyHoneytokenAndAwaitAlertKive(trap, lastModificationTime,
+				err := verifyHoneytokenAndAwaitAlertKive(trap,
 					testNamespace, testPodName, containersPolicyShouldMatch)
 				Expect(err).ShouldNot(HaveOccurred())
 			}
@@ -286,8 +284,7 @@ var _ = Describe("Koney Operator with Kive", Ordered, func() {
 
 			By("validating that the honeytoken is created in the extra test pod and has the expected content")
 			for _, trap := range deceptionPolicy.Spec.Traps {
-				// we re-use the lastModificationTime from the previous test because no probes should have needed an update
-				err := verifyHoneytokenAndAwaitAlertKive(trap, lastModificationTime,
+				err := verifyHoneytokenAndAwaitAlertKive(trap,
 					testNamespace, nameOfExtraTestPod, containersPolicyShouldMatch)
 				Expect(err).ShouldNot(HaveOccurred())
 			}
@@ -309,7 +306,6 @@ var _ = Describe("Koney Operator with Kive", Ordered, func() {
 	When("Reverting the changes to the DeceptionPolicy CR", func() {
 		It("should revert the honeytoken in the test pod", func() {
 			By("reverting the DeceptionPolicy CR")
-			lastModificationTime = time.Now().UTC()
 			cmd := exec.Command("kubectl", "apply", "-n", testNamespace,
 				"-f", filepath.Join(projectDir, yamlOfOneFilesystokenContainerExecKive))
 			_, err := testutils.Run(cmd)
@@ -344,7 +340,7 @@ var _ = Describe("Koney Operator with Kive", Ordered, func() {
 
 			By("validating that the honeytoken is updated in the test pod and has the expected content")
 			for _, trap := range deceptionPolicy.Spec.Traps {
-				err := verifyHoneytokenAndAwaitAlertKive(trap, lastModificationTime,
+				err := verifyHoneytokenAndAwaitAlertKive(trap,
 					testNamespace, testPodName, containersPolicyShouldMatch)
 				Expect(err).ShouldNot(HaveOccurred())
 			}
@@ -359,7 +355,6 @@ var _ = Describe("Koney Operator with Kive", Ordered, func() {
 		It("should update the honeytoken in the test pod", func() {
 			By("updating the DeceptionPolicy CR")
 
-			lastModificationTime = time.Now().UTC()
 			cmd := exec.Command("kubectl", "apply", "-n", testNamespace,
 				"-f", filepath.Join(projectDir, yamlOfFilesystokenVolumeMountKive))
 			_, err := testutils.Run(cmd)
@@ -404,7 +399,7 @@ var _ = Describe("Koney Operator with Kive", Ordered, func() {
 
 			By("validating that the honeytoken is updated in the test pod and has the expected content")
 			for _, trap := range deceptionPolicy.Spec.Traps {
-				err := verifyHoneytokenAndAwaitAlertKive(trap, lastModificationTime,
+				err := verifyHoneytokenAndAwaitAlertKive(trap,
 					testNamespace, testPodName, containersPolicyShouldMatch)
 				Expect(err).ShouldNot(HaveOccurred())
 			}

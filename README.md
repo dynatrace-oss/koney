@@ -230,6 +230,8 @@ captorDeployment:
 helm upgrade tetragon cilium/tetragon -n kube-system --set dnsPolicy=ClusterFirstWithHostNet
 ```
 
+ℹ️ **Note**: Koney supports Tetragon v1.6 and newer.
+
 ### Status Conditions
 
 The `DeceptionPolicy` resource has a `status` field that includes a list of conditions. Status conditions are used to provide information about the deployment status of the deception policy.
