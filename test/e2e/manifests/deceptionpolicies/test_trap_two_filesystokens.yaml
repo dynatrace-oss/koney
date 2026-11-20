@@ -42,3 +42,22 @@ spec:
         strategy: containerExec
       captorDeployment:
         strategy: tetragon
+
+    # An empty honeytoken, in a container where sh is dash, see #86
+    - filesystemHoneytoken:
+        filePath: /tmp/empty_token
+        fileContent: ""
+        readOnly: true
+
+      match:
+        any:
+          - resources:
+              containerSelector: nginx
+              selector:
+                matchLabels:
+                  demo.koney/honeytoken: "true"
+
+      decoyDeployment:
+        strategy: containerExec
+      captorDeployment:
+        strategy: tetragon

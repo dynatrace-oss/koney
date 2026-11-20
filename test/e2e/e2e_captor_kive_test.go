@@ -246,6 +246,10 @@ var _ = Describe("Koney Operator with Kive", Ordered, func() {
 
 	When("creating a new pod in the cluster after the DeceptionPolicy was already deployed", func() {
 		It("should update the honeytoken in the extra test pod", func() {
+			// Kive reports no process arguments, so Koney cannot tell its own alerts apart; at least make sure
+			// that it does not alert on Koney's write, which it does not see today
+			extraPodCreationTime := time.Now().UTC()
+
 			By("creating an extra test pod")
 			cmd := exec.Command("kubectl", "apply", "-n", testNamespace,
 				"-f", filepath.Join(projectDir, yamlOfExtraTestPod))
@@ -283,6 +287,13 @@ var _ = Describe("Koney Operator with Kive", Ordered, func() {
 				err := verifyHoneytokenAndAwaitAlertKive(trap,
 					testNamespace, nameOfExtraTestPod, containersPolicyShouldMatch)
 				Expect(err).ShouldNot(HaveOccurred())
+			}
+
+			By("validating that Koney did not alert on its own accesses to the honeytokens in the extra test pod")
+			for _, trap := range deceptionPolicy.Spec.Traps {
+				Eventually(func() error {
+					return verifyNoOwnAlerts(trap, nameOfExtraTestPod, extraPodCreationTime)
+				}, 30*time.Second, time.Second).Should(Succeed())
 			}
 
 			By("validating that the status conditions of the DeceptionPolicy are accurate")

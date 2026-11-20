@@ -17,6 +17,7 @@ package e2e
 
 import (
 	"bytes"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"os/exec"
@@ -555,6 +556,112 @@ func verifyCaptorsDeployed(namespace, crdName, deceptionPolicyName string) error
 	if condition == nil || condition.Status != metav1.ConditionTrue {
 		return fmt.Errorf("captors not deployed yet: %+v", condition)
 	}
+	return nil
+}
+
+// koneyFingerprints returns the fingerprints that Koney adds to the arguments of its own
+// printf and cat calls, derived from the webhook token, as the controller does it.
+func koneyFingerprints() (printfFingerprint, catFingerprint string) {
+	cmd := exec.Command("kubectl", "get", "secret", nameOfWebhookTokenSecret,
+		"-n", managerNamespace, "-o", "jsonpath={.data.token}")
+	encoded, err := testutils.Run(cmd)
+	Expect(err).NotTo(HaveOccurred())
+	token, err := base64.StdEncoding.DecodeString(string(encoded))
+	Expect(err).NotTo(HaveOccurred())
+
+	fingerprint := utils.FingerprintOf(string(token))
+	return utils.EncodeFingerprintInPrintf(fingerprint), utils.EncodeFingerprintInCat(fingerprint)
+}
+
+// findTetragonProcesses returns the binary and arguments of the processes that Tetragon
+// saw accessing the file in the pod, i.e., the raw events before Koney filters them.
+func findTetragonProcesses(filePath, podName string, sinceTime time.Time) ([]string, error) {
+	cmd := exec.Command("kubectl", "logs", "-n", "kube-system", "-l", "app.kubernetes.io/name=tetragon",
+		"-c", "export-stdout", "--tail", "-1", "--since-time", sinceTime.Format(time.RFC3339))
+	output, err := testutils.Run(cmd)
+	if err != nil {
+		return nil, err
+	}
+
+	var processes []string
+	for _, line := range bytes.Split(output, []byte("\n")) {
+		var event struct {
+			Kprobe *struct {
+				Process struct {
+					Binary    string `json:"binary"`
+					Arguments string `json:"arguments"`
+					Pod       struct {
+						Name string `json:"name"`
+					} `json:"pod"`
+				} `json:"process"`
+				Args []struct {
+					FileArg *struct {
+						Path string `json:"path"`
+					} `json:"file_arg"`
+				} `json:"args"`
+			} `json:"process_kprobe"`
+		}
+		if json.Unmarshal(line, &event) != nil || event.Kprobe == nil || event.Kprobe.Process.Pod.Name != podName {
+			continue
+		}
+		for _, arg := range event.Kprobe.Args {
+			if arg.FileArg != nil && arg.FileArg.Path == filePath {
+				processes = append(processes, event.Kprobe.Process.Binary+" "+event.Kprobe.Process.Arguments)
+				break
+			}
+		}
+	}
+
+	return processes, nil
+}
+
+// verifyNoOwnAlertsTetragon checks that Tetragon saw Koney's own fingerprinted accesses to
+// the honeytoken in the pod since the given time, but that Koney did not alert on any of them.
+func verifyNoOwnAlertsTetragon(trap v1alpha1.Trap, podName string, sinceTime time.Time) error {
+	filePath := trap.FilesystemHoneytoken.FilePath
+	printfFingerprint, catFingerprint := koneyFingerprints()
+
+	// Without these events, the check below would pass without Koney ever filtering anything
+	processes, err := findTetragonProcesses(filePath, podName, sinceTime)
+	if err != nil {
+		return err
+	}
+	// writing empty content only truncates the file, which security_file_permission does not see
+	wrote, readBack := trap.FilesystemHoneytoken.FileContent == "", false
+	for _, process := range processes {
+		fmt.Fprintf(ginkgo.GinkgoWriter, "found Tetragon event: %s\n", process) //nolint:errcheck
+		wrote = wrote || strings.Contains(process, printfFingerprint)
+		readBack = readBack || strings.Contains(process, catFingerprint)
+	}
+	if !wrote || !readBack {
+		return fmt.Errorf("expected Tetragon events of Koney writing (%t) and reading back (%t) %s, got %q",
+			wrote, readBack, filePath, processes)
+	}
+
+	return verifyNoOwnAlerts(trap, podName, sinceTime)
+}
+
+// verifyNoOwnAlerts checks that all alerts for the honeytoken in the pod since the
+// given time come from the accesses of the e2e tests, and none from Koney itself.
+func verifyNoOwnAlerts(trap v1alpha1.Trap, podName string, sinceTime time.Time) error {
+	printfFingerprint, catFingerprint := koneyFingerprints()
+
+	alerts, err := findKoneyAlerts(trap.FilesystemHoneytoken.FilePath, managerNamespace, &sinceTime)
+	if err != nil {
+		return err
+	}
+	for _, alert := range alerts {
+		if alert.Pod.Name != podName {
+			continue
+		}
+		// the e2e tests only access the honeytokens with a plain cat (Kive reports less exact binaries)
+		if !strings.Contains(alert.Process.Binary, "cat") ||
+			strings.Contains(alert.Process.Arguments, printfFingerprint) ||
+			strings.Contains(alert.Process.Arguments, catFingerprint) {
+			return fmt.Errorf("koney alerted on its own access: %+v", alert)
+		}
+	}
+
 	return nil
 }
 
