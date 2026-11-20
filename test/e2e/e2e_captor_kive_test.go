@@ -248,7 +248,8 @@ var _ = Describe("Koney Operator with Kive", Ordered, func() {
 
 	When("creating a new pod in the cluster after the DeceptionPolicy was already deployed", func() {
 		It("should update the honeytoken in the extra test pod", func() {
-			// the captors already watch the honeytokens when Koney writes them into this pod
+			// Kive reports no process arguments, so Koney cannot tell its own alerts apart; at least make sure
+			// that it does not alert on Koney's write, which it does not see today
 			extraPodCreationTime := time.Now().UTC()
 
 			By("creating an extra test pod")
