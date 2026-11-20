@@ -230,7 +230,7 @@ captorDeployment:
 helm upgrade tetragon cilium/tetragon -n kube-system --set dnsPolicy=ClusterFirstWithHostNet
 ```
 
-ℹ️ **Note**: Koney supports Tetragon v1.6 and newer. The end-to-end tests run against the latest patch release of every supported minor version (see [`test-e2e.yml`](.github/workflows/test-e2e.yml)). Older Tetragon versions are not supported: their `TracingPolicy` CRD lacks fields that Koney sends, and their BPF programs fail to load on recent kernels such as Linux 7.0.
+ℹ️ **Note**: Koney supports Tetragon v1.6 and newer.
 
 ### Status Conditions
 
