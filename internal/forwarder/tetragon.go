@@ -133,11 +133,6 @@ func (f *Forwarder) loadNewAlerts(ctx context.Context) {
 		for _, event := range events {
 			alert := f.mapTetragonEvent(ctx, event)
 
-			if isOwnAlert(alert) {
-				log.V(1).Info("Skipping an alert that Koney triggered itself")
-				continue
-			}
-
 			if containerSelectors != nil {
 				containerName := ""
 				if alert.Pod != nil {

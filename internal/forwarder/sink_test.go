@@ -20,6 +20,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"sync/atomic"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -29,6 +30,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
 	"github.com/dynatrace-oss/koney/api/v1alpha1"
+	"github.com/dynatrace-oss/koney/internal/controller/utils"
 )
 
 const sinkNamespace = "koney-system"
@@ -107,6 +109,35 @@ var _ = Describe("Alert sinks", func() {
 		Expect(authorization).To(Equal("Api-Token dt0c01.token"))
 		Expect(payload).To(HaveKeyWithValue("event.provider", "Koney"))
 		Expect(payload).To(HaveKeyWithValue("k8s.cluster.uid", "cluster-uid"))
+	})
+
+	It("should not forward the alerts that Koney triggers itself", func() {
+		var received atomic.Int32
+		server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, _ *http.Request) {
+			received.Add(1)
+			writer.WriteHeader(http.StatusAccepted)
+		}))
+		defer server.Close()
+
+		client := fake.NewClientBuilder().WithScheme(testScheme).WithObjects(
+			alertSinkResource("sink", "sink-secret"),
+			sinkSecret("sink-secret", server.URL),
+		).Build()
+		clientset := k8sfake.NewClientset(
+			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: clusterUIDNamespace, UID: "cluster-uid"}},
+		)
+		forwarder := New(Options{Client: client, Clientset: clientset, Namespace: sinkNamespace})
+		sinks := forwarder.readAlertSinks(context.Background())
+
+		// e.g., a Kive alert of Koney writing a honeytoken into a new pod
+		own := sampleAlert
+		own.Process = &ProcessMetadata{Arguments: ptr(`-c "printf "$2%.0s" "$3" > "$1"" sh /run/secrets/koney/token abc ` +
+			utils.EncodeFingerprintInPrintf(utils.Fingerprint()))}
+		forwarder.forwardAlert(context.Background(), own, sinks)
+		Expect(received.Load()).To(BeZero())
+
+		forwarder.forwardAlert(context.Background(), sampleAlert, sinks)
+		Expect(received.Load()).To(Equal(int32(1)))
 	})
 
 	It("should report a sink that rejects an alert", func() {

@@ -641,7 +641,15 @@ func verifyNoOwnAlertsTetragon(trap v1alpha1.Trap, podName string, sinceTime tim
 			wrote, readBack, filePath, processes)
 	}
 
-	alerts, err := findKoneyAlerts(filePath, managerNamespace, &sinceTime)
+	return verifyNoOwnAlerts(trap, podName, sinceTime)
+}
+
+// verifyNoOwnAlerts checks that all alerts for the honeytoken in the pod since the
+// given time come from the accesses of the e2e tests, and none from Koney itself.
+func verifyNoOwnAlerts(trap v1alpha1.Trap, podName string, sinceTime time.Time) error {
+	printfFingerprint, catFingerprint := koneyFingerprints()
+
+	alerts, err := findKoneyAlerts(trap.FilesystemHoneytoken.FilePath, managerNamespace, &sinceTime)
 	if err != nil {
 		return err
 	}
@@ -649,8 +657,10 @@ func verifyNoOwnAlertsTetragon(trap v1alpha1.Trap, podName string, sinceTime tim
 		if alert.Pod.Name != podName {
 			continue
 		}
-		// only the accesses of the e2e tests themselves should have alerted
-		if alert.Process.Binary != "/usr/bin/cat" || alert.Process.Arguments != filePath {
+		// the e2e tests only access the honeytokens with a plain cat (Kive reports less exact binaries)
+		if !strings.Contains(alert.Process.Binary, "cat") ||
+			strings.Contains(alert.Process.Arguments, printfFingerprint) ||
+			strings.Contains(alert.Process.Arguments, catFingerprint) {
 			return fmt.Errorf("koney alerted on its own access: %+v", alert)
 		}
 	}
