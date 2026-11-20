@@ -150,7 +150,7 @@ func (f *Forwarder) sendAlert(ctx context.Context, alert KoneyAlert, sink alertS
 func (f *Forwarder) forwardAlert(ctx context.Context, alert KoneyAlert, sinks []alertSink) {
 	log := k8slog.FromContext(ctx)
 
-	// for all captors, because they all see Koney's own accesses to honeytokens in new pods
+	// for all captors, although only Tetragon reports the process arguments that carry the fingerprint
 	if isOwnAlert(alert) {
 		log.V(1).Info("Skipping an alert that Koney triggered itself")
 		return
