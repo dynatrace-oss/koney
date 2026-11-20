@@ -20,7 +20,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"os/exec"
-	"regexp"
 	"strings"
 	"time"
 
@@ -303,14 +302,13 @@ func verifyStatusConditions(namespace, crdName, deceptionPolicyName string, expe
 //
 //nolint:unparam
 func verifyHoneytokenAndAwaitAlertTetragon(
-	trap v1alpha1.Trap, lastModified time.Time,
+	trap v1alpha1.Trap,
 	podNamespace, podName string, containers []string,
 ) error {
-	// Wait for Tetragon to setup probes
-	pattern := "Loaded BPF maps and events for sensor successfully"
+	// Wait for Koney to deploy the captors, so that a broken captor fails here and not as missing alerts
 	Eventually(func() error {
-		return expectLogLine(pattern, "kube-system", "app.kubernetes.io/name=tetragon", "tetragon", &lastModified)
-	}, time.Minute, time.Second).Should(Succeed())
+		return verifyCaptorsDeployed(testNamespace, testCrdName, nameOfDeceptionPolicy)
+	}, 2*time.Minute, time.Second).Should(Succeed())
 
 	// eBPF probes tend to need some extra time before being ready
 	time.Sleep(3 * time.Second)
@@ -424,14 +422,13 @@ func verifyHoneytokenAndAwaitAlertTetragon(
 //
 //nolint:unparam
 func verifyHoneytokenAndAwaitAlertKive(
-	trap v1alpha1.Trap, lastModified time.Time,
+	trap v1alpha1.Trap,
 	podNamespace, podName string, containers []string,
 ) error {
-	// Wait for Kive to setup probes
-	pattern := "Created / Updated KiveData resource."
+	// Wait for Koney to deploy the captors, so that a broken captor fails here and not as missing alerts
 	Eventually(func() error {
-		return expectLogLine(pattern, "kivebpf-system", "app.kubernetes.io/name=kivebpf", "kivebpf-system", &lastModified)
-	}, time.Minute, time.Second).Should(Succeed())
+		return verifyCaptorsDeployed(testNamespace, testCrdName, nameOfDeceptionPolicy)
+	}, 2*time.Minute, time.Second).Should(Succeed())
 
 	// eBPF probes tend to need some extra time before being ready
 	time.Sleep(3 * time.Second)
@@ -542,22 +539,22 @@ func verifyHoneytokenAndAwaitAlertKive(
 	return nil
 }
 
-// expectLogLine checks if the log line is present in the logs of the pod (1000 lines max)
-func expectLogLine(pattern, namespace, selector, container string, sinceTime *time.Time) error {
-	args := []string{"logs", "-n", namespace, "-l", selector, "-c", container, "--tail", "1000"}
-	if sinceTime != nil {
-		args = append(args, "--since-time", sinceTime.Format(time.RFC3339))
-	}
-	cmd := exec.Command("kubectl", args...)
-	output, err := testutils.Run(cmd)
+// verifyCaptorsDeployed checks that the CaptorsDeployed condition of the DeceptionPolicy is True.
+// ponytail: the controller sets no ObservedGeneration, so right after an update this may still see the previous True
+func verifyCaptorsDeployed(namespace, crdName, deceptionPolicyName string) error {
+	cmd := exec.Command("kubectl", "get", crdName, deceptionPolicyName, "-o", "json", "-n", namespace)
+	deceptionPolicyJSON, err := testutils.Run(cmd)
 	if err != nil {
 		return err
 	}
-
-	if _, err := regexp.MatchString(pattern, string(output)); err != nil {
-		return fmt.Errorf("expected pattern '%s' not found in logs - increase tail limit?", pattern)
+	var deceptionPolicy v1alpha1.DeceptionPolicy
+	if err := json.Unmarshal(deceptionPolicyJSON, &deceptionPolicy); err != nil {
+		return err
 	}
-
+	condition := deceptionPolicy.Status.GetCondition(controller.CaptorsDeployedType)
+	if condition == nil || condition.Status != metav1.ConditionTrue {
+		return fmt.Errorf("captors not deployed yet: %+v", condition)
+	}
 	return nil
 }
 
