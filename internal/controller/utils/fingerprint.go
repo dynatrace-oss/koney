@@ -36,13 +36,14 @@ var (
 // but stays the same across restarts.
 func Fingerprint() int {
 	fingerprintOnce.Do(func() {
-		fingerprint = fingerprintOf(GetAlertWebhookToken())
+		fingerprint = FingerprintOf(GetAlertWebhookToken())
 	})
 
 	return fingerprint
 }
 
-func fingerprintOf(token string) int {
+// FingerprintOf derives the fingerprint from the webhook token.
+func FingerprintOf(token string) int {
 	digest := sha256.Sum256([]byte("koney-fingerprint:" + token))
 
 	return int(binary.BigEndian.Uint32(digest[:4]) | fingerprintHighBit)

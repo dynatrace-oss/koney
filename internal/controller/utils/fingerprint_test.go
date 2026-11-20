@@ -24,13 +24,13 @@ import (
 
 var _ = Describe("Fingerprint", func() {
 	It("should derive the same fingerprint from the same token", func() {
-		Expect(fingerprintOf("s3cret")).To(Equal(fingerprintOf("s3cret")))
-		Expect(fingerprintOf("s3cret")).NotTo(Equal(fingerprintOf("another-token")))
+		Expect(FingerprintOf("s3cret")).To(Equal(FingerprintOf("s3cret")))
+		Expect(FingerprintOf("s3cret")).NotTo(Equal(FingerprintOf("another-token")))
 	})
 
 	It("should give every fingerprint the same length", func() {
 		for _, token := range []string{"", "s3cret", "another-token", "yet-another-one"} {
-			fingerprint := fingerprintOf(token)
+			fingerprint := FingerprintOf(token)
 			Expect(fingerprint).To(And(BeNumerically(">=", 1<<31), BeNumerically("<", 1<<32)))
 			Expect(strings.Count(EncodeFingerprintInCat(fingerprint), "-u")).To(Equal(32))
 			Expect(EncodeFingerprintInPrintf(fingerprint)).To(HaveLen(len("KONEY_FINGERPRINT_") + 10))
@@ -39,7 +39,7 @@ var _ = Describe("Fingerprint", func() {
 
 	It("should not treat a plain cat -u as a fingerprint", func() {
 		for _, token := range []string{"", "s3cret", "another-token"} {
-			Expect("cat -u /run/secrets/token").NotTo(ContainSubstring(EncodeFingerprintInCat(fingerprintOf(token))))
+			Expect("cat -u /run/secrets/token").NotTo(ContainSubstring(EncodeFingerprintInCat(FingerprintOf(token))))
 		}
 	})
 

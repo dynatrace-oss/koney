@@ -294,6 +294,10 @@ var _ = Describe("Koney Operator", Ordered, func() {
 
 	When("creating a new pod in the cluster after the DeceptionPolicy was already deployed", func() {
 		It("should update the honeytoken in the extra test pod", func() {
+			// Unlike for the first pod, the captors already watch the honeytokens when Koney
+			// writes them into this pod, so this is where Koney must not alert on itself
+			extraPodCreationTime := time.Now().UTC()
+
 			By("creating an extra test pod")
 			cmd := exec.Command("kubectl", "apply", "-n", testNamespace,
 				"-f", filepath.Join(projectDir, yamlOfExtraTestPod))
@@ -332,6 +336,14 @@ var _ = Describe("Koney Operator", Ordered, func() {
 				err := verifyHoneytokenAndAwaitAlertTetragon(trap, lastModificationTime,
 					testNamespace, nameOfExtraTestPod, containersPolicyShouldMatch)
 				Expect(err).ShouldNot(HaveOccurred())
+			}
+
+			// The alerts of the e2e accesses were forwarded above, so Koney's earlier ones would have been too
+			By("validating that Koney did not alert on its own accesses to the honeytokens in the extra test pod")
+			for _, trap := range deceptionPolicy.Spec.Traps {
+				Eventually(func() error {
+					return verifyNoOwnAlertsTetragon(trap, nameOfExtraTestPod, extraPodCreationTime)
+				}, 30*time.Second, time.Second).Should(Succeed())
 			}
 
 			By("validating that the status conditions of the DeceptionPolicy are accurate")
