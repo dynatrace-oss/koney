@@ -33,7 +33,7 @@ var _ = Describe("Fingerprint", func() {
 			fingerprint := fingerprintOf(token)
 			Expect(fingerprint).To(And(BeNumerically(">=", 1<<31), BeNumerically("<", 1<<32)))
 			Expect(strings.Count(EncodeFingerprintInCat(fingerprint), "-u")).To(Equal(32))
-			Expect(EncodeFingerprintInEcho(fingerprint)).To(HaveLen(len("KONEY_FINGERPRINT_") + 10))
+			Expect(EncodeFingerprintInPrintf(fingerprint)).To(HaveLen(len("KONEY_FINGERPRINT_") + 10))
 		}
 	})
 
@@ -44,7 +44,7 @@ var _ = Describe("Fingerprint", func() {
 	})
 
 	It("should encode a fingerprint in echo and cat calls", func() {
-		Expect(EncodeFingerprintInEcho(1337)).To(Equal("KONEY_FINGERPRINT_1337"))
+		Expect(EncodeFingerprintInPrintf(1337)).To(Equal("KONEY_FINGERPRINT_1337"))
 		Expect(EncodeFingerprintInCat(5)).To(Equal("-uu -u -uu"))
 	})
 })

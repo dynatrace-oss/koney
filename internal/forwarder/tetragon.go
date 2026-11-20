@@ -309,7 +309,7 @@ func isOwnAlert(alert KoneyAlert) bool {
 	fingerprint := utils.Fingerprint()
 	arguments := *alert.Process.Arguments
 
-	return strings.Contains(arguments, utils.EncodeFingerprintInEcho(fingerprint)) ||
+	return strings.Contains(arguments, utils.EncodeFingerprintInPrintf(fingerprint)) ||
 		strings.Contains(arguments, utils.EncodeFingerprintInCat(fingerprint))
 }
 

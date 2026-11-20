@@ -48,13 +48,12 @@ func fingerprintOf(token string) int {
 	return int(binary.BigEndian.Uint32(digest[:4]) | fingerprintHighBit)
 }
 
-// EncodeFingerprintInEcho encodes a fingerprint in a call to `echo`, to be
-// used, e.g. in a call such as `echo -e "foobar\c KONEY_FINGERPRINT_123"` after
-// the `\c` escape sequence. Everything after the `\c` escape sequence is
-// ignored by `echo` when `-e` is used, thus, the command will still work as
-// expected. This is useful to mark `echo` calls from Koney, so that we won't
-// alert on them later.
-func EncodeFingerprintInEcho(code int) string {
+// EncodeFingerprintInPrintf encodes a fingerprint in a call to `printf`, to be
+// used, e.g. in a call such as `printf "foobar%.0s" KONEY_FINGERPRINT_123`, where
+// the `%.0s` conversion consumes the fingerprint without printing it. Thus, the
+// command will still work as expected. This is useful to mark `printf` calls
+// from Koney, so that we won't alert on them later.
+func EncodeFingerprintInPrintf(code int) string {
 	return fmt.Sprintf("KONEY_FINGERPRINT_%d", code)
 }
 

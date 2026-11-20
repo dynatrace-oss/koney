@@ -15,7 +15,10 @@
 
 package filesystoken
 
-import "strings"
+import (
+	"fmt"
+	"strings"
+)
 
 // The dynamic values (file path, octal content and fingerprints) are passed to
 // the shell as positional arguments instead of being interpolated into the
@@ -26,16 +29,28 @@ func fileExistenceCheckCommand(filePath string) []string {
 	return []string{"sh", "-c", `[ ! -f "$1" ] && echo 'No such file' || echo 'File exists'`, "sh", filePath}
 }
 
-func writeOctalContentCommand(octalContent, echoFingerprint, filePath string) []string {
-	return []string{
-		"sh", "-c",
-		`oct_string="$2"; i=1; while [ $i -lt ${#oct_string} ]; do $(which echo) -e "\0$(expr substr $oct_string $i 3)\c $3"; i=$(expr $i + 3); done > "$1"`,
-		"sh", filePath, octalContent, echoFingerprint,
-	}
+// writeFileContentCommand writes content to the file, which empties the file if content is empty.
+// It uses printf, which every POSIX shell has (unlike `echo -e` or `which`), and passes
+// the content as a format string in which octal escapes stand for all special bytes.
+// `%.0s` adds the fingerprint to the arguments of printf without printing it,
+// in case printf is not a shell built-in, such as in posh.
+func writeFileContentCommand(content, printfFingerprint, filePath string) []string {
+	return []string{"sh", "-c", `printf "$2%.0s" "$3" > "$1"`, "sh", filePath, printfFormat(content), printfFingerprint}
 }
 
-func writeEmptyFileCommand(echoFingerprint, filePath string) []string {
-	return []string{"sh", "-c", `echo -e "\c $2" > "$1"`, "sh", filePath, echoFingerprint}
+// printfFormat encodes content as a printf format string that prints exactly that content.
+// Only ASCII letters and digits are kept as they are, so the format has no `%`, no `\` other than
+// its own escapes, and cannot start with `-`. Escapes always have three octal digits, so a digit after them is a literal.
+func printfFormat(content string) string {
+	var b strings.Builder
+	for _, c := range []byte(content) {
+		if c >= 'a' && c <= 'z' || c >= 'A' && c <= 'Z' || c >= '0' && c <= '9' {
+			b.WriteByte(c)
+		} else {
+			fmt.Fprintf(&b, "\\%03o", c)
+		}
+	}
+	return b.String()
 }
 
 func readFileContentCommand(catFingerprint, filePath string) []string {

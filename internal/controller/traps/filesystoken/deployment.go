@@ -238,22 +238,12 @@ func (r *FilesystemHoneytokenReconciler) deployDecoyWithContainerExec(ctx contex
 	}
 
 	// mark the commands with a fingerprint so that we won't alert on them later
-	echoFingerprint := utils.EncodeFingerprintInEcho(utils.Fingerprint())
+	printfFingerprint := utils.EncodeFingerprintInPrintf(utils.Fingerprint())
 	catFingerprint := utils.EncodeFingerprintInCat(utils.Fingerprint())
 
-	if trap.FilesystemHoneytoken.FileContent != "" {
-		// To avoid issues with special characters (e.g., command injection vulnerabilities),
-		// we first encode the content in octal (sh does not like hex) and then decode it in the container
-		octalContent := utils.StringToOct(trap.FilesystemHoneytoken.FileContent)
-
-		// To decode the octal content, we use the following command:
-		// oct_string="141142143"; i=1; while [ $i -lt ${#oct_string} ]; do $(which echo) -e "\0$(expr substr $oct_string $i 3)\c"; i=$(expr $i + 3); done > /path/to/file
-		// $(which echo) is used to avoid issues with the shell built-in echo command
-		cmd = writeOctalContentCommand(octalContent, echoFingerprint, trap.FilesystemHoneytoken.FilePath)
-	} else {
-		// We don't use touch because if the file already includes content, touch would not make it empty
-		cmd = writeEmptyFileCommand(echoFingerprint, trap.FilesystemHoneytoken.FilePath)
-	}
+	// The content is passed as an escaped printf format string, so special characters are never interpreted by the shell.
+	// We don't use touch for empty content because if the file already includes content, touch would not make it empty.
+	cmd = writeFileContentCommand(trap.FilesystemHoneytoken.FileContent, printfFingerprint, trap.FilesystemHoneytoken.FilePath)
 
 	// Use ExecCMDInContainer to execute the command in the container
 	output, err := r.executeCommandInContainer(ctx, pod, containerName, cmd)
