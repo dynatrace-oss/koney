@@ -341,14 +341,15 @@ func verifyHoneytokenAndAwaitAlertTetragon(
 			}
 
 			// Remove alerts that happened before the first access time
-			// (we don't want delayed alerts from previous tests)
+			// (we don't want delayed alerts from previous tests); alerts have second precision,
+			// so keep those in the second of the first access, or the first access never counts
 			filteredAlerts := []KoneyAlert{}
 			for i := 0; i < len(alerts); i++ {
 				timestamp, err := time.Parse(time.RFC3339, alerts[i].Timestamp)
 				if err != nil {
 					return fmt.Errorf("failed to parse alert timestamp: %v", err)
 				}
-				if timestamp.After(firstAccessTime.Truncate(time.Second)) {
+				if !timestamp.Before(firstAccessTime.Truncate(time.Second)) {
 					filteredAlerts = append(filteredAlerts, alerts[i])
 				}
 			}
@@ -461,14 +462,15 @@ func verifyHoneytokenAndAwaitAlertKive(
 			}
 
 			// Remove alerts that happened before the first access time
-			// (we don't want delayed alerts from previous tests)
+			// (we don't want delayed alerts from previous tests); alerts have second precision,
+			// so keep those in the second of the first access, or the first access never counts
 			filteredAlerts := []KoneyAlert{}
 			for i := 0; i < len(alerts); i++ {
 				timestamp, err := time.Parse(time.RFC3339, alerts[i].Timestamp)
 				if err != nil {
 					return fmt.Errorf("failed to parse alert timestamp: %v", err)
 				}
-				if timestamp.After(firstAccessTime.Truncate(time.Second)) {
+				if !timestamp.Before(firstAccessTime.Truncate(time.Second)) {
 					filteredAlerts = append(filteredAlerts, alerts[i])
 				}
 			}
