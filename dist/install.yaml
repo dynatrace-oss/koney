@@ -882,18 +882,19 @@ spec:
       serviceAccountName: koney-cleanup
       securityContext:
         runAsNonRoot: true
+        runAsUser: 65532
         seccompProfile:
           type: RuntimeDefault
       containers:
       - name: kubectl
-        image: cgr.dev/chainguard/kubectl:latest
+        image: registry.k8s.io/kubectl:v1.37.2
         securityContext:
           allowPrivilegeEscalation: false
           capabilities:
             drop:
             - ALL
         command:
-        - /usr/bin/kubectl
+        - /bin/kubectl
         - delete
         - deceptionpolicy,deceptionalertsink
         - --all-namespaces
