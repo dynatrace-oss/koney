@@ -146,7 +146,7 @@ func (f *Forwarder) sendAlert(ctx context.Context, alert KoneyAlert, sink alertS
 	return nil
 }
 
-// forwardAlert writes an alert to the log of the controller and sends it to all sinks.
+// forwardAlert relays an alert to the alerts container and sends it to all sinks.
 func (f *Forwarder) forwardAlert(ctx context.Context, alert KoneyAlert, sinks []alertSink) {
 	log := k8slog.FromContext(ctx)
 
@@ -162,8 +162,10 @@ func (f *Forwarder) forwardAlert(ctx context.Context, alert KoneyAlert, sinks []
 		return
 	}
 
-	// alerts are written as plain JSON lines, so that they can be picked up from the log as they are
-	fmt.Println(string(encoded))
+	// the alerts container logs alerts as plain JSON lines, so that they can be picked up as they are
+	if err := f.relay.send(encoded); err != nil {
+		log.Error(err, "Unable to relay an alert to the alerts container", "alert", string(encoded))
+	}
 
 	for _, sink := range sinks {
 		if err := f.sendAlert(ctx, alert, sink); err != nil {
