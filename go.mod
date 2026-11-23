@@ -2,19 +2,19 @@ module github.com/dynatrace-oss/koney
 
 go 1.27.0
 
-toolchain go1.27.3
+toolchain go1.27.4
 
 require (
 	github.com/San7o/kivebpf v1.0.0-pre2
 	github.com/cilium/tetragon/pkg/k8s v0.0.0-20260413164430-43a0219e13b2
 	github.com/go-logr/logr v1.4.4
-	github.com/onsi/ginkgo/v2 v2.28.1
-	github.com/onsi/gomega v1.39.1
-	k8s.io/api v0.35.3
-	k8s.io/apiextensions-apiserver v0.35.3
-	k8s.io/apimachinery v0.35.3
-	k8s.io/client-go v0.35.3
-	sigs.k8s.io/controller-runtime v0.21.0 // pinned: v0.22+ changed ctrl.NewWebhookManagedBy to require a generic type arg, incompatible with github.com/San7o/kivebpf@v1.0.0-pre2
+	github.com/onsi/ginkgo/v2 v2.34.0
+	github.com/onsi/gomega v1.44.0
+	k8s.io/api v0.35.10
+	k8s.io/apiextensions-apiserver v0.35.10
+	k8s.io/apimachinery v0.35.10
+	k8s.io/client-go v0.35.10
+	sigs.k8s.io/controller-runtime v0.21.0 // pinned: v0.22+ changed ctrl.NewWebhookManagedBy to require a generic type arg, incompatible with github.com/San7o/kivebpf@v1.0.0-pre2 (see #90)
 )
 
 require (
@@ -100,11 +100,11 @@ require (
 	google.golang.org/genproto/googleapis/api v0.0.0-20260803160001-6ac0973c030d // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20260803160001-6ac0973c030d // indirect
 	google.golang.org/grpc v1.83.2 // indirect
-	google.golang.org/protobuf v1.36.11 // indirect
+	google.golang.org/protobuf v1.36.12-0.20260120151049-f2248ac996af // indirect
 	gopkg.in/evanphx/json-patch.v4 v4.13.0 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
-	k8s.io/apiserver v0.35.3 // indirect
-	k8s.io/component-base v0.35.3 // indirect
+	k8s.io/apiserver v0.35.10 // indirect
+	k8s.io/component-base v0.35.10 // indirect
 	k8s.io/klog/v2 v2.140.0 // indirect
 	k8s.io/kube-openapi v0.0.0-20260330154417-16be699c7b31 // indirect
 	k8s.io/utils v0.0.0-20260319190234-28399d86e0b5 // indirect

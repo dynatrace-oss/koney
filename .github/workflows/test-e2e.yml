@@ -18,12 +18,12 @@ jobs:
         tetragon: ["1.6.1", "1.7.1", "1.8.0"]
     steps:
     - name: Checkout repository
-      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       with:
         persist-credentials: false
 
     - name: Setup Go
-      uses: actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c # v6
+      uses: actions/setup-go@d8cbb8045d7f43706b9177cceb36c1f91a6644d5 # v7
       with:
         go-version-file: go.mod
 
@@ -40,7 +40,7 @@ jobs:
       run: make setup-test-e2e
 
     - name: Install Helm
-      uses: azure/setup-helm@1a275c3b69536ee54be43f2070a358922e12c8d4 # v4.3.1
+      uses: azure/setup-helm@2f5e7bc67f1f9972ab16657bb795f36d8f04de0e # v5.1.0
 
     - name: Verify Helm installation
       run: helm version
