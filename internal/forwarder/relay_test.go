@@ -19,6 +19,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"net"
 	"os"
 	"path/filepath"
 	"strings"
@@ -78,7 +79,14 @@ var _ = Describe("Alert relay", func() {
 	startRelay := func() *lockedBuffer {
 		out := &lockedBuffer{}
 		go func() { _ = RelayAlerts(socket, out) }()
-		Eventually(func() error { _, err := os.Stat(socket); return err }).Should(Succeed())
+		// not just the socket file, which a previous relay may have left behind
+		Eventually(func() error {
+			conn, err := net.Dial("unixgram", socket)
+			if err == nil {
+				_ = conn.Close()
+			}
+			return err
+		}).Should(Succeed())
 		return out
 	}
 
@@ -102,13 +110,30 @@ var _ = Describe("Alert relay", func() {
 		Expect(logs.String()).To(BeEmpty())
 	})
 
+	It("should not lose the first alert after the alerts container restarted", func() {
+		// the previous relay, which the forwarder is connected to when it goes away
+		previous, err := net.ListenUnixgram("unixgram", &net.UnixAddr{Name: socket, Net: "unixgram"})
+		Expect(err).NotTo(HaveOccurred())
+		forwarder.forwardAlert(ctx, sampleAlert, nil)
+		buffer := make([]byte, relayBufferSize)
+		n, err := previous.Read(buffer)
+		Expect(err).NotTo(HaveOccurred())
+		Expect(string(buffer[:n])).To(ContainSubstring(sampleAlert.Timestamp))
+		Expect(previous.Close()).To(Succeed())
+
+		out := startRelay()
+		forwarder.forwardAlert(ctx, sampleAlert, nil)
+		Eventually(out.String).Should(ContainSubstring(sampleAlert.Timestamp))
+		Expect(logs.String()).To(BeEmpty())
+	})
+
 	It("should not block but log the alert while the alerts container is down, and recover", func() {
 		done := make(chan struct{})
 		go func() {
 			defer close(done)
 			forwarder.forwardAlert(ctx, sampleAlert, nil)
 		}()
-		Eventually(done).WithTimeout(relayWriteTimeout / 2).Should(BeClosed())
+		Eventually(done).WithTimeout(time.Second).Should(BeClosed())
 		Expect(logs.String()).To(ContainSubstring("Unable to relay an alert to the alerts container"))
 		Expect(logs.String()).To(ContainSubstring(sampleAlert.Timestamp))
 

@@ -29,7 +29,8 @@ import (
 const relayBufferSize = 256 * 1024
 
 // relayWriteTimeout bounds a write to a relay that is alive but does not read its socket.
-const relayWriteTimeout = time.Second
+// The relay drains far more alerts per second than the captors ever report.
+const relayWriteTimeout = 100 * time.Millisecond
 
 // RelayAlerts receives alerts as datagrams on a unix socket at path and writes each one as
 // a line to out. It runs in the alerts container, so that the log of that container holds
@@ -60,9 +61,9 @@ func RelayAlerts(path string, out io.Writer) error {
 }
 
 // alertRelay sends alerts to the socket of RelayAlerts. Datagrams keep the boundaries of the
-// alerts and fail right away while nobody listens, so the forwarder never blocks on the relay.
+// alerts and fail right away while nobody listens, so the forwarder never waits long for the relay.
 //
-// ponytail: alerts are dropped from the alerts log while the relay restarts (they are still
+// ponytail: alerts are dropped from the alerts log while the relay is down (they are still
 // logged as errors and sent to the sinks); replay them from a small ring buffer if that matters.
 type alertRelay struct {
 	path  string
@@ -71,11 +72,23 @@ type alertRelay struct {
 }
 
 // send writes one alert to the relay, dialing it first if there is no connection yet.
-// The connection is dropped after an error, so that the next alert dials again.
 func (r *alertRelay) send(alert []byte) error {
 	r.mutex.Lock()
 	defer r.mutex.Unlock()
 
+	hadConn := r.conn != nil
+	err := r.write(alert)
+	// a connection to a relay that has restarted since fails once, so dial the new relay right away,
+	// but not after a timeout, because retrying a relay that does not read only stalls twice as long
+	if err != nil && hadConn && !errors.Is(err, os.ErrDeadlineExceeded) {
+		err = r.write(alert)
+	}
+
+	return err
+}
+
+// write dials the relay if needed and writes one alert. The connection is dropped after an error.
+func (r *alertRelay) write(alert []byte) error {
 	if r.conn == nil {
 		conn, err := net.Dial("unixgram", r.path)
 		if err != nil {

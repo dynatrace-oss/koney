@@ -693,10 +693,10 @@ func findKoneyAlerts(needle, managerNamespace string, sinceTime *time.Time) ([]K
 	if sinceTime != nil {
 		args = append(args, "--since-time", sinceTime.Format(time.RFC3339))
 	}
-	cmd := exec.Command("kubectl", args...)
-	output, err := testutils.Run(cmd)
+	// stdout only, because kubectl may print warnings on stderr, which are no lines of the alerts container
+	output, err := exec.Command("kubectl", args...).Output()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("kubectl %v failed: %w", args, err)
 	}
 
 	alerts := []KoneyAlert{}

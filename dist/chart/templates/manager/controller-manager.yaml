@@ -71,8 +71,8 @@ spec:
         - name: alerts-socket
           mountPath: /var/run/koney
         resources:
-          {{- if .Values.manager.resources }}
-          {{- toYaml .Values.manager.resources | nindent 10 }}
+          {{- if .Values.alerts.resources }}
+          {{- toYaml .Values.alerts.resources | nindent 10 }}
           {{- else }}
           {}
           {{- end }}

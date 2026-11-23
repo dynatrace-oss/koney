@@ -32,6 +32,18 @@ manager:
       cpu: 10m
       memory: 128Mi
 
+# The alerts container, which logs the alerts that the controller manager sends to it.
+alerts:
+
+  # -- Resource limits and requests (it needs about 8Mi of memory, also under load)
+  resources:
+    limits:
+      cpu: 100m
+      memory: 32Mi
+    requests:
+      cpu: 5m
+      memory: 16Mi
+
 # Helper RBAC roles for managing custom resources
 # These provide convenient admin/editor/viewer roles for each CRD type
 # Useful for giving users different levels of access to your custom resources

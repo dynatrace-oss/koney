@@ -115,7 +115,11 @@ func main() {
 
 	if relayAlerts {
 		err := forwarder.RelayAlerts(utils.GetAlertsSocket(), os.Stdout)
-		setupLog.Error(err, "unable to relay the alerts")
+		// not logged, so that the alerts container logs nothing but alerts: kubectl describe pod shows
+		// the termination message instead (unless this does not run in a container)
+		if os.WriteFile("/dev/termination-log", []byte("unable to relay the alerts: "+err.Error()), 0o600) != nil {
+			setupLog.Error(err, "unable to relay the alerts")
+		}
 		os.Exit(1)
 	}
 

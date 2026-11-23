@@ -7,7 +7,7 @@ This document describes how to build, test, and deploy the Koney operator.
 - `go` version v1.27.0+
 - `docker` version 17.03+
 - `kubectl` version v1.11.3+
-- Access to a Kubernetes v1.11.3+ cluster.
+- Access to a Kubernetes v1.29+ cluster.
 - [Tetragon](https://tetragon.io/) v1.1.0+ or [Kive](https://github.com/San7o/kivebpf) installed in the cluster, if you also want to monitor traps.
 - `pre-commit` to run checks before committing changes.
 
