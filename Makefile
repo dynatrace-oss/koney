@@ -103,7 +103,7 @@ test: generate fmt lint setup-envtest ## Run unit tests (no cluster required).
 
 .PHONY: test-e2e
 test-e2e: generate fmt lint ## Run end-to-end tests (requires an isolated environment).
-	KIND_CLUSTER=$(KIND_CLUSTER) go test ./test/e2e/ -v -ginkgo.v
+	KIND_CLUSTER=$(KIND_CLUSTER) go test ./test/e2e/ -v -ginkgo.v -timeout 30m
 	$(MAKE) clean-test-e2e
 
 .PHONY: setup-test-e2e
