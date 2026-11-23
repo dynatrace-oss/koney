@@ -22,7 +22,9 @@ spec:
     spec:
       serviceAccountName: koney-manager-serviceaccount
       terminationGracePeriodSeconds: 10
-      volumes: []
+      volumes:
+      - name: alerts-socket
+        emptyDir: {}
       securityContext:
         {{- if .Values.manager.podSecurityContext }}
         {{- toYaml .Values.manager.podSecurityContext | nindent 8 }}
@@ -40,6 +42,34 @@ spec:
         env:
         - name: KONEY_NAMESPACE
           value: {{ include "chart.namespaceName" . | quote }}
+        resources:
+          {{- if .Values.manager.resources }}
+          {{- toYaml .Values.manager.resources | nindent 10 }}
+          {{- else }}
+          {}
+          {{- end }}
+        securityContext:
+          {{- if .Values.manager.containerSecurityContext }}
+          {{- toYaml .Values.manager.containerSecurityContext | nindent 10 }}
+          {{- else }}
+          {}
+          {{- end }}
+      # native sidecar (restartPolicy: Always): starts before and stops after the manager,
+      # and logs nothing but the alerts that the manager sends to it
+      - name: alerts
+        image: "{{ .Values.manager.image.repository }}:{{ .Values.manager.image.tag }}"
+        imagePullPolicy: {{ .Values.manager.image.pullPolicy }}
+        restartPolicy: Always
+        command:
+        - /manager
+        args:
+        - --relay-alerts
+        env:
+        - name: KONEY_ALERTS_SOCKET
+          value: /var/run/koney/alerts.sock
+        volumeMounts:
+        - name: alerts-socket
+          mountPath: /var/run/koney
         resources:
           {{- if .Values.manager.resources }}
           {{- toYaml .Values.manager.resources | nindent 10 }}
@@ -72,6 +102,8 @@ spec:
         env:
         - name: KONEY_NAMESPACE
           value: {{ include "chart.namespaceName" . | quote }}
+        - name: KONEY_ALERTS_SOCKET
+          value: /var/run/koney/alerts.sock
         - name: KONEY_ALERT_WEBHOOK_TOKEN
           valueFrom:
             secretKeyRef:
@@ -85,7 +117,9 @@ spec:
         - containerPort: 8000
           protocol: TCP
           name: http
-        volumeMounts: []
+        volumeMounts:
+        - name: alerts-socket
+          mountPath: /var/run/koney
         livenessProbe:
           httpGet:
             path: /healthz

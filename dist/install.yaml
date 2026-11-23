@@ -691,7 +691,9 @@ spec:
     spec:
       serviceAccountName: koney-manager-serviceaccount
       terminationGracePeriodSeconds: 10
-      volumes: []
+      volumes:
+      - name: alerts-socket
+        emptyDir: {}
       securityContext:
         runAsNonRoot: true
         seccompProfile:
@@ -719,6 +721,34 @@ spec:
           capabilities:
             drop:
             - ALL
+      # native sidecar (restartPolicy: Always): starts before and stops after the manager,
+      # and logs nothing but the alerts that the manager sends to it
+      - name: alerts
+        image: "registry.lab.dynatrace.org/research/koney-controller:0.2.2"
+        imagePullPolicy: IfNotPresent
+        restartPolicy: Always
+        command:
+        - /manager
+        args:
+        - --relay-alerts
+        env:
+        - name: KONEY_ALERTS_SOCKET
+          value: /var/run/koney/alerts.sock
+        volumeMounts:
+        - name: alerts-socket
+          mountPath: /var/run/koney
+        resources:
+          limits:
+            cpu: 500m
+            memory: 256Mi
+          requests:
+            cpu: 10m
+            memory: 128Mi
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
       containers:
       - name: manager
         image: "registry.lab.dynatrace.org/research/koney-controller:0.2.2"
@@ -732,6 +762,8 @@ spec:
         env:
         - name: KONEY_NAMESPACE
           value: "koney-system"
+        - name: KONEY_ALERTS_SOCKET
+          value: /var/run/koney/alerts.sock
         - name: KONEY_ALERT_WEBHOOK_TOKEN
           valueFrom:
             secretKeyRef:
@@ -741,7 +773,9 @@ spec:
         - containerPort: 8000
           protocol: TCP
           name: http
-        volumeMounts: []
+        volumeMounts:
+        - name: alerts-socket
+          mountPath: /var/run/koney
         livenessProbe:
           httpGet:
             path: /healthz

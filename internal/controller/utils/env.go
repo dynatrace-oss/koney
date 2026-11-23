@@ -31,6 +31,15 @@ func GetAlertWebhookToken() string {
 	return GetEnv(AlertWebhookTokenEnv, "")
 }
 
+// AlertsSocketEnv is the environment variable that holds the path of the unix socket
+// where the alerts container receives the alerts.
+const AlertsSocketEnv = "KONEY_ALERTS_SOCKET"
+
+// GetAlertsSocket retrieves the path of the unix socket where the alerts container receives the alerts.
+func GetAlertsSocket() string {
+	return GetEnv(AlertsSocketEnv, "/var/run/koney/alerts.sock")
+}
+
 // GetEnv retrieves the value of the environment variable named by the key.
 // If the variable is present in the environment the value (which may be empty) is returned.
 // Otherwise the fallback value is returned.

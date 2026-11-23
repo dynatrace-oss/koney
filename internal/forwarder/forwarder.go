@@ -44,6 +44,9 @@ type Options struct {
 
 	// Address is the address where the webhooks are served. Defaults to defaultAddress.
 	Address string
+
+	// AlertsSocket is the unix socket of the alerts container, which logs the alerts.
+	AlertsSocket string
 }
 
 // Forwarder receives the alerts of the captors and forwards them to the alert sinks.
@@ -71,6 +74,9 @@ type Forwarder struct {
 
 	// httpClient is shared by the Kive handlers and the event puller.
 	httpClient *http.Client
+
+	// relay is shared by the Kive handlers and the event puller.
+	relay *alertRelay
 }
 
 // New builds the alert forwarder. Add both of its runnables to the manager.
@@ -84,6 +90,7 @@ func New(options Options) *Forwarder {
 		triggers:   make(chan struct{}, 1),
 		events:     newEventCache(eventCacheSize),
 		httpClient: &http.Client{Timeout: sinkRequestTimeout},
+		relay:      &alertRelay{path: options.AlertsSocket},
 	}
 }
 

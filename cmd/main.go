@@ -72,6 +72,7 @@ func main() {
 	var secureMetrics bool
 	var enableHTTP2 bool
 	var initWebhookTokenAndExit bool
+	var relayAlerts bool
 	var tlsOpts []func(*tls.Config)
 	flag.StringVar(&metricsAddr, "metrics-bind-address", "0", "The address the metrics endpoint binds to. "+
 		"Use :8443 for HTTPS or :8080 for HTTP, or leave as 0 to disable the metrics service.")
@@ -93,6 +94,9 @@ func main() {
 	flag.BoolVar(&initWebhookTokenAndExit, "init-webhook-token-and-exit", false,
 		"If set, create the secret with the token of the alert forwarder webhooks, then exit. "+
 			"An existing token is kept. This is meant to run in an init container.")
+	flag.BoolVar(&relayAlerts, "relay-alerts", false,
+		"If set, log the alerts that the manager sends to the socket in "+utils.AlertsSocketEnv+
+			" instead of running the manager. This is meant to run in the alerts sidecar container.")
 	opts := zap.Options{
 		Development: true,
 	}
@@ -107,6 +111,12 @@ func main() {
 			os.Exit(1)
 		}
 		return
+	}
+
+	if relayAlerts {
+		err := forwarder.RelayAlerts(utils.GetAlertsSocket(), os.Stdout)
+		setupLog.Error(err, "unable to relay the alerts")
+		os.Exit(1)
 	}
 
 	// if the enable-http2 flag is false (the default), http/2 should be disabled
@@ -242,10 +252,11 @@ func main() {
 	}
 
 	alertForwarder := forwarder.New(forwarder.Options{
-		Client:    mgr.GetClient(),
-		Clientset: kubernetes.NewForConfigOrDie(mgr.GetConfig()),
-		Namespace: utils.GetKoneyNamespace(),
-		Token:     webhookToken,
+		Client:       mgr.GetClient(),
+		Clientset:    kubernetes.NewForConfigOrDie(mgr.GetConfig()),
+		Namespace:    utils.GetKoneyNamespace(),
+		Token:        webhookToken,
+		AlertsSocket: utils.GetAlertsSocket(),
 	})
 
 	for _, runnable := range []manager.Runnable{alertForwarder.Webhooks(), alertForwarder.EventPuller()} {
