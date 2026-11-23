@@ -1,7 +1,7 @@
 repos:
 # general pre-commit hooks
 - repo: https://github.com/pre-commit/pre-commit-hooks
-  rev: v5.0.0
+  rev: v6.0.0
   hooks:
   - id: check-case-conflict
   - id: check-json
@@ -18,7 +18,7 @@ repos:
 
 # license headers
 - repo: https://github.com/Lucas-C/pre-commit-hooks
-  rev: v1.5.5
+  rev: v1.5.6
   hooks:
   - id: insert-license
     name: add license headers (go)

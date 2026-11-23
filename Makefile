@@ -26,7 +26,7 @@ HELM_REGISTRY ?= $(IMAGE_TAG_BASE)/charts
 
 # OPERATOR_SDK_VERSION sets the Operator SDK version to use.
 # By default, what is installed on the system is used.
-OPERATOR_SDK_VERSION ?= v1.41.0
+OPERATOR_SDK_VERSION ?= v1.42.3
 
 # KIND_CLUSTER defines the name of the Kind cluster to be used for e2e tests.
 KIND_CLUSTER ?= koney-test-e2e
@@ -216,15 +216,15 @@ KUBEBUILDER ?= $(LOCALBIN)/kubebuilder
 HELM ?= $(LOCALBIN)/helm
 
 ## Tool Versions
-CONTROLLER_TOOLS_VERSION ?= v0.20.1
+CONTROLLER_TOOLS_VERSION ?= v0.23.0
 # ENVTEST_VERSION is the version of controller-runtime release branch to fetch the envtest setup script (i.e. release-0.20)
 ENVTEST_VERSION ?= $(shell go list -m -f "{{ .Version }}" sigs.k8s.io/controller-runtime | awk -F'[v.]' '{printf "release-%d.%d", $$2, $$3}')
 # ENVTEST_K8S_VERSION is the version of Kubernetes to use for setting up ENVTEST binaries (i.e. 1.31)
 ENVTEST_K8S_VERSION ?= $(shell go list -m -f "{{ .Version }}" k8s.io/api | awk -F'[v.]' '{printf "1.%d", $$3}')
-GOLANGCI_LINT_VERSION ?= v2.14.0
-GOIMPORTS_VERSION ?= v0.44.0
-KUBEBUILDER_VERSION ?= v4.13.1
-HELM_VERSION ?= v3.20.2
+GOLANGCI_LINT_VERSION ?= v2.15.0
+GOIMPORTS_VERSION ?= v0.53.0
+KUBEBUILDER_VERSION ?= v4.16.0
+HELM_VERSION ?= v4.3.2
 
 .PHONY: controller-gen
 controller-gen: $(CONTROLLER_GEN) ## Download controller-gen locally if necessary.
@@ -254,7 +254,7 @@ $(KUBEBUILDER): $(LOCALBIN)
 .PHONY: helm
 helm: $(HELM) ## Download helm locally if necessary.
 $(HELM): $(LOCALBIN)
-	$(call go-install-tool,$(HELM),helm.sh/helm/v3/cmd/helm,$(HELM_VERSION))
+	$(call go-install-tool,$(HELM),helm.sh/helm/v4/cmd/helm,$(HELM_VERSION))
 
 # go-install-tool will 'go install' any package with custom target and name of binary, if it doesn't exist
 # $1 - target path with name of binary
