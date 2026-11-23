@@ -29,8 +29,7 @@ import (
 const relayBufferSize = 256 * 1024
 
 // relayWriteTimeout bounds a write to a relay that is alive but does not read its socket.
-// The relay drains far more alerts per second than the captors ever report.
-const relayWriteTimeout = 100 * time.Millisecond
+const relayWriteTimeout = time.Second
 
 // RelayAlerts receives alerts as datagrams on a unix socket at path and writes each one as
 // a line to out. It runs in the alerts container, so that the log of that container holds
@@ -78,9 +77,8 @@ func (r *alertRelay) send(alert []byte) error {
 
 	hadConn := r.conn != nil
 	err := r.write(alert)
-	// a connection to a relay that has restarted since fails once, so dial the new relay right away,
-	// but not after a timeout, because retrying a relay that does not read only stalls twice as long
-	if err != nil && hadConn && !errors.Is(err, os.ErrDeadlineExceeded) {
+	// a connection to a relay that has restarted since fails once, so dial the new relay right away
+	if err != nil && hadConn {
 		err = r.write(alert)
 	}
 

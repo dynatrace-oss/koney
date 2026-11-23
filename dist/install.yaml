@@ -739,7 +739,7 @@ spec:
           mountPath: /var/run/koney
         resources:
           limits:
-            cpu: 100m
+            cpu: 25m
             memory: 32Mi
           requests:
             cpu: 5m
