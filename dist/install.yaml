@@ -739,11 +739,11 @@ spec:
           mountPath: /var/run/koney
         resources:
           limits:
-            cpu: 500m
-            memory: 256Mi
+            cpu: 100m
+            memory: 32Mi
           requests:
-            cpu: 10m
-            memory: 128Mi
+            cpu: 5m
+            memory: 16Mi
         securityContext:
           allowPrivilegeEscalation: false
           capabilities:

@@ -21,6 +21,7 @@ Currently, Koney supports the deployment of [honeytokens](https://en.wikipedia.o
 ## 🚀 Quickstart
 
 You can install Koney with `kubectl` or `helm`. If you have Helm installed, we recommend Helm.
+Koney requires Kubernetes v1.29 or newer.
 
 **Option A:** (recommended) Install Koney with `helm`.
 
