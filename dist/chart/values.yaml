@@ -3,8 +3,8 @@ manager:
 
   # -- Image settings for the controller manager
   image:
-    repository: registry.lab.dynatrace.org/research/koney-controller # patch:manager
-    tag: 0.2.2
+    repository: ghcr.io/dynatrace-oss/koney-controller # patch:manager
+    tag: 0.3.0
     pullPolicy: IfNotPresent
   # -- Arguments
   args: []
